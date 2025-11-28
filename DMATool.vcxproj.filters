@@ -45,6 +45,27 @@
     <ClCompile Include="src\Backend\JTAGInterface.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="vendor\imgui\imgui.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vendor\imgui\imgui_demo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vendor\imgui\imgui_draw.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vendor\imgui\imgui_tables.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vendor\imgui\imgui_widgets.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vendor\imgui\backends\imgui_impl_win32.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="vendor\imgui\backends\imgui_impl_dx11.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Application.h">
@@ -77,14 +98,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
-    <None Include="DMATool.sln" />
     <None Include="SETUP.md" />
     <None Include=".gitignore" />
-    <None Include="vendor\.gitkeep" />
     <None Include="IMPLEMENTATION_ROADMAP.md" />
-    <None Include="DIRECTX11_MIGRATION.md" />
-    <None Include="DMATool_NEW.vcxproj" />
-    <None Include="BUILD_FIX.md" />
-    <None Include="setup_imgui.ps1" />
   </ItemGroup>
 </Project>

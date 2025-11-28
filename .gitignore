@@ -253,7 +253,5 @@ ASALocalRun/
 .ionide/
 
 # Project specific
-vendor/
-!vendor/.gitkeep
 *.dma
 *.log

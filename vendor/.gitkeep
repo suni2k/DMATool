@@ -1,0 +1,6 @@
+# Keep this directory but ignore its contents (except this file)
+# Download dependencies here:
+# - ImGui: https://github.com/ocornut/imgui
+# - GLFW: https://www.glfw.org/
+
+# See SETUP.md for detailed instructions
