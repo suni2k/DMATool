@@ -189,6 +189,7 @@ namespace DMATool::UI
             if (ImGui::Button("ENTER TOOL", ImVec2(buttonWidth, buttonHeight)))
             {
                 m_ShowStartupDialog = false;
+                m_CurrentTab = 0; // Switch to DNA ID tab immediately
             }
             ImGui::SetWindowFontScale(1.0f);
             
@@ -413,23 +414,36 @@ namespace DMATool::UI
         {
             if (ImGui::BeginTabItem("DNA ID"))
             {
+                m_CurrentTab = 0;
                 Tabs::JTAGPortTab::Render();
                 ImGui::EndTabItem();
             }
             
             if (ImGui::BeginTabItem("Flash DMA"))
             {
+                m_CurrentTab = 1;
                 Tabs::JTAGFlashTab::Render();
                 ImGui::EndTabItem();
             }
             
             if (ImGui::BeginTabItem("Benchmark DMA"))
             {
+                m_CurrentTab = 2;
                 Tabs::DataPortTab::Render();
                 ImGui::EndTabItem();
             }
             
             ImGui::EndTabBar();
+        }
+        
+        // Force select DNA ID tab on first frame after entering tool
+        static bool s_ForceFirstTab = true;
+        if (s_ForceFirstTab && !m_ShowStartupDialog)
+        {
+            s_ForceFirstTab = false;
+            m_CurrentTab = 0;
+            ImGui::SetTabItemClosed("Flash DMA");
+            ImGui::SetTabItemClosed("Benchmark DMA");
         }
     }
 }

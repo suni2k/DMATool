@@ -1,0 +1,118 @@
+═══════════════════════════════════════════════════════════════════
+                    QUICK ANSWERS TO YOUR QUESTIONS
+═══════════════════════════════════════════════════════════════════
+
+1. DNA ID FORMATTING
+   ==================
+   ✓ YES - Remove "0x" prefix for firmware providers
+   
+   From OpenOCD:    0x003ccd8c77d04854
+   For Firmware:    003ccd8c77d04854  ← Use this format
+
+
+2. DRIVER INSTALLATION LOCATION
+   =============================
+   ✓ YES - Drivers are installed on the SAME PC (your PC)
+   ✗ NOT on target/victim PC
+   
+   Why? The JTAG port connects back to YOUR motherboard via USB:
+   
+   [Your PC]
+      ├─ PCIe Slot ──→ [DMA Card] ──→ Target PCIe slot on other PC
+      └─ USB Port ←──┐                (for DMA attacks)
+                     │
+                     └─ JTAG/Update Port (on DMA card)
+                        (for programming/DNA extraction)
+
+
+3. DRIVER TYPES & DETECTION
+   =========================
+   
+   CH347 Driver:
+   ✓ Currently Installed
+   ✓ Version: 2.4.2023.10
+   ✓ Provider: wch.cn
+   ✓ VID/PID: 0x1A86 / 0x55DD
+   
+   RS232/FTDI Driver:
+   - VID/PID: 0x0403 / 0x6011 (35T) or 0x6014 (75T)
+   - Used on older cards
+
+
+4. GUI FEATURES TO IMPLEMENT
+   ==========================
+   
+   Driver Status Section:
+   ☐ Show: "CH347 Driver: v2.4.2023.10 (Installed ✓)"
+   ☐ Show: "FTDI Driver: Not Found"
+   ☐ Show: Last Updated: 10/09/2023
+   
+   Driver Actions:
+   ☐ [Install Driver] button
+      - Launches CH347FpgaDownloadTool.exe as admin
+      - Or installs via pnputil if .inf available
+   
+   ☐ [Uninstall Driver] button  
+      - Requires admin
+      - Warns user first
+      - Uses: pnputil /delete-driver /uninstall /force
+   
+   ☐ [Check for Updates] button
+      - Queries WCH website or GitHub
+      - Shows available version vs current
+   
+   DNA Extraction:
+   ☐ [Extract DNA ID] button
+      - Runs OpenOCD command
+      - Parses output
+      - Removes "0x" automatically
+      - Shows: "003ccd8c77d04854"
+   
+   ☐ [Copy DNA] button - Copy to clipboard
+   ☐ [Export DNA] button - Save to text file
+
+
+5. POWERSHELL COMMANDS FOR YOUR C++ CODE
+   ======================================
+   
+   Check Driver Status:
+   -------------------
+   Get-PnpDevice | Where-Object {\.FriendlyName -like "*CH347*"}
+   
+   Get Driver Version:
+   ------------------
+   Get-PnpDeviceProperty -InstanceId <id> -KeyName "DEVPKEY_Device_DriverVersion"
+   
+   Install Driver:
+   --------------
+   pnputil.exe /add-driver "path\to\driver.inf" /install
+   
+   Uninstall Driver:
+   ----------------
+   pnputil.exe /delete-driver oem154.inf /uninstall /force
+   
+   Check Admin Rights:
+   ------------------
+   ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+
+
+6. YOUR CURRENT STATUS
+   ===================
+   
+   Card Type:       XC7A100T (100T) ✓
+   Interface:       CH347 ✓
+   Driver Status:   INSTALLED (v2.4.2023.10) ✓
+   DNA ID:          003ccd8c77d04854 ✓ (formatted, ready for firmware provider)
+   Connection:      Working ✓
+   
+   Everything is properly configured!
+
+
+DETAILED DOCUMENTATION CREATED:
+================================
+✓ DETECTION_GUIDE.txt  - Complete chip/interface detection methods
+✓ DRIVER_GUIDE.md      - Driver management, installation, and code examples
+✓ SETUP_GUIDE.md       - Step-by-step hardware setup
+
+All files in: C:\Users\suni\source\repos\DMATool\dmafiles\
+

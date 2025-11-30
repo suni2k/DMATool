@@ -90,6 +90,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Backend\OpenOCDInterface.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\UI\Theme.cpp" />
@@ -110,6 +111,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Application.h" />
+    <ClInclude Include="src\Backend\OpenOCDInterface.h" />
+    <ClInclude Include="src\resource.h" />
     <ClInclude Include="src\UI\Theme.h" />
     <ClInclude Include="src\UI\MainWindow.h" />
     <ClInclude Include="src\UI\Tabs\JTAGPortTab.h" />
@@ -120,10 +123,18 @@
     <ClInclude Include="src\Backend\JTAGInterface.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="docs\ARCHITECTURE.md" />
+    <None Include="docs\BUILD_INSTRUCTIONS.md" />
+    <None Include="docs\DMA_TESTING_GUIDE.md" />
+    <None Include="docs\DNA_ID_STATUS.md" />
+    <None Include="docs\DNA_ID_TAB_COMPLETE.md" />
+    <None Include="docs\TROUBLESHOOTING.md" />
     <None Include="README.md" />
-    <None Include="SETUP.md" />
     <None Include=".gitignore" />
-    <None Include="IMPLEMENTATION_ROADMAP.md" />
+    <None Include="scripts\Setup-PCILeech.ps1" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="DMATool.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -66,6 +66,9 @@
     <ClCompile Include="vendor\imgui\backends\imgui_impl_dx11.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Backend\OpenOCDInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Application.h">
@@ -95,11 +98,50 @@
     <ClInclude Include="src\Backend\JTAGInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\Backend\OpenOCDInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
     <None Include="SETUP.md" />
     <None Include=".gitignore" />
     <None Include="IMPLEMENTATION_ROADMAP.md" />
+    <None Include="DNA_ID_IMPLEMENTATION.md" />
+    <None Include="IMPLEMENTATION_COMPLETE.md" />
+    <None Include="ARCHITECTURE_DIAGRAM.md" />
+    <None Include="CURRENT_STATUS.md" />
+    <None Include="DNA_ID_README.md" />
+    <None Include="JTAG_INIT_ERROR_FIX.md" />
+    <None Include="FINAL_BUILD_STATUS.md" />
+    <None Include="DNA_EXTRACTION_COMPLETE.md" />
+    <None Include="AUTO_DETECTION_GUIDE.md" />
+    <None Include="FEATURE_COMPLETE_FINAL.md" />
+    <None Include="UI_IMPROVEMENTS_COMPLETE.md" />
+    <None Include="LOADING_IMPLEMENTATION_STATUS.md" />
+    <None Include="UI_IMPROVEMENTS_FINAL.md" />
+    <None Include="BUG_FIXES_TIMING.md" />
+    <None Include="IMGUI_STACK_FIX.md" />
+    <None Include="FLOATING_NOTIFICATION.md" />
+    <None Include="AUTO_DETECTION_FIXES_FINAL.md" />
+    <None Include="DNA_ID_FINAL_STATUS.md" />
+    <None Include="FINAL_FIXES_COMPLETE.md" />
+    <None Include="ALL_ISSUES_RESOLVED.md" />
+    <None Include="DRIVER_INSTALL_FIX.md" />
+    <None Include="DMATOOL_DOCUMENTATION.md" />
+    <None Include="docs\DNA_ID_TAB_COMPLETE.md" />
+    <None Include="docs\ARCHITECTURE.md" />
+    <None Include="docs\BUILD_INSTRUCTIONS.md" />
+    <None Include="docs\TROUBLESHOOTING.md" />
+    <None Include="docs\DNA_ID_STATUS.md" />
+    <None Include="DMATool.vcxproj.filters.new" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="DMATool.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
   </ItemGroup>
 </Project>

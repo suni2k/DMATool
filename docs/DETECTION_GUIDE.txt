@@ -1,0 +1,147 @@
+=================================================================
+CONFIRMED: Best Method to Detect FPGA Chip and Interface Type
+=================================================================
+
+METHOD: Use OpenOCD via JTAG Port
+----------------------------------
+
+DETECTION SUMMARY FOR YOUR CARD:
+--------------------------------
+Chip Type:    XC7A100T (confirmed via IDCODE: 0x13631093)
+Interface:    CH347 (USB-based JTAG)
+DNA ID:       0x003ccd8c77d04854
+
+
+HOW TO DETECT CHIP TYPE (35T/75T/100T):
+========================================
+
+Read the IDCODE register via OpenOCD JTAG scan.
+
+IDCODE to Chip Mapping:
+-----------------------
+0x03622093 = XC7A35T   (Artix-7 35T)
+0x0362D093 = XC7A75T   (Artix-7 75T)
+0x03631093 = XC7A100T  (Artix-7 100T)
+
+Note: First digit may be 0x0 or 0x1 (version/stepping)
+Example: 0x13631093 = XC7A100T (version 1)
+
+The part number is in bits [27:12] of IDCODE:
+- 0x3622 = 35T
+- 0x362D = 75T
+- 0x3631 = 100T
+
+
+HOW TO DETECT INTERFACE TYPE (CH347 vs RS232):
+===============================================
+
+METHOD 1: Check OpenOCD Executable/Config Used
+-----------------------------------------------
+CH347:  Uses openocd-347.exe with ch347 driver
+        Config: init_347_*.cfg
+        VID/PID: 0x1a86 0x55dd (or 0x55de)
+
+RS232:  Uses openocd.exe with ftdi driver
+        Config: init_232_*.cfg
+        VID/PID: 0x0403 0x6011 (35T) or 0x0403 0x6014 (75T)
+
+METHOD 2: Check USB Devices (Windows)
+--------------------------------------
+CH347:  Device shows as 'USB HighSpeed-JTAG/I2C... CH347T'
+        Manufacturer: WCH
+        
+RS232:  Device shows as FTDI-based serial adapter
+        Manufacturer: FTDI
+
+
+COMPLETE DETECTION WORKFLOW:
+=============================
+
+Step 1: Detect Interface Type
+------------------------------
+Query USB devices:
+  PowerShell: Get-PnpDevice | Where-Object {$_.FriendlyName -like '*CH347*' -or $_.FriendlyName -like '*FTDI*'}
+
+If CH347 found:
+  - Use: openocd-347.exe
+  - Config base: init_347_
+  
+If FTDI found:
+  - Use: openocd.exe
+  - Config base: init_232_
+
+
+Step 2: Detect Chip Type
+-------------------------
+Run OpenOCD with any config (doesn't matter which chip config):
+  openocd-347.exe -f init_347_75t.cfg
+
+Parse output for line:
+  'JTAG tap: xc7.tap tap/device found: 0xXXXXXXXX'
+
+Extract IDCODE and map to chip type:
+  0x?3622093 → XC7A35T
+  0x?362D093 → XC7A75T  
+  0x?3631093 → XC7A100T
+
+
+Step 3: Extract DNA ID
+-----------------------
+Same OpenOCD output contains:
+  'DNA = <binary> (0xXXXXXXXXXXXXXXXX)'
+
+Extract the hex value: 0x003ccd8c77d04854
+
+
+IMPLEMENTATION FOR YOUR C++ GUI:
+=================================
+
+Option 1: Smart Detection (Recommended)
+----------------------------------------
+1. Check USB devices to determine CH347 vs RS232
+2. Run appropriate OpenOCD command
+3. Parse output to get:
+   - IDCODE → determine chip type
+   - DNA value
+4. Display results in GUI
+
+
+Option 2: Try All Configs (Simpler but slower)
+-----------------------------------------------
+1. Try: openocd-347.exe -f init_347_75t.cfg
+2. If success: Interface = CH347
+3. If fail: Try openocd.exe -f init_232_75t.cfg
+4. If success: Interface = RS232
+5. Parse IDCODE from successful output
+6. Map IDCODE to chip type
+
+
+EXAMPLE OUTPUT TO PARSE:
+=========================
+Info : JTAG tap: xc7.tap tap/device found: 0x13631093 (mfg: 0x049 (Xilinx), part: 0x3631, ver: 0x1)
+                                           ^^^^^^^^^^                                    ^^^^^^
+                                           IDCODE (100T)                                 Part = 100T
+
+DNA = 000111100110011011000110001110111110100000100100001010100 (0x003ccd8c77d04854)
+                                                                 ^^^^^^^^^^^^^^^^^^^
+                                                                 DNA ID (formatted)
+
+
+SUMMARY OF YOUR CURRENT CARD:
+==============================
+✓ Chip:      XC7A100T (most powerful, 220MB/s transfer speed)
+✓ Interface: CH347 (USB-C, fast 480Mbps USB 2.0)
+✓ DNA ID:    0x003ccd8c77d04854
+✓ Status:    Fully working and detected
+
+
+FILES NEEDED FOR YOUR C++ APPLICATION:
+=======================================
+1. openocd-347.exe (for CH347 interface)
+2. openocd.exe (for RS232 interface)
+3. Config files: init_347_*.cfg and init_232_*.cfg
+4. Support files: xilinx-dna*.cfg, xilinx-xc7.cfg, jtagspi.cfg
+5. DLL files: cygwin1.dll, cygusb-1.0.dll, libhidapi-0.dll, libusb-1.0.dll
+
+All available at: C:\Users\suni\Desktop\dma\DNA_ID\DNA_ID\
+

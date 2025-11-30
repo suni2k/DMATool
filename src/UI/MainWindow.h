@@ -13,6 +13,8 @@ namespace DMATool::UI
 
         void Render();
 
+        void SwitchToDNAIDTab() { m_CurrentTab = 0; }
+
     private:
         void RenderStartupDialog();
         void RenderMainContent();

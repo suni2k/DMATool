@@ -1,0 +1,19 @@
+#include "src\resource.h"
+
+IDR_OPENOCD_EXE RCDATA "dmafiles\\ch347\\CH347FPGATool\\OpenOCD_CH347\\bin\\openocd.exe"
+IDR_CH347_CFG RCDATA "dmafiles\\ch347\\CH347FPGATool\\OpenOCD_CH347\\bin\\ch347.cfg"
+IDR_LIBUSB_DLL RCDATA "dmafiles\\ch347\\CH347FPGATool\\OpenOCD_CH347\\bin\\libusb-1.0.dll"
+IDR_LIBHIDAPI_DLL RCDATA "dmafiles\\ch347\\CH347FPGATool\\OpenOCD_CH347\\bin\\libhidapi-0.dll"
+IDR_XILINX_DNA_347_CFG RCDATA "dmafiles\\ch347\\CH347FPGATool\\OpenOCD_CH347\\bin\\xilinx-dna-347.cfg"
+IDR_XILINX_XC7_CFG RCDATA "dmafiles\\ch347\\CH347FPGATool\\OpenOCD_CH347\\bin\\xilinx-xc7.cfg"
+IDR_JTAGSPI_CFG RCDATA "dmafiles\\ch347\\CH347FPGATool\\OpenOCD_CH347\\bin\\jtagspi.cfg"
+IDR_XILINX_DNA_CFG RCDATA "dmafiles\\ch347\\CH347FPGATool\\OpenOCD_CH347\\bin\\xilinx-dna.cfg"
+
+// CH341/CH347 Driver Files
+IDR_CH341_INF RCDATA "tools\\ch347\\drivers\\CH341WDM.INF"
+IDR_CH341_SYS RCDATA "tools\\ch347\\drivers\\CH341WDM.SYS"
+IDR_CH341_M64_SYS RCDATA "tools\\ch347\\drivers\\CH341M64.SYS"
+IDR_CH341_W64_SYS RCDATA "tools\\ch347\\drivers\\CH341W64.SYS"
+IDR_CH341_CAT RCDATA "tools\\ch347\\drivers\\CH341WDM.CAT"
+IDR_CH347_DLL RCDATA "tools\\ch347\\drivers\\CH347DLL.DLL"
+IDR_CH347_DLL_A64 RCDATA "tools\\ch347\\drivers\\CH347DLLA64.DLL"
