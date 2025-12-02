@@ -296,11 +296,6 @@ namespace DMATool::UI::Tabs
         
         ImGui::EndChild();
         
-        ImGui::Spacing();
-        ImGui::Spacing();
-        
-        ImGui::EndChild();
-        
         // Perform auto-detection AFTER UI has rendered AND notification has shown for 1 frame
         if (s_IsAutoDetecting && s_FramesSinceDetectionQueued >= 2)
         {
@@ -499,7 +494,7 @@ namespace DMATool::UI::Tabs
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(24, 20));
             ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 16.0f);
             ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.11f, 0.12f, 0.14f, 0.98f));
-            ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.53f, 0.65f, 0.86f, 0.8f));  // Brighter blue border
+            ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.83f, 0.69f, 0.22f, 0.9f));  // Gold border - brand theme
             ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 3.0f);
             
             ImGui::Begin("##ScanningNotification", nullptr,
@@ -579,6 +574,8 @@ namespace DMATool::UI::Tabs
             ImGui::PopStyleVar(3);
             ImGui::PopStyleColor(2);
         }
+        
+        ImGui::EndChild();  // End JTAGPortContent
     }
 
     void JTAGPortTab::RenderDeviceInfoPanel()

@@ -170,6 +170,7 @@
     <None Include="docs\CONSOLE_LOG_SPACING_AND_VERTICAL_RESIZER.md" />
     <None Include="docs\HORIZONTAL_RESIZER_UPDATE.md" />
     <None Include="docs\HORIZONTAL_RESIZER_FINAL.md" />
+    <None Include="docs\JTAG_PORT_TAB_ID_STACK_FIX.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DMATool.rc">

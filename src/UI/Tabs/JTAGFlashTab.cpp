@@ -143,9 +143,6 @@ namespace DMATool::UI::Tabs
         
         ImGui::EndChild();
         
-        ImGui::Spacing();
-        ImGui::Spacing();
-        
         ImGui::EndChild();  // End JTAGFlashContent
     }
 

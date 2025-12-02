@@ -158,6 +158,7 @@
     <None Include="docs\FTDI_DRIVER_UNINSTALL_FIX.md" />
     <None Include="docs\HORIZONTAL_RESIZER_FINAL.md" />
     <None Include="docs\HORIZONTAL_RESIZER_UPDATE.md" />
+    <None Include="docs\JTAG_PORT_TAB_ID_STACK_FIX.md" />
     <None Include="docs\MANUAL_RC_UPDATE_REQUIRED.md" />
     <None Include="docs\PERFORMANCE_RATINGS.md" />
     <None Include="docs\STRESS_TEST_DURATION_FIX.md" />

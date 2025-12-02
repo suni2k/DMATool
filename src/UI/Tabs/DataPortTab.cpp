@@ -106,14 +106,16 @@ namespace DMATool::UI::Tabs
         float availableHeight = ImGui::GetContentRegionAvail().y;
         float topHeight = availableHeight * topPanelHeightRatio;
         
-        // Top section with manual resize handle
+        // Top section with manual resize handle - NO PADDING to prevent gap before separator
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0, 0));
         ImGui::BeginChild("TopSection", ImVec2(0, topHeight), false, ImGuiWindowFlags_NoScrollbar);
+        ImGui::PopStyleVar();
         
         // Two column layout for top panels (RESIZABLE horizontal separator)
         ImGui::Columns(2, "BenchmarkColumns", true);
         
-        // Left column: Test Controls
-        float panelHeight = ImGui::GetContentRegionAvail().y - (ImGui::GetStyle().ItemSpacing.y * 2);
+        // Left column: Test Controls - subtract ItemSpacing to eliminate gap
+        float panelHeight = ImGui::GetContentRegionAvail().y;
         RenderTestControlsPanel(panelHeight);
         
         ImGui::NextColumn();
@@ -124,9 +126,6 @@ namespace DMATool::UI::Tabs
         ImGui::Columns(1);
         
         ImGui::EndChild();
-        
-        // Add spacing before separator (matches DNA ID tab)
-        ImGui::Spacing();
         
         // HORIZONTAL RESIZE HANDLE between top and bottom sections (matches vertical column separator)
         // Get cursor position BEFORE drawing anything
@@ -259,7 +258,7 @@ namespace DMATool::UI::Tabs
             ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(24, 20));
             ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 16.0f);
             ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.11f, 0.12f, 0.14f, 0.98f));
-            ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.53f, 0.65f, 0.86f, 0.8f));  // Brighter blue border
+            ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.83f, 0.69f, 0.22f, 0.9f));  // Gold border - brand theme
             ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 3.0f);
             
             ImGui::Begin("##FT601Notification", nullptr,
@@ -364,6 +363,7 @@ namespace DMATool::UI::Tabs
         // Push style for dropdown button
         ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(8, 10));  // Button padding
         ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(8, 8));    // Add vertical spacing between items
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(4, 6));  // Add padding inside dropdown popup
         ImGui::SetNextItemWidth(-1);
         
         if (ImGui::BeginCombo("##testtype", testTypes[currentTestType]))
@@ -387,7 +387,7 @@ namespace DMATool::UI::Tabs
             ImGui::EndCombo();
         }
         
-        ImGui::PopStyleVar(2);  // Pop both padding and spacing
+        ImGui::PopStyleVar(3);  // Pop all 3 style vars (FramePadding, ItemSpacing, WindowPadding)
         
         // Store current test type globally so results panel can access it
         s_CurrentTestType = currentTestType;

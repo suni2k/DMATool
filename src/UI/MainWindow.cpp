@@ -410,6 +410,9 @@ namespace DMATool::UI
 
     void MainWindow::RenderTabs()
     {
+        // Force select DNA ID tab on first frame after entering tool
+        static bool s_FirstRender = true;
+        
         if (ImGui::BeginTabBar("MainTabs", ImGuiTabBarFlags_None))
         {
             if (ImGui::BeginTabItem("DNA ID"))
@@ -436,14 +439,10 @@ namespace DMATool::UI
             ImGui::EndTabBar();
         }
         
-        // Force select DNA ID tab on first frame after entering tool
-        static bool s_ForceFirstTab = true;
-        if (s_ForceFirstTab && !m_ShowStartupDialog)
+        // Reset first render flag after first frame
+        if (s_FirstRender)
         {
-            s_ForceFirstTab = false;
-            m_CurrentTab = 0;
-            ImGui::SetTabItemClosed("Flash DMA");
-            ImGui::SetTabItemClosed("Benchmark DMA");
+            s_FirstRender = false;
         }
     }
 }
