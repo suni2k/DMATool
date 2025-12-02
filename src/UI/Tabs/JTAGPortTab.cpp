@@ -141,7 +141,16 @@ namespace DMATool::UI::Tabs
         
         ImGui::Spacing();
         
-        // Two column layout
+        // RESIZABLE VERTICAL LAYOUT: Top panels vs Bottom panel
+        static float topPanelHeightRatio = 0.52f;  // Default 52% for top panels
+        
+        float availableHeight = ImGui::GetContentRegionAvail().y;
+        float topHeight = availableHeight * topPanelHeightRatio;
+        
+        // Top section
+        ImGui::BeginChild("TopSection", ImVec2(0, topHeight), false, ImGuiWindowFlags_NoScrollbar);
+        
+        // Two column layout for top panels
         ImGui::Columns(2, "JTAGColumns", true);
         
         RenderDeviceInfoPanel();
@@ -152,25 +161,56 @@ namespace DMATool::UI::Tabs
         
         ImGui::Columns(1);
         
-        ImGui::Spacing();
+        ImGui::EndChild();
+        
+        // HORIZONTAL RESIZE HANDLE between top and bottom sections (matches vertical column separator)
+        ImVec2 cursorBeforeSeparator = ImGui::GetCursorScreenPos();
         ImGui::Separator();
-        ImGui::Spacing();
         
-        // Calculate the exact column offset to match the panels above
-        float columnsOffsetX = ImGui::GetStyle().ItemSpacing.x * 0.5f + ImGui::GetStyle().FramePadding.x;
+        ImVec2 separatorPos = cursorBeforeSeparator;
+        float separatorWidth = ImGui::GetContentRegionAvail().x + ImGui::GetStyle().WindowPadding.x * 2;
         
-        // Apply the same offset to our bottom panel
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + columnsOffsetX);
+        ImGui::SetCursorScreenPos(ImVec2(separatorPos.x, separatorPos.y - 2));
+        ImGui::InvisibleButton("##vsplitter", ImVec2(separatorWidth, 4));
         
-        // Reduce the width to account for both left and right offsets
-        float panelWidth = ImGui::GetContentRegionAvail().x - columnsOffsetX;
+        bool isHovered = ImGui::IsItemHovered();
+        bool isActive = ImGui::IsItemActive();
         
-        // Calculate height to leave room for bottom spacing
-        float bottomSpacing = ImGui::GetStyle().ItemSpacing.y * 2;
-        float panelHeight = ImGui::GetContentRegionAvail().y - bottomSpacing;
+        if (isActive)
+        {
+            float delta = ImGui::GetIO().MouseDelta.y;
+            topPanelHeightRatio += delta / availableHeight;
+            if (topPanelHeightRatio < 0.3f) topPanelHeightRatio = 0.3f;
+            if (topPanelHeightRatio > 0.7f) topPanelHeightRatio = 0.7f;
+        }
         
+        if (isActive)
+        {
+            ImGui::GetWindowDrawList()->AddLine(
+                separatorPos,
+                ImVec2(separatorPos.x + separatorWidth, separatorPos.y),
+                IM_COL32(230, 191, 64, 255),  // brandGoldLight
+                1.5f
+            );
+        }
+        else if (isHovered)
+        {
+            ImGui::GetWindowDrawList()->AddLine(
+                separatorPos,
+                ImVec2(separatorPos.x + separatorWidth, separatorPos.y),
+                IM_COL32(212, 176, 56, 255),  // brandGold
+                1.5f
+            );
+        }
+        
+        if (isHovered || isActive)
+        {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+        }
+        
+        // Bottom section: Status & Log panel
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16, 16));
-        ImGui::BeginChild("StatusPanel", ImVec2(panelWidth, panelHeight), true);
+        ImGui::BeginChild("StatusPanel", ImVec2(0, 0), true);
         ImGui::PopStyleVar();
         
         ImGui::Text("Status & Log");
@@ -543,8 +583,8 @@ namespace DMATool::UI::Tabs
 
     void JTAGPortTab::RenderDeviceInfoPanel()
     {
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(14, 10));  // Reduced top/bottom padding
-        ImGui::BeginChild("DeviceInfoPanel", ImVec2(0, 400), true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(14, 10));
+        ImGui::BeginChild("DeviceInfoPanel", ImVec2(0, 0), true, ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
         ImGui::PopStyleVar();
         
         ImGui::Text("FPGA Device Information");
@@ -719,8 +759,8 @@ namespace DMATool::UI::Tabs
 
     void JTAGPortTab::RenderDriverPanel()
     {
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16, 10));  // Match FPGA panel padding
-        ImGui::BeginChild("DriverPanel", ImVec2(0, 400), true);
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16, 10));
+        ImGui::BeginChild("DriverPanel", ImVec2(0, 0), true);
         ImGui::PopStyleVar();
         
         ImGui::Text("JTAG Driver Information");

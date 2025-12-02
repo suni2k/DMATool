@@ -15,6 +15,9 @@ namespace DMATool::Backend
         std::string location;
         bool isCorrectDriver = false;  // True if "FT601 USB 3.0 Bridge Device", false if "SuperSpeed-FIFO Bridge"
     };
+    
+    // Progress callback type
+    using ProgressCallback = std::function<void(const std::string&)>;
 
     class FT601DriverInterface
     {
@@ -26,10 +29,10 @@ namespace DMATool::Backend
         FT601DriverInfo CheckDriver();
 
         // Install FT601 driver from embedded resources
-        bool InstallDriver();
+        bool InstallDriver(ProgressCallback progressCallback = nullptr);
 
         // Uninstall FT601 driver
-        bool UninstallDriver();
+        bool UninstallDriver(ProgressCallback progressCallback = nullptr);
 
     private:
         // FT601 VID/PID

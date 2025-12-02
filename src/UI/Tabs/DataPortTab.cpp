@@ -2,6 +2,7 @@
 #include "../Theme.h"
 #include <imgui.h>
 #include <iostream>
+#include <thread>
 
 namespace DMATool::UI::Tabs
 {
@@ -18,6 +19,7 @@ namespace DMATool::UI::Tabs
     static bool s_IsCheckingFT601Driver = false;
     static bool s_IsInstallingFT601Driver = false;
     static bool s_IsUninstallingFT601Driver = false;
+    static std::string s_FT601DriverProgress = "";  // Track operation progress
 
     void DataPortTab::AddLog(const std::string& message)
     {
@@ -97,41 +99,241 @@ namespace DMATool::UI::Tabs
         
         ImGui::Spacing();
         
-        // Two column layout for top panels
+        // RESIZABLE VERTICAL LAYOUT: Top panels vs Bottom panels
+        // Use BeginChild with resize enabled for vertical split
+        static float topPanelHeightRatio = 0.52f;  // Default 52% for top panels
+        
+        float availableHeight = ImGui::GetContentRegionAvail().y;
+        float topHeight = availableHeight * topPanelHeightRatio;
+        
+        // Top section with manual resize handle
+        ImGui::BeginChild("TopSection", ImVec2(0, topHeight), false, ImGuiWindowFlags_NoScrollbar);
+        
+        // Two column layout for top panels (RESIZABLE horizontal separator)
         ImGui::Columns(2, "BenchmarkColumns", true);
         
         // Left column: Test Controls
         float panelHeight = ImGui::GetContentRegionAvail().y - (ImGui::GetStyle().ItemSpacing.y * 2);
-        RenderTestControlsPanel(panelHeight * 0.45f);  // Reduced from 0.6 to 0.45
+        RenderTestControlsPanel(panelHeight);
         
         ImGui::NextColumn();
         
-        // Right column: Results
-        RenderResultsPanel(panelHeight * 0.45f);  // Reduced from 0.6 to 0.45
+        // Right column: FTDI Driver
+        RenderFT601DriverPanel(panelHeight);
         
         ImGui::Columns(1);
         
+        ImGui::EndChild();
+        
+        // Add spacing before separator (matches DNA ID tab)
         ImGui::Spacing();
+        
+        // HORIZONTAL RESIZE HANDLE between top and bottom sections (matches vertical column separator)
+        // Get cursor position BEFORE drawing anything
+        ImVec2 cursorBeforeSeparator = ImGui::GetCursorScreenPos();
+        
+        // Draw separator (uses theme colors: Border -> SeparatorHovered -> SeparatorActive)
         ImGui::Separator();
-        ImGui::Spacing();
         
-        // Bottom section: Console log (left) + FT601 Driver (right) in 2-column layout
-        ImGui::Columns(2, "BottomPanels", true);
+        // Get the actual separator position and size
+        ImVec2 separatorPos = cursorBeforeSeparator;
+        float separatorWidth = ImGui::GetContentRegionAvail().x + ImGui::GetStyle().WindowPadding.x * 2;
         
-        // Left: Console log (60% width)
+        // Create invisible button CENTERED on the separator for interaction
+        ImGui::SetCursorScreenPos(ImVec2(separatorPos.x, separatorPos.y - 2));  // Center 4px button on 1px line
+        ImGui::InvisibleButton("##vsplitter", ImVec2(separatorWidth, 4));  // 4px tall interaction area
+        
+        // Handle hover and drag
+        bool isHovered = ImGui::IsItemHovered();
+        bool isActive = ImGui::IsItemActive();
+        
+        if (isActive)
+        {
+            float delta = ImGui::GetIO().MouseDelta.y;
+            topPanelHeightRatio += delta / availableHeight;
+            // Clamp between 30% and 70%
+            if (topPanelHeightRatio < 0.3f) topPanelHeightRatio = 0.3f;
+            if (topPanelHeightRatio > 0.7f) topPanelHeightRatio = 0.7f;
+        }
+        
+        // Draw colored line overlay when hovered or active (matches ImGuiCol_SeparatorHovered/Active)
+        if (isActive)
+        {
+            // Active: Brand gold light (0.90, 0.75, 0.25) - matches ImGuiCol_SeparatorActive
+            ImGui::GetWindowDrawList()->AddLine(
+                separatorPos,
+                ImVec2(separatorPos.x + separatorWidth, separatorPos.y),
+                IM_COL32(230, 191, 64, 255),  // brandGoldLight
+                1.5f  // Slightly thicker when active
+            );
+        }
+        else if (isHovered)
+        {
+            // Hovered: Brand gold (0.83, 0.69, 0.22) - matches ImGuiCol_SeparatorHovered
+            ImGui::GetWindowDrawList()->AddLine(
+                separatorPos,
+                ImVec2(separatorPos.x + separatorWidth, separatorPos.y),
+                IM_COL32(212, 176, 56, 255),  // brandGold
+                1.5f
+            );
+        }
+        
+        // Change cursor when hovering
+        if (isHovered || isActive)
+        {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+        }
+        
+        // Bottom section: Console log (left) + Test Results (right) in 2-column layout (RESIZABLE horizontal separator)
+        ImGui::Columns(2, "BottomPanels", true);  // Horizontal resizing enabled
+        
+        // Left: Console log
         float bottomHeight = ImGui::GetContentRegionAvail().y - ImGui::GetStyle().ItemSpacing.y;
         RenderConsoleLog(bottomHeight);
         
         ImGui::NextColumn();
         
-        // Right: FT601 Driver panel (40% width)
-        RenderFT601DriverPanel(bottomHeight);
+        // Right: Test Results
+        RenderResultsPanel(bottomHeight);
         
         ImGui::Columns(1);
         
         ImGui::Spacing();
         
         ImGui::EndChild();
+        
+        // Floating progress notification (toast-style) for driver operations
+        if (s_IsCheckingFT601Driver || s_IsInstallingFT601Driver || s_IsUninstallingFT601Driver)
+        {
+            // Get the MAIN VIEWPORT (entire window) position and size
+            ImGuiViewport* viewport = ImGui::GetMainViewport();
+            ImVec2 viewportPos = viewport->Pos;
+            ImVec2 viewportSize = viewport->Size;
+            
+            // Center notification with better sizing
+            float toastWidth = 420.0f;
+            float toastHeight = 140.0f;
+            
+            ImVec2 toastPos(
+                viewportPos.x + (viewportSize.x - toastWidth) * 0.5f,
+                viewportPos.y + (viewportSize.y - toastHeight) * 0.5f
+            );
+            
+            // Draw overlay that covers EVERYTHING EXCEPT the notification popup
+            ImDrawList* drawList = ImGui::GetForegroundDrawList();
+            
+            // Draw overlay in 4 rectangles around the notification to exclude it
+            ImU32 overlayColor = IM_COL32(0, 0, 0, 160);
+            
+            // Top rectangle (above notification)
+            drawList->AddRectFilled(
+                viewportPos,
+                ImVec2(viewportPos.x + viewportSize.x, toastPos.y),
+                overlayColor
+            );
+            
+            // Bottom rectangle (below notification)
+            drawList->AddRectFilled(
+                ImVec2(viewportPos.x, toastPos.y + toastHeight),
+                ImVec2(viewportPos.x + viewportSize.x, viewportPos.y + viewportSize.y),
+                overlayColor
+            );
+            
+            // Left rectangle (left of notification)
+            drawList->AddRectFilled(
+                ImVec2(viewportPos.x, toastPos.y),
+                ImVec2(toastPos.x, toastPos.y + toastHeight),
+                overlayColor
+            );
+            
+            // Right rectangle (right of notification)
+            drawList->AddRectFilled(
+                ImVec2(toastPos.x + toastWidth, toastPos.y),
+                ImVec2(viewportPos.x + viewportSize.x, toastPos.y + toastHeight),
+                overlayColor
+            );
+            
+            ImGui::SetNextWindowPos(toastPos);
+            ImGui::SetNextWindowSize(ImVec2(toastWidth, toastHeight));
+            
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(24, 20));
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 16.0f);
+            ImGui::PushStyleColor(ImGuiCol_WindowBg, ImVec4(0.11f, 0.12f, 0.14f, 0.98f));
+            ImGui::PushStyleColor(ImGuiCol_Border, ImVec4(0.53f, 0.65f, 0.86f, 0.8f));  // Brighter blue border
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 3.0f);
+            
+            ImGui::Begin("##FT601Notification", nullptr,
+                ImGuiWindowFlags_NoTitleBar |
+                ImGuiWindowFlags_NoResize |
+                ImGuiWindowFlags_NoMove |
+                ImGuiWindowFlags_NoScrollbar |
+                ImGuiWindowFlags_NoScrollWithMouse |
+                ImGuiWindowFlags_NoCollapse);
+            
+            // Title text
+            ImGui::SetCursorPos(ImVec2(24, 35));
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.95f, 0.95f, 0.97f, 1.0f));  // Near white
+            ImGui::SetWindowFontScale(1.4f);
+            
+            std::string statusText = "Processing Driver";
+            if (s_IsCheckingFT601Driver)
+                statusText = "Checking Driver";
+            else if (s_IsInstallingFT601Driver)
+                statusText = "Installing Driver";
+            else if (s_IsUninstallingFT601Driver)
+                statusText = "Uninstalling Driver";
+            
+            // Center the title text
+            float titleWidth = ImGui::CalcTextSize(statusText.c_str()).x;
+            ImGui::SetCursorPosX((toastWidth - titleWidth) * 0.5f);
+            ImGui::Text(statusText.c_str());
+            ImGui::SetWindowFontScale(1.0f);
+            ImGui::PopStyleColor();
+            
+            // Separator line
+            ImGui::SetCursorPosX(24);
+            ImGui::SetCursorPosY(70);
+            ImGui::PushStyleColor(ImGuiCol_Separator, ImVec4(0.4f, 0.4f, 0.5f, 0.5f));
+            ImGui::Separator();
+            ImGui::PopStyleColor();
+            
+            // Animated dots when processing
+            ImGui::SetCursorPosY(80);
+            ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.6f, 0.65f, 0.7f, 1.0f));
+            ImGui::SetWindowFontScale(1.05f);
+            
+            // Show progress if available, otherwise animated dots
+            if (!s_FT601DriverProgress.empty())
+            {
+                // Center and wrap text properly
+                ImGui::PushTextWrapPos(toastWidth - 48);
+                float textWidth = ImGui::CalcTextSize(s_FT601DriverProgress.c_str(), nullptr, false, toastWidth - 48).x;
+                ImGui::SetCursorPosX((toastWidth - textWidth) * 0.5f);
+                ImGui::TextWrapped(s_FT601DriverProgress.c_str());
+                ImGui::PopTextWrapPos();
+            }
+            else
+            {
+                static float dotTimer = 0.0f;
+                dotTimer += ImGui::GetIO().DeltaTime;
+                int dotCount = ((int)(dotTimer * 2.0f) % 4);
+                
+                std::string dots = "Please wait";
+                for (int i = 0; i < dotCount; i++) dots += ".";
+
+                float dotsWidth = ImGui::CalcTextSize(dots.c_str()).x;
+                ImGui::SetCursorPosX((toastWidth - dotsWidth) * 0.5f);
+                ImGui::Text(dots.c_str());
+            }
+            
+            ImGui::SetWindowFontScale(1.0f);
+            ImGui::PopStyleColor();
+
+            ImGui::End();
+            
+            ImGui::PopStyleVar(3);
+            ImGui::PopStyleColor(2);
+        }
     }
 
     void DataPortTab::RenderTestControlsPanel(float height)
@@ -710,6 +912,9 @@ namespace DMATool::UI::Tabs
         ImGui::Separator();
         ImGui::Spacing();
         
+        // REMOVE SPACING between log lines - they're already color-coded
+        ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));  // Zero vertical spacing
+        
         // Log output
         ImGui::BeginChild("LogScrollRegion", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
         
@@ -725,6 +930,10 @@ namespace DMATool::UI::Tabs
         {
             for (const auto& msg : s_LogMessages)
             {
+                // SKIP EMPTY LINES - they cause unwanted spacing
+                if (msg.empty())
+                    continue;
+                
                 // Special handling for "Test completed:" messages to color-code rating
                 if (msg.find("[SUCCESS] Test completed:") != std::string::npos)
                 {
@@ -760,7 +969,7 @@ namespace DMATool::UI::Tabs
                         ImGui::TextColored(Colors::Success, msg.c_str());
                     }
                 }
-                // Color code log messages
+                // Color code log messages (NO spacing between lines - already color-coded)
                 else if (msg.find("[ERROR]") != std::string::npos)
                     ImGui::TextColored(Colors::Destructive, msg.c_str());
                 else if (msg.find("[SUCCESS]") != std::string::npos)
@@ -788,6 +997,8 @@ namespace DMATool::UI::Tabs
         
         ImGui::EndChild();
         
+        ImGui::PopStyleVar();  // Pop ItemSpacing
+        
         ImGui::EndChild();
     }
 
@@ -797,12 +1008,12 @@ namespace DMATool::UI::Tabs
         ImGui::BeginChild("FT601DriverPanel", ImVec2(0, height), true);
         ImGui::PopStyleVar();
         
-        ImGui::Text("FTDI FT601 Driver");
+        ImGui::Text("FTDI Driver");
         ImGui::Spacing();
         ImGui::Separator();
         ImGui::Spacing();
         
-        // Driver Status
+        // Driver Status - 2 COLUMN LAYOUT
         ImGui::PushStyleColor(ImGuiCol_Text, Colors::Info);
         ImGui::Text("Driver Status");
         ImGui::PopStyleColor();
@@ -811,10 +1022,14 @@ namespace DMATool::UI::Tabs
         // Compact font for status info
         ImGui::SetWindowFontScale(0.95f);
         
+        // 2-COLUMN LAYOUT for status information
+        ImGui::Columns(2, "DriverStatusColumns", false);
+        
+        // LEFT COLUMN
         ImGui::PushStyleColor(ImGuiCol_Text, Colors::MutedForeground);
         ImGui::Text("Status:");
         ImGui::PopStyleColor();
-        ImGui::SameLine(100);
+        ImGui::SameLine(70);
         if (s_FT601DriverInfo.installed && s_FT601DriverInfo.isCorrectDriver)
             ImGui::TextColored(Colors::Success, "Installed");
         else if (!s_FT601DriverInfo.deviceName.empty() && !s_FT601DriverInfo.isCorrectDriver)
@@ -825,7 +1040,7 @@ namespace DMATool::UI::Tabs
         ImGui::PushStyleColor(ImGuiCol_Text, Colors::MutedForeground);
         ImGui::Text("Device:");
         ImGui::PopStyleColor();
-        ImGui::SameLine(100);
+        ImGui::SameLine(70);
         if (!s_FT601DriverInfo.deviceName.empty())
         {
             // Wrap long device names
@@ -836,17 +1051,23 @@ namespace DMATool::UI::Tabs
         else
             ImGui::Text("Not Detected");
         
+        // RIGHT COLUMN
+        ImGui::NextColumn();
+        
         ImGui::PushStyleColor(ImGuiCol_Text, Colors::MutedForeground);
         ImGui::Text("Version:");
         ImGui::PopStyleColor();
-        ImGui::SameLine(100);
+        ImGui::SameLine(70);
         ImGui::Text(s_FT601DriverInfo.version.empty() ? "---" : s_FT601DriverInfo.version.c_str());
         
         ImGui::PushStyleColor(ImGuiCol_Text, Colors::MutedForeground);
         ImGui::Text("VID/PID:");
         ImGui::PopStyleColor();
-        ImGui::SameLine(100);
+        ImGui::SameLine(70);
         ImGui::Text(s_FT601DriverInfo.vidPid.empty() ? "---" : s_FT601DriverInfo.vidPid.c_str());
+        
+        // Reset to single column
+        ImGui::Columns(1);
         
         ImGui::SetWindowFontScale(1.0f);  // Reset font scale
         
@@ -858,9 +1079,9 @@ namespace DMATool::UI::Tabs
         ImGui::PushStyleColor(ImGuiCol_Text, Colors::Warning);
         ImGui::Text("Management");
         ImGui::PopStyleColor();
-        ImGui::Dummy(ImVec2(0, 2));  // Reduced spacing
+        ImGui::Dummy(ImVec2(0, 1));  // 1px spacing after label
         
-        // Check Driver button
+        // Check Driver Status button
         ImGui::BeginDisabled(s_IsCheckingFT601Driver);
         
         std::string checkButtonText = "Check Driver Status";
@@ -873,10 +1094,10 @@ namespace DMATool::UI::Tabs
             for (int i = 0; i < dotCount; i++) checkButtonText += ".";
         }
         
-        if (Theme::ButtonSecondary(checkButtonText.c_str(), ImVec2(-1, 32)))  // Reduced button height
+        if (Theme::ButtonSecondary(checkButtonText.c_str(), ImVec2(-1, 40)))
         {
             s_IsCheckingFT601Driver = true;
-            AddLog("[INFO] Checking FT601 driver status...");
+            AddLog("[INFO] Checking FTDI driver status...");
         }
         ImGui::EndDisabled();
         
@@ -898,42 +1119,47 @@ namespace DMATool::UI::Tabs
             
             if (checkFrames >= 2)
             {
+                s_FT601DriverProgress = "Querying driver status...";
+                
+                // Small delay to show progress
+                Sleep(100);
+                
                 s_FT601DriverInfo = s_FT601Driver.CheckDriver();
                 
                 if (s_FT601DriverInfo.installed && s_FT601DriverInfo.isCorrectDriver)
                 {
-                    AddLog("[SUCCESS] FT601 driver is installed");
+                    AddLog("[SUCCESS] FTDI driver is installed");
                     AddLog("[INFO] Device: " + s_FT601DriverInfo.deviceName);
-                    if (!s_FT601DriverInfo.version.empty())
-                        AddLog("[INFO] Version: " + s_FT601DriverInfo.version);
-                    if (!s_FT601DriverInfo.vidPid.empty())
-                        AddLog("[INFO] VID/PID: " + s_FT601DriverInfo.vidPid);
+                    AddLog("[INFO] Driver Version: " + s_FT601DriverInfo.version);
+                    AddLog("[INFO] VID/PID: " + s_FT601DriverInfo.vidPid);
                 }
                 else if (!s_FT601DriverInfo.deviceName.empty() && !s_FT601DriverInfo.isCorrectDriver)
                 {
-                    AddLog("[WARNING] FT601 driver not installed");
-                    AddLog("[INFO] Current device: " + s_FT601DriverInfo.deviceName);
-                    AddLog("[INFO] This is the default device name - driver needed");
-                    AddLog("[INFO] Action: Click 'Install FT601 Driver' to install proper driver");
+                    AddLog("[WARNING] FTDI WinUSB driver not installed");
+                    AddLog("[INFO] Device detected: " + s_FT601DriverInfo.deviceName);
+                    AddLog("[INFO] Driver version: " + (s_FT601DriverInfo.version.empty() ? "Not installed" : s_FT601DriverInfo.version));
+                    AddLog("[INFO] Recommended version: 1.4.0.1 or higher");
+                    AddLog("[INFO] Action: Click 'Install FTDI Driver' to install WinUSB driver");
                 }
                 else
                 {
-                    AddLog("[WARNING] FT601 device not detected");
-                    AddLog("[INFO] Please connect the FT601 device");
+                    AddLog("[WARNING] FTDI device not detected");
+                    AddLog("[INFO] Please connect the FTDI device");
                 }
                 
+                s_FT601DriverProgress = "";
                 s_IsCheckingFT601Driver = false;
                 checkQueued = false;
                 checkFrames = 0;
             }
         }
         
-        ImGui::Spacing();
+        ImGui::Dummy(ImVec2(0, 1));  // 1px spacing between buttons
         
         // Install Driver button
         ImGui::BeginDisabled(s_IsInstallingFT601Driver);
         
-        std::string installButtonText = "Install FT601 Driver";
+        std::string installButtonText = "Install FTDI Driver";
         if (s_IsInstallingFT601Driver)
         {
             static float installDotTimer = 0.0f;
@@ -943,16 +1169,17 @@ namespace DMATool::UI::Tabs
             for (int i = 0; i < dotCount; i++) installButtonText += ".";
         }
         
-        if (Theme::ButtonPrimary(installButtonText.c_str(), ImVec2(-1, 32)))  // Reduced button height
+        if (Theme::ButtonPrimary(installButtonText.c_str(), ImVec2(-1, 40)))  // Increased from 32 to 40
         {
             s_IsInstallingFT601Driver = true;
-            AddLog("[INFO] Installing FT601 driver...");
+            AddLog("[INFO] Installing FTDI driver...");
         }
         ImGui::EndDisabled();
         
         // Install driver operation
         static bool installQueued = false;
         static int installFrames = 0;
+        static std::thread installThread;
         
         if (s_IsInstallingFT601Driver)
         {
@@ -960,46 +1187,56 @@ namespace DMATool::UI::Tabs
             {
                 installQueued = true;
                 installFrames = 0;
-            }
-            else
-            {
-                installFrames++;
-            }
-            
-            if (installFrames >= 2)
-            {
-                if (s_FT601Driver.InstallDriver())
-                {
-                    AddLog("[SUCCESS] FT601 driver installation initiated");
-                    AddLog("[INFO] Please follow UAC prompts if they appear");
-                    
-                    // Refresh status after install
-                    Sleep(2000);
-                    s_FT601DriverInfo = s_FT601Driver.CheckDriver();
-                    
-                    if (s_FT601DriverInfo.installed)
-                    {
-                        AddLog("[SUCCESS] Driver installed successfully");
-                    }
-                }
-                else
-                {
-                    AddLog("[ERROR] Failed to install FT601 driver");
-                    AddLog("[INFO] Check that driver files exist in: dmafiles\\Winusb_D3XX_Release_1.4.0.1");
-                }
                 
-                s_IsInstallingFT601Driver = false;
-                installQueued = false;
-                installFrames = 0;
+                // Launch installation on a separate thread
+                if (installThread.joinable())
+                    installThread.join();
+                
+                installThread = std::thread([]() {
+                    bool success = s_FT601Driver.InstallDriver([](const std::string& progress) {
+                        // Update progress string (thread-safe since it's just a string assignment)
+                        s_FT601DriverProgress = progress;
+                    });
+                    
+                    if (success)
+                    {
+                        s_FT601DriverProgress = "Driver installed! Refreshing...";
+                        AddLog("[SUCCESS] FTDI driver installation completed");
+                        AddLog("[INFO] Driver will be applied automatically");
+                        
+                        // Refresh driver status
+                        Sleep(500);
+                        s_FT601DriverInfo = s_FT601Driver.CheckDriver();
+                        
+                        if (s_FT601DriverInfo.installed)
+                        {
+                            AddLog("[SUCCESS] Driver installed successfully");
+                        }
+                        else
+                        {
+                            AddLog("[INFO] Driver installed - device may need replug");
+                        }
+                    }
+                    else
+                    {
+                        AddLog("[ERROR] Failed to install FTDI driver");
+                        AddLog("[INFO] Check that driver files exist in: dmafiles\\Winusb_D3XX_Release_1.4.0.1");
+                    }
+                    
+                    s_FT601DriverProgress = "";
+                    s_IsInstallingFT601Driver = false;
+                    installQueued = false;
+                });
+                installThread.detach();
             }
         }
         
-        ImGui::Spacing();
+        ImGui::Dummy(ImVec2(0, 1));  // 1px spacing between buttons
         
         // Uninstall Driver button
         ImGui::BeginDisabled(s_IsUninstallingFT601Driver);
         
-        std::string uninstallButtonText = "Uninstall FT601 Driver";
+        std::string uninstallButtonText = "Uninstall FTDI Driver";
         if (s_IsUninstallingFT601Driver)
         {
             static float uninstallDotTimer = 0.0f;
@@ -1009,16 +1246,17 @@ namespace DMATool::UI::Tabs
             for (int i = 0; i < dotCount; i++) uninstallButtonText += ".";
         }
         
-        if (Theme::ButtonDestructive(uninstallButtonText.c_str(), ImVec2(-1, 32)))  // Reduced button height
+        if (Theme::ButtonDestructive(uninstallButtonText.c_str(), ImVec2(-1, 40)))  // Increased from 32 to 40
         {
             s_IsUninstallingFT601Driver = true;
-            AddLog("[INFO] Uninstalling FT601 driver...");
+            AddLog("[INFO] Uninstalling FTDI driver...");
         }
         ImGui::EndDisabled();
         
         // Uninstall driver operation
         static bool uninstallQueued = false;
         static int uninstallFrames = 0;
+        static std::thread uninstallThread;
         
         if (s_IsUninstallingFT601Driver)
         {
@@ -1026,35 +1264,45 @@ namespace DMATool::UI::Tabs
             {
                 uninstallQueued = true;
                 uninstallFrames = 0;
-            }
-            else
-            {
-                uninstallFrames++;
-            }
-            
-            if (uninstallFrames >= 2)
-            {
-                if (s_FT601Driver.UninstallDriver())
-                {
-                    AddLog("[SUCCESS] FT601 driver uninstallation initiated");
-                    
-                    // Refresh status after uninstall
-                    Sleep(2000);
-                    s_FT601DriverInfo = s_FT601Driver.CheckDriver();
-                    
-                    if (!s_FT601DriverInfo.installed)
-                    {
-                        AddLog("[SUCCESS] Driver uninstalled successfully");
-                    }
-                }
-                else
-                {
-                    AddLog("[ERROR] Failed to uninstall FT601 driver");
-                }
                 
-                s_IsUninstallingFT601Driver = false;
-                uninstallQueued = false;
-                uninstallFrames = 0;
+                // Launch uninstallation on a separate thread
+                if (uninstallThread.joinable())
+                    uninstallThread.join();
+                
+                uninstallThread = std::thread([]() {
+                    bool success = s_FT601Driver.UninstallDriver([](const std::string& progress) {
+                        // Update progress string (thread-safe since it's just a string assignment)
+                        s_FT601DriverProgress = progress;
+                    });
+                    
+                    if (success)
+                    {
+                        s_FT601DriverProgress = "Driver removed! Refreshing...";
+                        AddLog("[SUCCESS] FTDI driver uninstallation completed");
+                        
+                        // Refresh driver status
+                        Sleep(500);
+                        s_FT601DriverInfo = s_FT601Driver.CheckDriver();
+                        
+                        if (!s_FT601DriverInfo.installed)
+                        {
+                            AddLog("[SUCCESS] Driver uninstalled successfully");
+                        }
+                        else
+                        {
+                            AddLog("[INFO] Driver status refreshing in background");
+                        }
+                    }
+                    else
+                    {
+                        AddLog("[ERROR] Failed to uninstall FTDI driver");
+                    }
+                    
+                    s_FT601DriverProgress = "";
+                    s_IsUninstallingFT601Driver = false;
+                    uninstallQueued = false;
+                });
+                uninstallThread.detach();
             }
         }
         

@@ -157,12 +157,22 @@
     <None Include="docs\STRESS_TEST_IMPLEMENTATION.md" />
     <None Include="docs\TEST_RESULTS_LAYOUT_CONSISTENCY.md" />
     <None Include="docs\FT601_DRIVER_FINAL_FIXES.md" />
+    <None Include="docs\FT601_DRIVER_POPUP_AND_UNINSTALL_FIX.md" />
+    <None Include="docs\FTDI_DRIVER_UNINSTALL_FIX.md" />
+    <None Include="docs\FTDI_DRIVER_NON_BLOCKING_OPERATIONS.md" />
+    <None Include="docs\FT601_DRIVER_PROGRESS_CALLBACKS.md" />
+    <None Include="docs\DATA_PORT_TAB_LAYOUT_UPDATE.md" />
+    <None Include="docs\UI_LAYOUT_CONSISTENCY_FIXES.md" />
+    <None Include="docs\UI_SPACING_FIXES_FINAL.md" />
+    <None Include="docs\FTDI_DRIVER_PERFORMANCE_ANALYSIS.md" />
+    <None Include="docs\FTDI_CHECK_BUTTON_RESTORED.md" />
+    <None Include="docs\BENCHMARK_PANEL_HEIGHT_ADJUSTMENTS.md" />
+    <None Include="docs\CONSOLE_LOG_SPACING_AND_VERTICAL_RESIZER.md" />
+    <None Include="docs\HORIZONTAL_RESIZER_UPDATE.md" />
+    <None Include="docs\HORIZONTAL_RESIZER_FINAL.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DMATool.rc">
-      <Filter>Resource Files</Filter>
-    </ResourceCompile>
-    <ResourceCompile Include="DMATool_new.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
   </ItemGroup>

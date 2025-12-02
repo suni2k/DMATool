@@ -15,7 +15,16 @@ namespace DMATool::UI::Tabs
         
         ImGui::Spacing();
         
-        // Two column layout
+        // RESIZABLE VERTICAL LAYOUT: Top panels vs Bottom panel
+        static float topPanelHeightRatio = 0.52f;  // Default 52% for top panels
+        
+        float availableHeight = ImGui::GetContentRegionAvail().y;
+        float topHeight = availableHeight * topPanelHeightRatio;
+        
+        // Top section
+        ImGui::BeginChild("TopSection", ImVec2(0, topHeight), false, ImGuiWindowFlags_NoScrollbar);
+        
+        // Two column layout for top panels
         ImGui::Columns(2, "FlashColumns", true);
         
         RenderFlashInfoPanel();
@@ -26,29 +35,56 @@ namespace DMATool::UI::Tabs
         
         ImGui::Columns(1);
         
-        ImGui::Spacing();
+        ImGui::EndChild();
+        
+        // HORIZONTAL RESIZE HANDLE between top and bottom sections (matches vertical column separator)
+        ImVec2 cursorBeforeSeparator = ImGui::GetCursorScreenPos();
         ImGui::Separator();
-        ImGui::Spacing();
         
-        // Use a single-column layout to match the spacing of the two-column panels above
-        ImGui::Columns(1, "ProgressColumn", false);
+        ImVec2 separatorPos = cursorBeforeSeparator;
+        float separatorWidth = ImGui::GetContentRegionAvail().x + ImGui::GetStyle().WindowPadding.x * 2;
         
-        // Calculate the exact column offset to match the panels above
-        float columnsOffsetX = ImGui::GetStyle().ItemSpacing.x * 0.5f + ImGui::GetStyle().FramePadding.x;
+        ImGui::SetCursorScreenPos(ImVec2(separatorPos.x, separatorPos.y - 2));
+        ImGui::InvisibleButton("##vsplitter", ImVec2(separatorWidth, 4));
         
-        // Apply the same offset to our bottom panel
-        ImGui::SetCursorPosX(ImGui::GetCursorPosX() + columnsOffsetX);
+        bool isHovered = ImGui::IsItemHovered();
+        bool isActive = ImGui::IsItemActive();
         
-        // Reduce the width to account for both left and right offsets
-        float panelWidth = ImGui::GetContentRegionAvail().x - columnsOffsetX;
+        if (isActive)
+        {
+            float delta = ImGui::GetIO().MouseDelta.y;
+            topPanelHeightRatio += delta / availableHeight;
+            if (topPanelHeightRatio < 0.3f) topPanelHeightRatio = 0.3f;
+            if (topPanelHeightRatio > 0.7f) topPanelHeightRatio = 0.7f;
+        }
         
-        // Calculate height to leave room for bottom spacing
-        float bottomSpacing = ImGui::GetStyle().ItemSpacing.y * 2; // Space for two Spacing() calls
-        float panelHeight = ImGui::GetContentRegionAvail().y - bottomSpacing;
+        if (isActive)
+        {
+            ImGui::GetWindowDrawList()->AddLine(
+                separatorPos,
+                ImVec2(separatorPos.x + separatorWidth, separatorPos.y),
+                IM_COL32(230, 191, 64, 255),  // brandGoldLight
+                1.5f
+            );
+        }
+        else if (isHovered)
+        {
+            ImGui::GetWindowDrawList()->AddLine(
+                separatorPos,
+                ImVec2(separatorPos.x + separatorWidth, separatorPos.y),
+                IM_COL32(212, 176, 56, 255),  // brandGold
+                1.5f
+            );
+        }
         
-        // Inline the Progress Panel content with proper width
+        if (isHovered || isActive)
+        {
+            ImGui::SetMouseCursor(ImGuiMouseCursor_ResizeNS);
+        }
+        
+        // Bottom section: Operation Progress panel
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16, 16));
-        ImGui::BeginChild("ProgressPanel", ImVec2(panelWidth, panelHeight), true);
+        ImGui::BeginChild("ProgressPanel", ImVec2(0, 0), true);
         ImGui::PopStyleVar();
         
         ImGui::Text("Operation Progress");
@@ -110,13 +146,13 @@ namespace DMATool::UI::Tabs
         ImGui::Spacing();
         ImGui::Spacing();
         
-        ImGui::EndChild();
+        ImGui::EndChild();  // End JTAGFlashContent
     }
 
     void JTAGFlashTab::RenderFlashInfoPanel()
     {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16, 16));
-        ImGui::BeginChild("FlashInfoPanel", ImVec2(0, 400), true);
+        ImGui::BeginChild("FlashInfoPanel", ImVec2(0, 0), true);
         ImGui::PopStyleVar();
         
         ImGui::Spacing();
@@ -196,7 +232,7 @@ namespace DMATool::UI::Tabs
     void JTAGFlashTab::RenderFlashOperationsPanel()
     {
         ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(16, 16));
-        ImGui::BeginChild("FlashOperationsPanel", ImVec2(0, 400), true);
+        ImGui::BeginChild("FlashOperationsPanel", ImVec2(0, 0), true);
         ImGui::PopStyleVar();
         
         ImGui::Spacing();

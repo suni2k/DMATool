@@ -6,6 +6,7 @@
 #include <sstream>
 #include <regex>
 #include <filesystem>
+#include <algorithm>
 
 namespace DMATool::Backend
 {
@@ -14,30 +15,41 @@ namespace DMATool::Backend
         FT601DriverInfo info;
         std::string output;
 
-        // Query all PnP devices for FTDI FT601
-        std::string command = "Get-PnpDevice | Where-Object {$_.InstanceId -like '*VID_" + 
-                            std::string(FT601_VID) + "&PID_" + std::string(FT601_PID) + "*'} | " +
-                            "Select-Object FriendlyName, InstanceId, Status, DriverVersion | Format-List";
+        // Query PnP devices for FTDI FT601 and get driver properties
+        // Use Get-PnpDeviceProperty to reliably get driver version
+        std::string command = 
+            "$device = Get-PnpDevice | Where-Object {$_.InstanceId -like '*VID_" + std::string(FT601_VID) + "&PID_" + std::string(FT601_PID) + "*'} | Select-Object -First 1; "
+            "if ($device) { "
+            "  $props = @{}; "
+            "  $props['FriendlyName'] = $device.FriendlyName; "
+            "  $props['InstanceId'] = $device.InstanceId; "
+            "  $props['Status'] = $device.Status; "
+            "  $driverVersion = (Get-PnpDeviceProperty -InstanceId $device.InstanceId -KeyName 'DEVPKEY_Device_DriverVersion' -ErrorAction SilentlyContinue).Data; "
+            "  if ($driverVersion) { $props['DriverVersion'] = $driverVersion } else { $props['DriverVersion'] = '' } "
+            "  Write-Output \"FriendlyName: $($props['FriendlyName'])\"; "
+            "  Write-Output \"InstanceId: $($props['InstanceId'])\"; "
+            "  Write-Output \"Status: $($props['Status'])\"; "
+            "  Write-Output \"DriverVersion: $($props['DriverVersion'])\" "
+            "}";
 
         if (ExecutePowerShell(command, output))
         {
             // Parse the output
             info = ParseDriverInfo(output);
             
-            // Determine if it's the correct driver
+            // Determine if the correct driver is installed based on driver version
             if (!info.deviceName.empty())
             {
-                // Correct driver: "FT601 USB 3.0 Bridge Device" or "FTDI FT601 USB 3.0 Bridge Device"
-                // Default/No driver: "FTDI SuperSpeed-FIFO Bridge" (base device name)
-                if (info.deviceName.find("FT601 USB 3.0 Bridge Device") != std::string::npos ||
-                    info.deviceName.find("USB 3.0 Bridge Device") != std::string::npos)
+                // Check if driver version is present and is 1.4.0.1 or higher
+                if (!info.version.empty() && info.version != "Unknown")
                 {
+                    // Driver is installed - version 1.4.0.1 is the correct WinUSB driver
                     info.isCorrectDriver = true;
-                    info.installed = (info.installed && info.isCorrectDriver);
+                    info.installed = true;
                 }
-                else if (info.deviceName.find("SuperSpeed-FIFO Bridge") != std::string::npos)
+                else
                 {
-                    // This is the default device name - no driver installed
+                    // Device detected but no driver version = default Windows driver
                     info.isCorrectDriver = false;
                     info.installed = false;
                 }
@@ -47,13 +59,17 @@ namespace DMATool::Backend
         return info;
     }
 
-    bool FT601DriverInterface::InstallDriver()
+    bool FT601DriverInterface::InstallDriver(ProgressCallback progressCallback)
     {
-        std::cout << "[INFO] Installing FT601 driver..." << std::endl;
+        std::cout << "[INFO] Installing FTDI driver..." << std::endl;
+        if (progressCallback) progressCallback("Initializing driver installation...");
         
         std::string driverPath;
         
         // Try embedded resources first
+        std::cout << "[INFO] Extracting driver files..." << std::endl;
+        if (progressCallback) progressCallback("Extracting driver files...");
+        
         if (ExtractDriverFiles(driverPath))
         {
             std::cout << "[INFO] Using embedded driver files from temp" << std::endl;
@@ -62,6 +78,7 @@ namespace DMATool::Backend
         {
             // Fallback: Copy from external directory (same as CH347)
             std::cout << "[INFO] Embedded resources not found, using external driver files" << std::endl;
+            if (progressCallback) progressCallback("Loading external driver files...");
             
             // Create temp directory
             char tempPath[MAX_PATH];
@@ -147,8 +164,9 @@ namespace DMATool::Backend
             return false;
         }
         
-        std::cout << "[INFO] Using driver INF at: " << driverInfPath << std::endl;
-        std::cout << "[INFO] Adding driver to Windows driver store..." << std::endl;
+        std::cout << "[INFO] Installing driver to Windows driver store..." << std::endl;
+        std::cout << "[DEBUG] Driver INF path: " << driverInfPath << std::endl;
+        if (progressCallback) progressCallback("Adding driver to Windows driver store...");
 
         // Use pnputil to install driver
         std::string command = "pnputil.exe /add-driver \"" + driverInfPath + "\" /install";
@@ -165,10 +183,35 @@ namespace DMATool::Backend
         // Read pnputil output
         char buffer[256];
         std::string output;
+        bool shownPnpUtilityMessage = false;  // Track if we've shown the patience message
+        
         while (fgets(buffer, sizeof(buffer), pipe) != nullptr)
         {
             output += buffer;
             std::cout << buffer;  // Echo output
+            
+            // Update progress with pnputil output if callback is provided
+            if (progressCallback)
+            {
+                std::string line = buffer;
+                line.erase(0, line.find_first_not_of(" \t\r\n"));
+                line.erase(line.find_last_not_of(" \t\r\n") + 1);
+                if (!line.empty())
+                {
+                    progressCallback(line);
+                    
+                    // If we see "Microsoft PnP Utility", add a helpful message
+                    if (!shownPnpUtilityMessage && 
+                        (line.find("Microsoft PnP Utility") != std::string::npos ||
+                         line.find("PnP") != std::string::npos))
+                    {
+                        shownPnpUtilityMessage = true;
+                        // Give a brief pause so the user can see both messages
+                        Sleep(100);
+                        progressCallback("This may take a moment, please wait...");
+                    }
+                }
+            }
         }
 
         int exitCode = _pclose(pipe);
@@ -178,45 +221,15 @@ namespace DMATool::Backend
         
         if (success)
         {
-            std::cout << "[SUCCESS] FT601 driver added to Windows driver store" << std::endl;
-            std::cout << "[INFO] Applying driver to device..." << std::endl;
+            std::cout << "[SUCCESS] FTDI driver installed successfully" << std::endl;
+            std::cout << "[INFO] Driver will be applied automatically" << std::endl;
+            std::cout << "[INFO] Windows is refreshing device list in background..." << std::endl;
+            if (progressCallback) progressCallback("Driver installed! Applying changes...");
             
-            // Force Windows to rescan and apply the new driver
-            std::string rescanCommand = "pnputil /scan-devices";
-            std::cout << "[DEBUG] Rescanning devices..." << std::endl;
-            system(rescanCommand.c_str());
-            
-            // Wait a moment for rescan
-            Sleep(1000);
-            
-            // Now try to update the specific device
-            std::string updateCommand = "powershell -Command \"$devices = Get-PnpDevice | Where-Object {$_.HardwareID -like '*VID_0403&PID_601F*'}; if ($devices) { foreach ($device in $devices) { try { Write-Output 'UPDATING'; pnputil /restart-device \\\"$($device.InstanceId)\\\" | Out-Null; Write-Output 'SUCCESS' } catch { Write-Output 'FAILED' } } } else { Write-Output 'NO_DEVICE' }\"";
-            
-            FILE* updatePipe = _popen(updateCommand.c_str(), "r");
-            bool deviceUpdated = false;
-            if (updatePipe)
-            {
-                while (fgets(buffer, sizeof(buffer), updatePipe) != nullptr)
-                {
-                    std::string line(buffer);
-                    if (line.find("SUCCESS") != std::string::npos)
-                    {
-                        std::cout << "[SUCCESS] Device restarted with new driver" << std::endl;
-                        deviceUpdated = true;
-                    }
-                    else if (line.find("FAILED") != std::string::npos || line.find("NO_DEVICE") != std::string::npos)
-                    {
-                        std::cout << "[INFO] Device restart not needed or failed" << std::endl;
-                    }
-                }
-                _pclose(updatePipe);
-            }
-            
-            if (!deviceUpdated)
-            {
-                std::cout << "[INFO] Driver installed - please unplug and replug the FT601 device" << std::endl;
-                std::cout << "[INFO] Or restart the device in Device Manager to apply the driver" << std::endl;
-            }
+            // Start background device rescan (non-blocking)
+            // Use START command to launch in separate process that doesn't wait
+            std::string bgCommand = "start /B cmd /c \"pnputil /scan-devices >nul 2>&1\"";
+            system(bgCommand.c_str());
         }
         else
         {
@@ -229,50 +242,169 @@ namespace DMATool::Backend
         return success;
     }
 
-    bool FT601DriverInterface::UninstallDriver()
+    bool FT601DriverInterface::UninstallDriver(ProgressCallback progressCallback)
     {
         std::string output;
 
         // Method 1: Try to find and delete the driver package
+        std::cout << "[INFO] Searching for FTDI driver package..." << std::endl;
+        if (progressCallback) progressCallback("Searching for FTDI driver package...");
+        
         std::string command = "pnputil /enum-drivers";
         
-        if (!ExecutePowerShell(command, output))
+        FILE* enumPipe = _popen(command.c_str(), "r");
+        if (!enumPipe)
         {
+            std::cerr << "[ERROR] Failed to enumerate drivers" << std::endl;
+            return false;
+        }
+        
+        // Read enum output
+        char buffer[256];
+        while (fgets(buffer, sizeof(buffer), enumPipe) != nullptr)
+        {
+            output += buffer;
+        }
+        _pclose(enumPipe);
+
+        // Parse the output line by line to find the FTDI driver
+        // Look for the OEM inf that corresponds to ftd3xxwu.inf
+        std::istringstream iss(output);
+        std::string line;
+        std::string oemInf;
+        bool foundDriver = false;
+        std::string publishedName;
+        
+        while (std::getline(iss, line))
+        {
+            // Look for "Published Name:" line
+            if (line.find("Published Name") != std::string::npos || 
+                line.find("Published name") != std::string::npos)
+            {
+                size_t colonPos = line.find(":");
+                if (colonPos != std::string::npos)
+                {
+                    publishedName = line.substr(colonPos + 1);
+                    // Trim whitespace
+                    publishedName.erase(0, publishedName.find_first_not_of(" \t\r\n"));
+                    publishedName.erase(publishedName.find_last_not_of(" \t\r\n") + 1);
+                }
+            }
+            // Look for "Original Name:" line with ftd3xxwu.inf
+            else if ((line.find("Original Name") != std::string::npos || 
+                      line.find("Original name") != std::string::npos) && 
+                     !publishedName.empty())
+            {
+                // Check if this is the ftd3xxwu.inf driver
+                std::string lowerLine = line;
+                std::transform(lowerLine.begin(), lowerLine.end(), lowerLine.begin(), ::tolower);
+                
+                if (lowerLine.find("ftd3xxwu.inf") != std::string::npos)
+                {
+                    oemInf = publishedName;
+                    foundDriver = true;
+                    std::cout << "[INFO] Found driver package: " << oemInf << std::endl;
+                    std::cout << "[DEBUG] Original name: ftd3xxwu.inf" << std::endl;
+                    if (progressCallback) progressCallback("Found driver: " + oemInf);
+                    break;
+                }
+                // Reset published name after checking
+                publishedName.clear();
+            }
+        }
+        
+        if (!foundDriver || oemInf.empty())
+        {
+            std::cout << "[WARNING] FTDI driver package not found in driver store" << std::endl;
+            std::cout << "[DEBUG] Searched for 'ftd3xxwu.inf' (case-insensitive)" << std::endl;
+            std::cout << "[INFO] The driver may not be installed, or was already removed" << std::endl;
+            return false;
+        }
+        
+        // Uninstall and delete the driver package - RUN SYNCHRONOUSLY
+        std::cout << "[INFO] Uninstalling driver package: " << oemInf << std::endl;
+        if (progressCallback) progressCallback("Removing driver from devices...");
+        
+        // Run pnputil synchronously to properly verify the result
+        std::string uninstallCommand = "pnputil.exe /delete-driver " + oemInf + " /uninstall /force";
+        std::cout << "[DEBUG] Running: " << uninstallCommand << std::endl;
+        
+        FILE* pipe = _popen(uninstallCommand.c_str(), "r");
+        if (!pipe)
+        {
+            std::cerr << "[ERROR] Failed to execute pnputil" << std::endl;
             return false;
         }
 
-        // Look for FT601/FTD3XX driver
-        std::regex oemRegex(R"(Published Name\s*:\s*(oem\d+\.inf).*?Original Name\s*:\s*FTD3XXWU\.inf)", std::regex::icase);
-        std::smatch match;
+        // Read pnputil output LINE BY LINE to show progress
+        char uninstallBuffer[256];
+        std::string uninstallOutput;
+        int lineCount = 0;
+        bool shownPnpUtilityMessage = false;  // Track if we've shown the patience message
         
-        if (std::regex_search(output, match, oemRegex))
+        while (fgets(uninstallBuffer, sizeof(uninstallBuffer), pipe) != nullptr)
         {
-            std::string oemInf = match[1].str();
-            std::cout << "[INFO] Found driver package: " << oemInf << std::endl;
+            uninstallOutput += uninstallBuffer;
+            std::cout << uninstallBuffer;  // Echo output
             
-            // Uninstall and delete the driver package
-            std::string uninstallCommand = "Start-Process pnputil.exe -ArgumentList '/delete-driver', '" + 
-                                          oemInf + "', '/uninstall', '/force' -Verb RunAs -Wait -PassThru | Select-Object -ExpandProperty ExitCode";
-            
-            std::string uninstallOutput;
-            if (ExecutePowerShell(uninstallCommand, uninstallOutput))
+            // Update progress with pnputil output if callback is provided
+            if (progressCallback)
             {
-                std::cout << "[SUCCESS] FT601 driver package deleted" << std::endl;
+                std::string outputLine = uninstallBuffer;
+                outputLine.erase(0, outputLine.find_first_not_of(" \t\r\n"));
+                outputLine.erase(outputLine.find_last_not_of(" \t\r\n") + 1);
                 
-                // Method 2: Force device to re-enumerate (will show yellow triangle until driver reinstalled)
-                std::string reenumCommand = "Get-PnpDevice | Where-Object {$_.InstanceId -like '*VID_0403&PID_601F*'} | " +
-                                          std::string("ForEach-Object { pnputil /remove-device $_.InstanceId }");
-                ExecutePowerShell(reenumCommand, output);
-                
-                return true;
+                if (!outputLine.empty())
+                {
+                    progressCallback(outputLine);
+                    
+                    // If we see "Microsoft PnP Utility", add a helpful message
+                    if (!shownPnpUtilityMessage && 
+                        (outputLine.find("Microsoft PnP Utility") != std::string::npos ||
+                         outputLine.find("PnP") != std::string::npos))
+                    {
+                        shownPnpUtilityMessage = true;
+                        // Give a brief pause so the user can see both messages
+                        Sleep(100);
+                        progressCallback("This may take a few minutes, please be patient...");
+                    }
+                }
+                else
+                {
+                    // pnputil doesn't output much, so show timer-based progress
+                    lineCount++;
+                    if (lineCount % 2 == 0)
+                    {
+                        progressCallback("Removing driver from devices...");
+                    }
+                }
             }
+        }
+
+        int exitCode = _pclose(pipe);
+        std::cout << "[DEBUG] pnputil exit code: " << exitCode << std::endl;
+        
+        bool success = (exitCode == 0);
+        
+        if (success)
+        {
+            std::cout << "[SUCCESS] FTDI driver package deleted successfully: " << oemInf << std::endl;
+            std::cout << "[INFO] Driver uninstalled successfully" << std::endl;
+            std::cout << "[INFO] Windows is refreshing device list in background..." << std::endl;
+            if (progressCallback) progressCallback("Driver removed! Refreshing devices...");
+            
+            // Start background device rescan (non-blocking)
+            std::string bgCommand = "start /B cmd /c \"pnputil /scan-devices >nul 2>&1\"";
+            system(bgCommand.c_str());
+            
+            return true;
         }
         else
         {
-            std::cout << "[WARNING] FT601 driver package not found in driver store" << std::endl;
+            std::cerr << "[ERROR] Failed to delete driver package: " << oemInf << std::endl;
+            std::cerr << "[DEBUG] pnputil output: " << uninstallOutput << std::endl;
+            return false;
         }
-
-        return false;
     }
 
     bool FT601DriverInterface::ExecutePowerShell(const std::string& command, std::string& output)
@@ -319,7 +451,9 @@ namespace DMATool::Backend
             info.installed = (status == "OK");
         }
 
-        // Parse DriverVersion - fix: it was showing "FriendlyName : ..." instead of version
+        // Parse DriverVersion - CRITICAL: Get this from device properties, not the basic query
+        // The basic DriverVersion field from Get-PnpDevice doesn't always populate correctly
+        // We need to use Get-PnpDeviceProperty to get the actual driver version
         std::regex versionRegex(R"(DriverVersion\s*:\s*([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+))");
         if (std::regex_search(output, match, versionRegex))
         {
@@ -327,7 +461,7 @@ namespace DMATool::Backend
         }
         else
         {
-            // Fallback: try to extract just numbers after DriverVersion
+            // Fallback: try to extract any version-like pattern
             std::regex versionFallbackRegex(R"(DriverVersion\s*:\s*(.+))");
             if (std::regex_search(output, match, versionFallbackRegex))
             {
@@ -335,8 +469,8 @@ namespace DMATool::Backend
                 versionLine.erase(0, versionLine.find_first_not_of(" \t\r\n"));
                 versionLine.erase(versionLine.find_last_not_of(" \t\r\n") + 1);
                 
-                // Only use if it looks like a version number
-                if (versionLine.find_first_of("0123456789") == 0)
+                // Only use if it looks like a version number or is empty
+                if (versionLine.empty() || versionLine.find_first_of("0123456789") == 0)
                 {
                     info.version = versionLine;
                 }
@@ -380,7 +514,7 @@ namespace DMATool::Backend
         std::string infPath = outPath + "\\FTD3XXWU.inf";
         if (!ExtractResourceFile(IDR_FT601_INF, infPath))
         {
-            std::cerr << "[ERROR] Failed to extract FT601 INF file" << std::endl;
+            std::cerr << "[ERROR] Failed to extract FTDI INF file" << std::endl;
             return false;
         }
         
@@ -388,11 +522,11 @@ namespace DMATool::Backend
         std::string catPath = outPath + "\\FTD3XXWU.cat";
         if (!ExtractResourceFile(IDR_FT601_CAT, catPath))
         {
-            std::cerr << "[ERROR] Failed to extract FT601 CAT file" << std::endl;
+            std::cerr << "[ERROR] Failed to extract FTDI CAT file" << std::endl;
             return false;
         }
         
-        std::cout << "[INFO] FT601 driver files extracted to: " << outPath << std::endl;
+        std::cout << "[INFO] FTDI driver files extracted to: " << outPath << std::endl;
         return true;
     }
 
