@@ -17,12 +17,22 @@
 #define IDR_CH341_CAT                   113
 #define IDR_CH347_DLL                   114
 #define IDR_CH347_DLL_A64               115
+#define IDR_FT601_INF                   116
+#define IDR_FT601_CAT                   117
+
+// LeechCore embedded DLL resource IDs
+#define IDR_LEECHCORE_DLL               200
+#define IDR_FTD3XX_DLL                  201
+#define IDR_FTD3XXWU_DLL                202
+#define IDR_LEECHCORE_DEVICE_HVSAVED    203
+#define IDR_LEECHCORE_DEVICE_RAWTCP     204
+#define IDR_LEECHCORE_DRIVER            205
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        116
+#define _APS_NEXT_RESOURCE_VALUE        206
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1001
 #define _APS_NEXT_SYMED_VALUE           101

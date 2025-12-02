@@ -56,9 +56,9 @@ namespace DMATool::UI::Tabs
 
     void JTAGPortTab::Render()
     {
-        // IMPORTANT: Only auto-detect ONCE when tool is first entered
-        // Don't auto-detect when switching between tabs
-        static bool s_HasAutoDetected = false;  // Track if we've EVER auto-detected
+        // DISABLE AUTO-DETECTION: User must manually detect FPGA
+        // Reason: Tool might be launched while in UPDATE port, causing detection to fail
+        static bool s_HasAutoDetected = true;  // Set to true to disable auto-detection
         static bool s_AutoDetectQueued = false;
         static int s_FramesSinceFirstRender = 0;
         static int s_FramesSinceDetectionQueued = 0;
@@ -75,16 +75,19 @@ namespace DMATool::UI::Tabs
             s_FramesSinceFirstRender++;
         }
         
-        // Queue auto-detection only ONCE after 2 frames of being visible
-        // AND only if we've never auto-detected before
+        // AUTO-DETECTION DISABLED - User must click "Detect FPGA & Read DNA" button
+        // (Queue auto-detection code commented out)
+        /*
         if (s_FramesSinceFirstRender == 2 && !s_AutoDetectQueued && 
             !s_IsDetecting && !s_HasAutoDetected)
         {
             s_AutoDetectQueued = true;
-            s_HasAutoDetected = true;  // Mark that we've queued it
+            s_HasAutoDetected = true;
         }
+        */
         
         // Start detection (sets flag, actual work happens below after UI renders)
+        // AUTO-DETECTION DISABLED - This block will never execute
         if (s_AutoDetectQueued && !s_IsDetecting && !s_IsAutoDetecting)
         {
             s_AutoDetectQueued = false;
@@ -219,7 +222,8 @@ namespace DMATool::UI::Tabs
             ImGui::PushStyleColor(ImGuiCol_Text, Colors::MutedForeground);
             ImGui::Text("Waiting for operations...");
             ImGui::Text("[INFO] DNA ID tab initialized");
-            ImGui::Text("[INFO] Ready for FPGA detection via CH347 adapter");
+            ImGui::Text("[INFO] Click 'Detect FPGA & Read DNA' to start");
+            ImGui::Text("[INFO] Note: Ensure adapter is in DATA port, not UPDATE port");
             ImGui::PopStyleColor();
         }
         else

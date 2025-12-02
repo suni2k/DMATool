@@ -1,4 +1,8 @@
 #pragma once
+#include "../../Backend/BenchmarkInterface.h"
+#include "../../Backend/FT601DriverInterface.h"
+#include <vector>
+#include <string>
 
 namespace DMATool::UI::Tabs
 {
@@ -8,8 +12,17 @@ namespace DMATool::UI::Tabs
         static void Render();
         
     private:
-        static void RenderDMAConfigPanel(float height);
-        static void RenderMemoryOperationsPanel(float height);
-        static void RenderMemoryViewPanel(float height);
+        static void RenderTestControlsPanel(float height);
+        static void RenderResultsPanel(float height);
+        static void RenderConsoleLog(float height);
+        static void RenderFT601DriverPanel(float height);
+        
+        // Test management
+        static void StartQuickTest();
+        static void StopTest();
+        static void AddLog(const std::string& message);
+        static void ClearLog();
+        
+        // Note: Static state is managed in DataPortTab.cpp via file-scope statics
     };
 }

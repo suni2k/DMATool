@@ -1,0 +1,82 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.0;net48;net8.0-windows7.0</TargetFrameworks>
+		<OutputType>Library</OutputType>
+		<AssemblyName>FTD3XXWU_NET</AssemblyName>
+		<ImportWindowsDesktopTargets>true</ImportWindowsDesktopTargets>
+		<Platforms>AnyCPU;x64;x86</Platforms>
+		<SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
+		<RootNamespace>$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+		<AssemblyVersion>1.4.0.1</AssemblyVersion>
+		<FileVersion>1.4.0.1</FileVersion>
+		<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+	</PropertyGroup>
+	<!-- netstandard gets no WinForms -->
+	<PropertyGroup Condition="'$(TargetFramework)'=='netstandard2.0'">
+		<UseWindowsForms>false</UseWindowsForms>
+	</PropertyGroup>
+	<!-- the Windows TFMs (net48 + net8.0-windows7.0) get WinForms on -->
+	<PropertyGroup Condition="'$(TargetFramework)'!='netstandard2.0'">
+		<UseWindowsForms>true</UseWindowsForms>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
+		<OutputPath>bin\x64\Debug\</OutputPath>
+		<CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
+		<OutputPath>bin\x64\Release\</OutputPath>
+		<DefineConstants>TRACE;X64</DefineConstants>
+		<CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
+		<OutputPath>bin\x86\Debug\</OutputPath>
+		<CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
+		<OutputPath>bin\x86\Release\</OutputPath>
+		<DefineConstants>TRACE;X86</DefineConstants>
+		<CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+	</PropertyGroup>
+	<PropertyGroup>
+		<PackageId>FTD3XXWU.NET</PackageId>
+		<Version>1.4.0.1</Version>
+		<Authors>Future Technology Devices International Ltd.</Authors>
+		<Description>Managed .NET wrapper for the WinUSB‐based D3XX driver (FTD3XXWU.DLL).</Description>
+		<PackageTags>FTDI;D3XX;USB;WinUSB;wrapper</PackageTags>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.CSharp" Version="4.7.0" />
+		<PackageReference Include="System.Data.DataSetExtensions" Version="4.5.0" />
+	</ItemGroup>
+	<ItemGroup>
+		<!-- x86 -->
+		<None Include="native\win-x86\FTD3XXWU.DLL">
+			<!-- include in nupkg -->
+			<Pack>true</Pack>
+			<!-- so NuGet sees it as a native asset for win-x86 -->
+			<PackagePath>runtimes\win-x86\native\</PackagePath>
+			<!-- and copy to output when you build/publish -->
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+
+		<!-- x64 -->
+		<None Include="native\win-x64\FTD3XXWU.DLL">
+			<Pack>true</Pack>
+			<PackagePath>runtimes\win-x64\native\</PackagePath>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+
+		<!-- ARM64 -->
+		<None Include="native\win-arm64\FTD3XXWU.DLL">
+			<Pack>true</Pack>
+			<PackagePath>runtimes\win-arm64\native\</PackagePath>
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
+
+	<Target Name="PostBuild" AfterTargets="PostBuildEvent">
+		<Exec Command="call &quot;$(ProjectDir)FTD3XX_NET.bat&quot; &quot;$(OutDir)$(TargetName)$(TargetExt)&quot;&#xD;&#xA;" />
+	</Target>
+</Project>

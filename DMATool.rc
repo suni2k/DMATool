@@ -17,3 +17,7 @@ IDR_CH341_W64_SYS RCDATA "tools\\ch347\\drivers\\CH341W64.SYS"
 IDR_CH341_CAT RCDATA "tools\\ch347\\drivers\\CH341WDM.CAT"
 IDR_CH347_DLL RCDATA "tools\\ch347\\drivers\\CH347DLL.DLL"
 IDR_CH347_DLL_A64 RCDATA "tools\\ch347\\drivers\\CH347DLLA64.DLL"
+
+// FT601 Driver Files
+IDR_FT601_INF RCDATA "tools\\ftdi601\\drivers\\FTD3XXWU.Inf"
+IDR_FT601_CAT RCDATA "tools\\ftdi601\\drivers\\FTD3XXWU.cat"

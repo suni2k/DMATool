@@ -118,6 +118,9 @@
 
 ### Core Documentation
 - ?? **[DNA ID Tab - Complete Guide](docs/DNA_ID_TAB_COMPLETE.md)** - Full feature documentation
+- ?? **[DMA Benchmarking Guide](docs/DMA_BENCHMARKING_GUIDE.md)** - Performance testing and validation
+- ?? **[Benchmark Tab Specification](docs/BENCHMARK_TAB_SPEC.md)** - Technical implementation details
+- ?? **[DMA Testing Guide](docs/DMA_TESTING_GUIDE.md)** - Manual testing with PCILeech
 - ??? **[Architecture](docs/ARCHITECTURE.md)** - Project structure and design
 - ?? **[Build Instructions](docs/BUILD_INSTRUCTIONS.md)** - How to compile from source
 - ?? **[Troubleshooting](docs/TROUBLESHOOTING.md)** - Common issues and solutions
