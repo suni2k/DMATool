@@ -317,23 +317,11 @@ namespace DMATool::Backend
         
         // Track when sectors complete to start periodic writing updates
         bool sectorsCompleted = false;
-        auto lastProgressUpdate = std::chrono::steady_clock::now();
 
         while (true)
         {
             // Check if process is still running
             DWORD waitResult = WaitForSingleObject(pi.hProcess, 100);  // Wait 100ms
-            
-            // Send periodic "Writing progress" updates during the writing phase (every 2 seconds)
-            auto now = std::chrono::steady_clock::now();
-            double timeSinceLastUpdate = std::chrono::duration<double>(now - lastProgressUpdate).count();
-            
-            if (sectorsCompleted && timeSinceLastUpdate >= 2.0)
-            {
-                if (progressCallback)
-                    progressCallback(0, 0, "Writing progress");
-                lastProgressUpdate = now;
-            }
             
             // Try to read stdout
             PeekNamedPipe(hStdOutRead, NULL, 0, NULL, &bytesAvail, NULL);
@@ -344,7 +332,20 @@ namespace DMATool::Backend
                     buffer[bytesRead] = '\0';
                     output += buffer;
                     outputBuffer += buffer;
-                    std::cout << "[OPENOCD] " << buffer;  // Real-time output
+                    
+                    // Parse for 0x address lines (only show these, not [OPENOCD] prefix)
+                    std::string bufferStr(buffer);
+                    if (bufferStr.find("0x") != std::string::npos && 
+                        bufferStr.find(".") != std::string::npos)
+                    {
+                        // This is an address progress line - show it without [OPENOCD] prefix
+                        std::cout << buffer;
+                    }
+                    else
+                    {
+                        // Other output - show with [OPENOCD] prefix
+                        std::cout << "[OPENOCD] " << buffer;
+                    }
                     
                     // Parse complete lines for progress updates
                     size_t newlinePos;
@@ -368,7 +369,6 @@ namespace DMATool::Backend
                                 if (line.find("sector") != std::string::npos)
                                 {
                                     sectorsCompleted = true;
-                                    lastProgressUpdate = std::chrono::steady_clock::now();
                                 }
                             }
                             // Check for file read: "read 2099688 bytes from file"
@@ -423,7 +423,6 @@ namespace DMATool::Backend
                                 
                                 // Mark that sectors are being processed
                                 sectorsCompleted = true;
-                                lastProgressUpdate = std::chrono::steady_clock::now();
                             }
                             // Check for file read: "read 2099688 bytes from file"
                             else if (line.find("read") != std::string::npos && line.find("bytes from file") != std::string::npos)
@@ -461,7 +460,18 @@ namespace DMATool::Backend
                     {
                         buffer[bytesRead] = '\0';
                         output += buffer;
-                        std::cout << "[OPENOCD] " << buffer;
+                        
+                        // Check for 0x address lines
+                        std::string bufferStr(buffer);
+                        if (bufferStr.find("0x") != std::string::npos && 
+                            bufferStr.find(".") != std::string::npos)
+                        {
+                            std::cout << buffer;
+                        }
+                        else
+                        {
+                            std::cout << "[OPENOCD] " << buffer;
+                        }
                     }
                     else
                         break;
@@ -651,58 +661,22 @@ namespace DMATool::Backend
             }
             else if (msg.find("Firmware loaded") != std::string::npos || msg.find("read") != std::string::npos)
             {
-                // Firmware loaded into memory, start writing
-                if (progressCallback && sectorsComplete && !writingComplete)
+                // Firmware loaded - sectors complete, writing started
+                if (!sectorsComplete)
                 {
-                    progressCallback(42, 100, "Writing flash contents...");
-                    std::cout << "[INFO] Flash writing started" << std::endl;
-                }
-            }
-            else if (msg.find("Writing progress") != std::string::npos)
-            {
-                // PHASE 2: Writing flash (40% - 90%)
-                // This takes most of the time (~120-130 seconds for 2MB)
-                if (sectorsComplete && !writingComplete)
-                {
-                    auto now = std::chrono::steady_clock::now();
-                    double elapsedWrite = std::chrono::duration<double>(now - writingStartTime).count();
-                    
-                    // Progress from 40% to 90% based on ACTUAL elapsed time (not estimated)
-                    // Cap at 90% after 130 seconds
-                    double ratio = elapsedWrite / 130.0;  // 130 seconds to reach 90%
-                    if (ratio > 1.0) ratio = 1.0;  // Cap at 90%
-                    double writeProgress = ratio * 50.0;  // 0-50%
-                    float totalProgress = 40.0f + (float)writeProgress;  // 40-90%
-                    
-                    // Log elapsed time every 10 seconds (not every 2 seconds to avoid spam)
-                    uint64_t currentElapsedSeconds = (uint64_t)elapsedWrite;
-                    if (currentElapsedSeconds >= lastLoggedElapsedSeconds + 10)
-                    {
-                        std::string progressMsg = "Writing flash contents... (elapsed: " + std::to_string(currentElapsedSeconds) + "s)";
-                        if (progressCallback)
-                            progressCallback((uint64_t)totalProgress, 100, progressMsg);
-                        lastLoggedElapsedSeconds = currentElapsedSeconds;
-                    }
+                    sectorsComplete = true;
+                    writingStartTime = std::chrono::steady_clock::now();
+                    lastLoggedElapsedSeconds = 0;
                 }
             }
             else if (msg.find("Verification passed") != std::string::npos)
             {
-                // Mark writing as complete, verification started
-                if (!writingComplete)
-                {
-                    writingComplete = true;
-                    std::cout << "[INFO] Flash writing completed, starting verification..." << std::endl;
-                }
-                
-                // PHASE 3: Verification (90% - 95%)
-                if (progressCallback)
-                    progressCallback(95, 100, "Verification passed!");
+                // Mark writing as complete
+                writingComplete = true;
             }
             else if (msg.find("Verification failed") != std::string::npos)
             {
                 writingComplete = true;
-                if (progressCallback)
-                    progressCallback(90, 100, "Verification failed!");
             }
         };
         
@@ -718,8 +692,6 @@ namespace DMATool::Backend
 
         if (result.success)
         {
-            std::cout << "[SUCCESS] Flash programming succeeded!" << std::endl;
-            
             // CRITICAL FIX: Search both stdout AND stderr for byte count and verification
             // OpenOCD outputs to stderr!
             std::string combinedOutput = output + error;
@@ -740,7 +712,6 @@ namespace DMATool::Backend
                 if (verifyPassed)
                 {
                     result.message = "Flash programming and verification completed successfully";
-                    std::cout << "[SUCCESS] Verification passed!" << std::endl;
                 }
                 else if (verifyFailed)
                 {
@@ -748,7 +719,6 @@ namespace DMATool::Backend
                     result.message = "Flash programming completed but verification FAILED!\n";
                     result.message += "The flash contents do not match the firmware file.\n";
                     result.message += "This may indicate a programming error or flash corruption.";
-                    std::cout << "[ERROR] Verification failed!" << std::endl;
                 }
                 else
                 {
@@ -759,9 +729,6 @@ namespace DMATool::Backend
             {
                 result.message = "Flash programming completed successfully (not verified)";
             }
-            
-            if (progressCallback)
-                progressCallback(100, 100, result.message);
         }
         else
         {
@@ -776,9 +743,6 @@ namespace DMATool::Backend
                 result.message += "\n\nError Output:\n" + error;
             if (!output.empty())
                 result.message += "\n\nOpenOCD Output:\n" + output;
-            
-            if (progressCallback)
-                progressCallback(0, 100, "Flash programming failed");
         }
 
         return result;
@@ -902,26 +866,11 @@ namespace DMATool::Backend
         // Calculate SHA256 hash for original file
         std::string originalHash = CalculateSHA256(firmwarePath);
         
-        // Check elapsed time and update progress proportionally
-        auto now = std::chrono::steady_clock::now();
-        double elapsedVerify = std::chrono::duration<double>(now - verifyStartTime).count();
-        double progressPercent = 70.0 + (elapsedVerify / 7.0) * 20.0;  // 70% + (0-20%) over 7 seconds
-        if (progressPercent > 90.0) progressPercent = 90.0;  // Cap at 90%
-        
-        if (progressCallback)
-            progressCallback((uint64_t)progressPercent, 100, "Computing SHA256 hashes...");
-        
         // Calculate SHA256 hash for readback file
         std::string readbackHash = CalculateSHA256(readbackPath);
         
-        // Update progress again after second hash
-        now = std::chrono::steady_clock::now();
-        elapsedVerify = std::chrono::duration<double>(now - verifyStartTime).count();
-        progressPercent = 70.0 + (elapsedVerify / 7.0) * 20.0;
-        if (progressPercent > 90.0) progressPercent = 90.0;  // Cap at 90%
-        
         if (progressCallback)
-            progressCallback((uint64_t)progressPercent, 100, "Comparing hashes...");
+            progressCallback(85, 100, "Comparing hashes...");
 
         bool filesMatch = (originalHash == readbackHash && !originalHash.empty());
 
@@ -943,15 +892,9 @@ namespace DMATool::Backend
             result.message += "Original SHA256: " + originalHash + "\n";
             result.message += "Readback SHA256: " + readbackHash + "\n";
             result.message += "Speed: " + flashReadSpeed;
-            std::cout << "[SUCCESS] Verification PASSED - Hashes match perfectly!" << std::endl;
             
-            // Stay at 90% briefly, then jump to 100%
             if (progressCallback)
-            {
-                progressCallback(90, 100, "Verification complete - MATCH!");
-                std::this_thread::sleep_for(std::chrono::milliseconds(200));  // Brief pause
                 progressCallback(100, 100, "Verification complete - MATCH!");
-            }
         }
         else
         {
@@ -959,8 +902,6 @@ namespace DMATool::Backend
             result.message = "Verification failed! Flash contents do NOT match firmware file.\n";
             result.message += "Original SHA256: " + originalHash + "\n";
             result.message += "Readback SHA256: " + readbackHash;
-            
-            std::cout << "[ERROR] Verification FAILED - Hash mismatch detected!" << std::endl;
             
             if (progressCallback)
                 progressCallback(0, 100, "Verification failed - MISMATCH!");

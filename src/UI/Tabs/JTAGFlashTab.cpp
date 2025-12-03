@@ -393,13 +393,11 @@ namespace DMATool::UI::Tabs
                     
                     if (result.success)
                     {
-                        AddLog("[INFO] ");
                         AddLog("[SUCCESS] ===============================================");
                         AddLog("[SUCCESS] Flash programming and verification completed successfully!");
                         AddLog("[SUCCESS] ===============================================");
                         AddLog("[SUCCESS] Bytes written: " + std::to_string(result.bytesProcessed));
                         AddLog("[SUCCESS] Duration: " + std::to_string(result.durationSeconds) + " seconds");
-                        AddLog("[INFO] ");
                         UpdateProgress(100, "Complete!");
                         SetProgressState(ProgressState::Success);  // GREEN
                     }
@@ -449,11 +447,8 @@ namespace DMATool::UI::Tabs
                     AddLog("[INFO] ========================================");
                     AddLog("[INFO] Flash Verification");
                     AddLog("[INFO] ========================================");
-                    AddLog("[INFO] ");
                     AddLog("[INFO] Original file: " + s_FirmwarePath);
                     AddLog("[INFO] Target chip: " + Backend::FlashInterface::ChipModelToString(s_SelectedChipModel));
-                    AddLog("[INFO] This will read the entire flash and compare SHA256 hashes");
-                    AddLog("[INFO] ");
                     
                     auto result = s_FlashInterface->VerifyFirmware(
                         s_FirmwarePath,
@@ -466,14 +461,9 @@ namespace DMATool::UI::Tabs
                     
                     if (result.success)
                     {
-                        AddLog("[INFO] ");
                         AddLog("[SUCCESS] ============================================");
                         AddLog("[SUCCESS] VERIFICATION PASSED!");
                         AddLog("[SUCCESS] ============================================");
-                        AddLog("[INFO] ");
-                        AddLog("[SUCCESS] Flash contents match the firmware file exactly");
-                        AddLog("[SUCCESS] The firmware was written correctly");
-                        AddLog("[INFO] ");
                         
                         // Extract SHA256 hashes from message
                         std::string msg = result.message;
@@ -485,13 +475,12 @@ namespace DMATool::UI::Tabs
                         {
                             std::string origHash = msg.substr(origPos + 17, 64);
                             std::string readHash = msg.substr(readPos + 17, 64);
-                            AddLog("[INFO] Original SHA256:  " + origHash);
-                            AddLog("[INFO] Readback SHA256:  " + readHash);
-                            AddLog("[INFO] ");
+                            AddLog("[SUCCESS] Original SHA256:  " + origHash);
+                            AddLog("[SUCCESS] Readback SHA256:  " + readHash);
                         }
                         
-                        AddLog("[INFO] Bytes verified: " + std::to_string(result.bytesProcessed));
-                        AddLog("[INFO] Duration: " + std::to_string(result.durationSeconds) + " seconds");
+                        AddLog("[SUCCESS] Bytes verified: " + std::to_string(result.bytesProcessed));
+                        AddLog("[SUCCESS] Duration: " + std::to_string(result.durationSeconds) + " seconds");
                         
                         // Extract and display speed if available
                         if (speedPos != std::string::npos)
@@ -499,24 +488,17 @@ namespace DMATool::UI::Tabs
                             std::string speed = msg.substr(speedPos + 7);
                             if (speed.find('\n') != std::string::npos)
                                 speed = speed.substr(0, speed.find('\n'));
-                            AddLog("[INFO] Speed: " + speed);
+                            AddLog("[SUCCESS] Speed: " + speed);
                         }
                         
-                        AddLog("[INFO] ");
-                        
-                        UpdateProgress(100, "Verification complete - MATCH!");
+                        UpdateProgress(100, "Complete!");
                         SetProgressState(ProgressState::Success);  // GREEN
                     }
                     else
                     {
-                        AddLog("[INFO] ");
                         AddLog("[ERROR] ============================================");
                         AddLog("[ERROR] VERIFICATION FAILED!");
                         AddLog("[ERROR] ============================================");
-                        AddLog("[INFO] ");
-                        AddLog("[ERROR] Flash contents DO NOT match!");
-                        AddLog("[ERROR] The flash may be corrupted");
-                        AddLog("[INFO] ");
                         
                         // Extract SHA256 hashes from message
                         std::string msg = result.message;
@@ -527,18 +509,16 @@ namespace DMATool::UI::Tabs
                         {
                             std::string origHash = msg.substr(origPos + 17, 64);
                             std::string readHash = msg.substr(readPos + 17, 64);
-                            AddLog("[INFO] Original SHA256:  " + origHash);
-                            AddLog("[INFO] Readback SHA256:  " + readHash);
-                            AddLog("[INFO] ");
+                            AddLog("[ERROR] Original SHA256:  " + origHash);
+                            AddLog("[ERROR] Readback SHA256:  " + readHash);
                         }
                         
                         AddLog("[WARNING] Troubleshooting:");
                         AddLog("[WARNING]   1. Try reflashing with slower clock speed");
                         AddLog("[WARNING]   2. Check JTAG connections");
                         AddLog("[WARNING]   3. Verify hardware is working correctly");
-                        AddLog("[INFO] ");
                         
-                        UpdateProgress(0, "Verification failed - MISMATCH!");
+                        UpdateProgress(0, "Verification failed!");
                         SetProgressState(ProgressState::Failure);  // RED
                     }
                     

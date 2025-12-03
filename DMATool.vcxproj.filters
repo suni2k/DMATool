@@ -242,6 +242,8 @@
     <None Include="docs\FLASH_UI_FINAL_POLISH.md" />
     <None Include="docs\FLASH_VERIFICATION_SHA256_ENHANCEMENT.md" />
     <None Include="docs\FLASH_MULTI_PHASE_PROGRESS.md" />
+    <None Include="docs\FLASH_PROGRESS_REFINEMENT_FINAL.md" />
+    <None Include="docs\FLASH_LOG_CLEANUP.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DMATool.rc">

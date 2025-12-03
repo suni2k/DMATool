@@ -159,9 +159,11 @@
     <None Include="docs\FLASH_HANG_TROUBLESHOOTING.md" />
     <None Include="docs\FLASH_IMPLEMENTATION_SUMMARY.md" />
     <None Include="docs\FLASH_INTERFACE_LOOP_FIX.md" />
+    <None Include="docs\FLASH_LOG_CLEANUP.md" />
     <None Include="docs\FLASH_LOOP_FIX_SUMMARY.md" />
     <None Include="docs\FLASH_MULTI_PHASE_PROGRESS.md" />
     <None Include="docs\FLASH_PROGRESS_AND_VERIFICATION_FIX.md" />
+    <None Include="docs\FLASH_PROGRESS_REFINEMENT_FINAL.md" />
     <None Include="docs\FLASH_RESOURCES_PATH_VERIFICATION.md" />
     <None Include="docs\FLASH_STDERR_PARSING_FIX.md" />
     <None Include="docs\FLASH_TAB_IMPLEMENTATION_COMPLETE.md" />
