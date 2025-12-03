@@ -564,6 +564,8 @@
     <None Include="DRIVER_VERSION_AND_BENCHMARK_FIXES.md" />
     <None Include="scripts\Test-FT601-DriverVersion.ps1" />
     <None Include="BENCHMARK_DIAGNOSTIC.md" />
+    <None Include="scripts\Copy-PCILeech-To-Solution.ps1" />
+    <None Include="scripts\Embed-PCILeech-Resources.ps1" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DMATool.rc">

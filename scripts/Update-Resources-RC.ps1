@@ -37,6 +37,9 @@ IDR_LEECHCORE_DLL RCDATA "dmafiles\\pcileech\\leechcore.dll"
 IDR_FTD3XX_DLL RCDATA "dmafiles\\pcileech\\FTD3XX.dll"
 IDR_VMM_DLL RCDATA "dmafiles\\pcileech\\vmm.dll"
 IDR_DBGHELP_DLL RCDATA "dmafiles\\pcileech\\dbghelp.dll"
+IDR_LEECHCORE_DRIVER RCDATA "dmafiles\\pcileech\\leechcore_driver.dll"
+IDR_LEECHCORE_DEVICE_HVSAVED RCDATA "dmafiles\\pcileech\\leechcore_device_hvsavedstate.dll"
+IDR_LEECHCORE_DEVICE_RAWTCP RCDATA "dmafiles\\pcileech\\leechcore_device_rawtcp.dll"
 "@
         
         $content = $content.Insert($lineEnd + 1, $pcileechEntries)
@@ -72,6 +75,9 @@ $filesToCheck = @(
     @{Path="dmafiles\pcileech\FTD3XX.dll"; Name="FTD3XX DLL"},
     @{Path="dmafiles\pcileech\vmm.dll"; Name="VMM DLL"},
     @{Path="dmafiles\pcileech\dbghelp.dll"; Name="DbgHelp DLL"},
+    @{Path="dmafiles\pcileech\leechcore_driver.dll"; Name="LeechCore Driver DLL (CRITICAL for FPGA)"},
+    @{Path="dmafiles\pcileech\leechcore_device_hvsavedstate.dll"; Name="LeechCore HV Device DLL"},
+    @{Path="dmafiles\pcileech\leechcore_device_rawtcp.dll"; Name="LeechCore TCP Device DLL"},
     @{Path="dmafiles\Winusb_D3XX_Release_1.4.0.1\WU_FTD3XX_Driver\FTD3XXWU.Inf"; Name="FTDI Driver INF"},
     @{Path="dmafiles\Winusb_D3XX_Release_1.4.0.1\WU_FTD3XX_Driver\FTD3XXWU.cat"; Name="FTDI Driver CAT"}
 )

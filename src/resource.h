@@ -26,6 +26,9 @@
 #define IDR_PCILEECH_EXE                120
 #define IDR_VMM_DLL                     121
 #define IDR_DBGHELP_DLL                 122
+#define IDR_VCRUNTIME140_DLL            123
+#define IDR_SYMSRV_DLL                  124
+#define IDR_VMMYARA_DLL                 125
 
 // LeechCore embedded DLL resource IDs
 #define IDR_LEECHCORE_DLL               200

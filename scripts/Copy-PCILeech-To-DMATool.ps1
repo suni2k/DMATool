@@ -14,11 +14,15 @@ if (-not (Test-Path $destDir)) {
 
 # Essential files for benchmark testing
 $essentialFiles = @(
-    "pcileech.exe",           # Main executable
-    "leechcore.dll",          # Core library
-    "FTD3XX.dll",             # FT601 support
-    "vmm.dll",                # Memory management
-    "dbghelp.dll"             # Debug symbols
+    "pcileech.exe",                      # Main executable
+    "leechcore.dll",                     # Core library
+    "FTD3XX.dll",                        # FT601 support
+    "vmm.dll",                           # Memory management
+    "dbghelp.dll",                       # Debug symbols
+    "vcruntime140.dll",                  # CRITICAL: Visual C++ Runtime
+    "leechcore_driver.dll",              # CRITICAL: FPGA device driver
+    "leechcore_device_hvsavedstate.dll", # Optional: HV saved state support
+    "leechcore_device_rawtcp.dll"        # Optional: Raw TCP support
 )
 
 $sourceDir = "C:\Tools\PCILeech"
@@ -39,7 +43,7 @@ foreach ($file in $essentialFiles) {
         $size = (Get-Item $destPath).Length / 1KB
         Write-Host "  [OK] $file ($([Math]::Round($size, 0)) KB)" -ForegroundColor Green
     } else {
-        Write-Host "  [MISSING] $file" -ForegroundColor Red
+        Write-Host "  [MISSING] $file (optional)" -ForegroundColor Yellow
     }
 }
 

@@ -28,63 +28,62 @@ namespace DMATool::Backend
         std::string pcileechDir = std::string(tempPath) + "DMATool_PCILeech\\";
         std::string pcileechExe = pcileechDir + "pcileech.exe";
         
-        // Always check ALL required files, not just pcileech.exe
+        // Check if already extracted (all files must exist)
         bool needsExtraction = false;
+        std::vector<std::string> requiredFiles = {
+            "pcileech.exe", "leechcore.dll", "FTD3XX.dll", "vmm.dll", "dbghelp.dll",
+            "vcruntime140.dll", "leechcore_driver.dll", "leechcore_device_hvsavedstate.dll",
+            "leechcore_device_rawtcp.dll", "symsrv.dll", "vmmyara.dll", "FTD3XXWU.dll"
+        };
         
-        if (!std::filesystem::exists(pcileechExe) ||
-            !std::filesystem::exists(pcileechDir + "leechcore.dll") ||
-            !std::filesystem::exists(pcileechDir + "FTD3XX.dll") ||
-            !std::filesystem::exists(pcileechDir + "vmm.dll") ||
-            !std::filesystem::exists(pcileechDir + "dbghelp.dll"))
-        {
-            needsExtraction = true;
+        for (const auto& file : requiredFiles) {
+            if (!std::filesystem::exists(pcileechDir + file)) {
+                needsExtraction = true;
+                break;
+            }
         }
         
-        if (!needsExtraction)
-        {
-            // Don't log every time - resources are already extracted
-            // std::cout << "[INFO] PCILeech resources already extracted to temp" << std::endl;
+        if (!needsExtraction) {
             return pcileechExe;
         }
         
         // Create temp directory
         std::filesystem::create_directories(pcileechDir);
         
-        // Extract PCILeech and dependencies from resources
-        std::cout << "[INFO] Extracting PCILeech and dependencies from embedded resources..." << std::endl;
+        // Extract all PCILeech files from embedded resources
+        std::cout << "[INFO] Extracting PCILeech from embedded resources..." << std::endl;
         
-        if (!ExtractResourceToFile(IDR_PCILEECH_EXE, pcileechExe))
-        {
-            std::cout << "[ERROR] Failed to extract pcileech.exe from resources" << std::endl;
-            return "";
+        // Extract each file
+        struct ResourceFile { int id; const char* name; };
+        ResourceFile resources[] = {
+            {IDR_PCILEECH_EXE, "pcileech.exe"},
+            {IDR_LEECHCORE_DLL, "leechcore.dll"},
+            {IDR_FTD3XX_DLL, "FTD3XX.dll"},
+            {IDR_VMM_DLL, "vmm.dll"},
+            {IDR_DBGHELP_DLL, "dbghelp.dll"},
+            {IDR_VCRUNTIME140_DLL, "vcruntime140.dll"},
+            {IDR_LEECHCORE_DRIVER, "leechcore_driver.dll"},
+            {IDR_LEECHCORE_DEVICE_HVSAVED, "leechcore_device_hvsavedstate.dll"},
+            {IDR_LEECHCORE_DEVICE_RAWTCP, "leechcore_device_rawtcp.dll"},
+            {IDR_SYMSRV_DLL, "symsrv.dll"},
+            {IDR_VMMYARA_DLL, "vmmyara.dll"},
+            {IDR_FTD3XXWU_DLL, "FTD3XXWU.dll"}
+        };
+        
+        bool allExtracted = true;
+        for (const auto& res : resources) {
+            if (!ExtractResourceToFile(res.id, pcileechDir + res.name)) {
+                std::cout << "[ERROR] Failed to extract " << res.name << std::endl;
+                allExtracted = false;
+            }
         }
         
-        if (!ExtractResourceToFile(IDR_LEECHCORE_DLL, pcileechDir + "leechcore.dll"))
-        {
-            std::cout << "[ERROR] Failed to extract leechcore.dll from resources" << std::endl;
-            return "";
-        }
-        
-        if (!ExtractResourceToFile(IDR_FTD3XX_DLL, pcileechDir + "FTD3XX.dll"))
-        {
-            std::cout << "[ERROR] Failed to extract FTD3XX.dll from resources" << std::endl;
-            return "";
-        }
-        
-        if (!ExtractResourceToFile(IDR_VMM_DLL, pcileechDir + "vmm.dll"))
-        {
-            std::cout << "[ERROR] Failed to extract vmm.dll from resources" << std::endl;
-            return "";
-        }
-        
-        if (!ExtractResourceToFile(IDR_DBGHELP_DLL, pcileechDir + "dbghelp.dll"))
-        {
-            std::cout << "[ERROR] Failed to extract dbghelp.dll from resources" << std::endl;
+        if (!allExtracted) {
+            std::cout << "[ERROR] Some files failed to extract" << std::endl;
             return "";
         }
         
         std::cout << "[SUCCESS] All PCILeech resources extracted to: " << pcileechDir << std::endl;
-        
         return pcileechExe;
     }
 
@@ -122,37 +121,20 @@ namespace DMATool::Backend
         std::thread testThread([this, config]() {
             bool success = false;
 
-            // Try LeechCore first (faster, real-time), fallback to PCILeech benchmark
+            // Run LeechCore test (no fallback - PCILeech uses same DLLs)
             switch (config.testType)
             {
             case BenchmarkTestType::QuickTest:
                 success = RunQuickTestLeechCore(config);
-                if (!success)
-                {
-                    AddLog("[WARNING] LeechCore test failed, falling back to PCILeech benchmark");
-                    success = RunQuickTest(config);
-                }
                 break;
             case BenchmarkTestType::Throughput:
                 success = RunThroughputTest(config);
                 break;
             case BenchmarkTestType::StressTest:
-                // Stress test uses same algorithm as Quick Speed Test but tracks min/max latency
                 success = RunQuickTestLeechCore(config);
-                if (!success)
-                {
-                    AddLog("[WARNING] LeechCore test failed, falling back to PCILeech benchmark");
-                    success = RunQuickTest(config);
-                }
                 break;
             case BenchmarkTestType::CustomTest:
-                // Custom test uses Quick Speed Test logic but with user-configured duration
                 success = RunQuickTestLeechCore(config);
-                if (!success)
-                {
-                    AddLog("[WARNING] LeechCore test failed, falling back to PCILeech benchmark");
-                    success = RunQuickTest(config);
-                }
                 break;
             default:
                 AddLog("[ERROR] Test type not implemented yet!");
@@ -163,9 +145,6 @@ namespace DMATool::Backend
             if (success)
             {
                 CalculateRating();
-                
-                // ALWAYS show [SUCCESS] in green, then rating in its color
-                // Don't use [ERROR] for LOW rating - test succeeded, rating is just low
                 AddLog("[SUCCESS] Test completed: " + m_CurrentResults.rating);
             }
             else
@@ -338,8 +317,7 @@ namespace DMATool::Backend
         if (!leechcore.Initialize())
         {
             AddLog("[ERROR] Failed to initialize LeechCore: " + leechcore.GetLastError());
-            AddLog("[WARNING] Falling back to PCILeech benchmark method");
-            return false;  // This will trigger fallback in calling code
+            return false;
         }
         
         AddLog("[SUCCESS] LeechCore initialized: " + leechcore.GetLastError());
@@ -556,7 +534,6 @@ namespace DMATool::Backend
         if (!leechcore.Initialize())
         {
             AddLog("[ERROR] Failed to initialize LeechCore: " + leechcore.GetLastError());
-            AddLog("[WARNING] Falling back to PCILeech benchmark method");
             return false;
         }
         
@@ -796,6 +773,13 @@ namespace DMATool::Backend
 
     void BenchmarkInterface::CalculateRating()
     {
+        // NEW RATING SCALE (Updated Dec 2025):
+        // Elite:   7000+ RPS (Gold - matches theme)
+        // Amazing: 6000+ RPS (#1E90FF - Dodger Blue)
+        // Great:   5000+ RPS (Green)
+        // Okay:    4000+ RPS (#5EA6B8 - Teal)
+        // Low:     <4000 RPS (Red)
+        
         // Determine rating based on test type
         if (m_CurrentResults.throughputMBps > 0)
         {
@@ -807,9 +791,9 @@ namespace DMATool::Backend
             else if (throughput >= 200)
                 m_CurrentResults.rating = "AMAZING";
             else if (throughput >= 150)
-                m_CurrentResults.rating = "GOOD";
+                m_CurrentResults.rating = "GREAT";
             else if (throughput >= 125)
-                m_CurrentResults.rating = "WARNING";
+                m_CurrentResults.rating = "OKAY";
             else
                 m_CurrentResults.rating = "LOW";
         }
@@ -825,54 +809,54 @@ namespace DMATool::Backend
                 
                 if (readSize <= 4096)  // 1KB-4KB: Standard scale
                 {
-                    if (rps >= 7500)
+                    if (rps >= 7000)
                         m_CurrentResults.rating = "ELITE";
-                    else if (rps >= 6500)
+                    else if (rps >= 6000)
                         m_CurrentResults.rating = "AMAZING";
-                    else if (rps >= 5200)
-                        m_CurrentResults.rating = "GOOD";
+                    else if (rps >= 5000)
+                        m_CurrentResults.rating = "GREAT";
                     else if (rps >= 4000)
-                        m_CurrentResults.rating = "WARNING";
+                        m_CurrentResults.rating = "OKAY";
                     else
                         m_CurrentResults.rating = "LOW";
                 }
                 else if (readSize == 65536)  // 64KB: Adjusted scale (~16x larger)
                 {
-                    if (rps >= 2400)
+                    if (rps >= 2200)
                         m_CurrentResults.rating = "ELITE";
-                    else if (rps >= 2200)
+                    else if (rps >= 1900)
                         m_CurrentResults.rating = "AMAZING";
-                    else if (rps >= 1800)
-                        m_CurrentResults.rating = "GOOD";
-                    else if (rps >= 1400)
-                        m_CurrentResults.rating = "WARNING";
+                    else if (rps >= 1600)
+                        m_CurrentResults.rating = "GREAT";
+                    else if (rps >= 1250)
+                        m_CurrentResults.rating = "OKAY";
                     else
                         m_CurrentResults.rating = "LOW";
                 }
                 else  // 256KB: Adjusted scale for chunked reads
                 {
-                    if (rps >= 600)
+                    if (rps >= 550)
                         m_CurrentResults.rating = "ELITE";
-                    else if (rps >= 550)
+                    else if (rps >= 475)
                         m_CurrentResults.rating = "AMAZING";
-                    else if (rps >= 480)
-                        m_CurrentResults.rating = "GOOD";
-                    else if (rps >= 380)
-                        m_CurrentResults.rating = "WARNING";
+                    else if (rps >= 400)
+                        m_CurrentResults.rating = "GREAT";
+                    else if (rps >= 320)
+                        m_CurrentResults.rating = "OKAY";
                     else
                         m_CurrentResults.rating = "LOW";
                 }
             }
-            else  // Standard Quick Speed Test
+            else  // Standard Quick Speed Test / Stress Test
             {
-                if (rps >= 7500)
+                if (rps >= 7000)
                     m_CurrentResults.rating = "ELITE";
-                else if (rps >= 6500)
+                else if (rps >= 6000)
                     m_CurrentResults.rating = "AMAZING";
-                else if (rps >= 5200)
-                    m_CurrentResults.rating = "GOOD";
+                else if (rps >= 5000)
+                    m_CurrentResults.rating = "GREAT";
                 else if (rps >= 4000)
-                    m_CurrentResults.rating = "WARNING";
+                    m_CurrentResults.rating = "OKAY";
                 else
                     m_CurrentResults.rating = "LOW";
             }

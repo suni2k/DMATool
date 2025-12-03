@@ -84,7 +84,7 @@
       <AdditionalIncludeDirectories>$(SolutionDir)vendor\imgui;$(SolutionDir)vendor\imgui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -219,6 +219,7 @@
     <None Include="DRIVER_FIX_REQUIRED.md" />
     <None Include="DRIVER_LEECHCORE_FIXES.md" />
     <None Include="DRIVER_VERSION_AND_BENCHMARK_FIXES.md" />
+    <None Include="FINAL_FIX_SUMMARY.md" />
     <None Include="FINAL_TESTING_GUIDE.md" />
     <None Include="FLASH_HANG_QUICK_FIX.md" />
     <None Include="FPGA_DETECTION_QUICK_REF.md" />
@@ -245,6 +246,8 @@
     <None Include="scripts\Compare-OpenOCD-Installations.ps1" />
     <None Include="scripts\Configure-Manifest.ps1" />
     <None Include="scripts\Copy-PCILeech-To-DMATool.ps1" />
+    <None Include="scripts\Copy-PCILeech-To-Solution.ps1" />
+    <None Include="scripts\Embed-PCILeech-Resources.ps1" />
     <None Include="scripts\Fix-Benchmark-Resource-Issues.ps1" />
     <None Include="scripts\Fix-Build-MT-Issue.ps1" />
     <None Include="scripts\Fix-ManifestBuild.ps1" />

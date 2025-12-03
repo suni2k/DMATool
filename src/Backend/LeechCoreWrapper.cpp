@@ -154,30 +154,27 @@ namespace DMATool::Backend
 
     bool LeechCoreWrapper::LoadDLL()
     {
-        // ONLY use temp directory - LeechCore DLLs are extracted by BenchmarkInterface
-        // All DLLs must be extracted before LeechCore can initialize
+        // Load LeechCore DLLs from temp directory (extracted by BenchmarkInterface)
         
         char tempPath[MAX_PATH];
         GetTempPathA(MAX_PATH, tempPath);
-        std::string pcileechTempDir = std::string(tempPath) + "DMATool_PCILeech\\";
-        std::string leechcorePath = pcileechTempDir + "leechcore.dll";
-        std::string ftd3xxPath = pcileechTempDir + "FTD3XX.dll";
+        std::string pcileechDir = std::string(tempPath) + "DMATool_PCILeech\\";
+        std::string leechcorePath = pcileechDir + "leechcore.dll";
+        std::string ftd3xxPath = pcileechDir + "FTD3XX.dll";
         
-        // Check if required DLLs exist before attempting to load
+        // Check if required DLLs exist
         if (!std::filesystem::exists(leechcorePath))
         {
             m_LastError = "leechcore.dll not found at: " + leechcorePath + "\n";
-            m_LastError += "Resources have not been extracted yet.\n";
-            m_LastError += "This should happen automatically when using the Benchmark tab.";
+            m_LastError += "Resources not extracted yet.\n";
+            m_LastError += "Access Benchmark tab first to trigger extraction.";
             std::cout << "[ERROR] " << m_LastError << std::endl;
             return false;
         }
         
         if (!std::filesystem::exists(ftd3xxPath))
         {
-            m_LastError = "FTD3XX.dll not found at: " + ftd3xxPath + "\n";
-            m_LastError += "Required dependency missing.\n";
-            m_LastError += "Please try reopening the Benchmark tab to re-extract resources.";
+            m_LastError = "FTD3XX.dll not found at: " + ftd3xxPath;
             std::cout << "[ERROR] " << m_LastError << std::endl;
             return false;
         }
@@ -187,9 +184,7 @@ namespace DMATool::Backend
         if (!hFtd3xx)
         {
             DWORD dwError = ::GetLastError();
-            m_LastError = "Failed to load FTD3XX.dll (error " + std::to_string(dwError) + ")\n";
-            m_LastError += "This is a required dependency for LeechCore.\n";
-            m_LastError += "Ensure FTDI driver is installed (see Data Port tab).";
+            m_LastError = "Failed to load FTD3XX.dll (error " + std::to_string(dwError) + ")";
             std::cout << "[ERROR] " << m_LastError << std::endl;
             return false;
         }
@@ -207,14 +202,7 @@ namespace DMATool::Backend
 
         // Failed to load leechcore.dll
         DWORD dwError = ::GetLastError();
-        m_LastError = "Failed to load leechcore.dll (error " + std::to_string(dwError) + ")\n";
-        m_LastError += "Location: " + leechcorePath + "\n";
-        m_LastError += "Possible causes:\n";
-        m_LastError += "  1. Missing dependencies (FTD3XX.dll loaded successfully)\n";
-        m_LastError += "  2. Corrupted DLL file\n";
-        m_LastError += "  3. Incompatible architecture (x64 vs x86)\n";
-        m_LastError += "\nTry reopening the Benchmark tab to re-extract resources.";
-        
+        m_LastError = "Failed to load leechcore.dll (error " + std::to_string(dwError) + ")";
         std::cout << "[ERROR] " << m_LastError << std::endl;
         
         // Clean up FTD3XX.dll if leechcore.dll failed to load

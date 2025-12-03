@@ -24,12 +24,21 @@ IDR_CH347_DLL_A64 RCDATA "tools\\ch347\\drivers\\CH347DLLA64.DLL"
 IDR_FT601_INF RCDATA "dmafiles\\Winusb_D3XX_Release_1.4.0.1\\WU_FTD3XX_Driver\\FTD3XXWU.Inf"
 IDR_FT601_CAT RCDATA "dmafiles\\Winusb_D3XX_Release_1.4.0.1\\WU_FTD3XX_Driver\\FTD3XXWU.cat"
 
-// PCILeech Files for Benchmark Tests
-IDR_PCILEECH_EXE RCDATA "dmafiles\\pcileech\\pcileech.exe"
-IDR_LEECHCORE_DLL RCDATA "dmafiles\\pcileech\\leechcore.dll"
-IDR_FTD3XX_DLL RCDATA "dmafiles\\pcileech\\FTD3XX.dll"
-IDR_VMM_DLL RCDATA "dmafiles\\pcileech\\vmm.dll"
-IDR_DBGHELP_DLL RCDATA "dmafiles\\pcileech\\dbghelp.dll"
+// PCILeech Files for Benchmark Tests (embedded from tools\PCILeech)
+IDR_PCILEECH_EXE RCDATA "tools\\PCILeech\\pcileech.exe"
+IDR_LEECHCORE_DLL RCDATA "tools\\PCILeech\\leechcore.dll"
+IDR_FTD3XX_DLL RCDATA "tools\\PCILeech\\FTD3XX.dll"
+IDR_VMM_DLL RCDATA "tools\\PCILeech\\vmm.dll"
+IDR_DBGHELP_DLL RCDATA "tools\\PCILeech\\dbghelp.dll"
+IDR_VCRUNTIME140_DLL RCDATA "tools\\PCILeech\\vcruntime140.dll"
+IDR_LEECHCORE_DRIVER RCDATA "tools\\PCILeech\\leechcore_driver.dll"
+IDR_LEECHCORE_DEVICE_HVSAVED RCDATA "tools\\PCILeech\\leechcore_device_hvsavedstate.dll"
+IDR_LEECHCORE_DEVICE_RAWTCP RCDATA "tools\\PCILeech\\leechcore_device_rawtcp.dll"
+IDR_SYMSRV_DLL RCDATA "tools\\PCILeech\\symsrv.dll"
+IDR_VMMYARA_DLL RCDATA "tools\\PCILeech\\vmmyara.dll"
+IDR_FTD3XXWU_DLL RCDATA "tools\\PCILeech\\FTD3XXWU.dll"
+
+
 /////////////////////////////////////////////////////////////////////////////
 //
 

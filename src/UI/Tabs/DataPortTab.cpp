@@ -613,18 +613,18 @@ namespace DMATool::UI::Tabs
         
         if (!results.rating.empty())
         {
-            // Color based on rating
+            // Color based on rating - NEW SCALE
             ImVec4 ratingColor;
             if (results.rating == "ELITE")
-                ratingColor = ImVec4(1.0f, 0.84f, 0.0f, 1.0f);  // Gold
+                ratingColor = ImVec4(0.90f, 0.75f, 0.25f, 1.0f);  // Gold (theme brandGoldLight)
             else if (results.rating == "AMAZING")
-                ratingColor = Colors::Success;
-            else if (results.rating == "GOOD")
-                ratingColor = Colors::Info;
-            else if (results.rating == "WARNING")
-                ratingColor = Colors::Warning;
+                ratingColor = ImVec4(0.118f, 0.565f, 1.0f, 1.0f);  // #1E90FF Dodger Blue
+            else if (results.rating == "GREAT")
+                ratingColor = ImVec4(0.3f, 0.8f, 0.3f, 1.0f);  // Green
+            else if (results.rating == "OKAY")
+                ratingColor = ImVec4(0.369f, 0.651f, 0.722f, 1.0f);  // #5EA6B8 Teal
             else
-                ratingColor = Colors::Destructive;
+                ratingColor = Colors::Destructive;  // Red for LOW
             
             // Make rating text larger
             ImGui::SetWindowFontScale(1.5f);
@@ -689,38 +689,38 @@ namespace DMATool::UI::Tabs
             {
                 uint32_t readSize = s_Config.customReadSizeBytes;
                 
-                if (readSize <= 4096)  // 1KB-4KB
+                if (readSize <= 4096)  // 1KB-4KB - NEW THRESHOLDS
                 {
-                    if (results.readsPerSecond >= 7500) rpsColor = ImVec4(1.0f, 0.84f, 0.0f, 1.0f);
-                    else if (results.readsPerSecond >= 6500) rpsColor = Colors::Success;
-                    else if (results.readsPerSecond >= 5200) rpsColor = Colors::Info;
-                    else if (results.readsPerSecond >= 4000) rpsColor = Colors::Warning;
+                    if (results.readsPerSecond >= 7000) rpsColor = ImVec4(0.90f, 0.75f, 0.25f, 1.0f);  // Gold
+                    else if (results.readsPerSecond >= 6000) rpsColor = ImVec4(0.118f, 0.565f, 1.0f, 1.0f);  // #1E90FF
+                    else if (results.readsPerSecond >= 5000) rpsColor = ImVec4(0.3f, 0.8f, 0.3f, 1.0f);  // Green
+                    else if (results.readsPerSecond >= 4000) rpsColor = ImVec4(0.369f, 0.651f, 0.722f, 1.0f);  // #5EA6B8
                     else rpsColor = Colors::Destructive;
                 }
-                else if (readSize == 65536)  // 64KB
+                else if (readSize == 65536)  // 64KB - Proportionally adjusted
                 {
-                    if (results.readsPerSecond >= 2400) rpsColor = ImVec4(1.0f, 0.84f, 0.0f, 1.0f);
-                    else if (results.readsPerSecond >= 2200) rpsColor = Colors::Success;
-                    else if (results.readsPerSecond >= 1800) rpsColor = Colors::Info;
-                    else if (results.readsPerSecond >= 1400) rpsColor = Colors::Warning;
+                    if (results.readsPerSecond >= 2200) rpsColor = ImVec4(0.90f, 0.75f, 0.25f, 1.0f);
+                    else if (results.readsPerSecond >= 1900) rpsColor = ImVec4(0.118f, 0.565f, 1.0f, 1.0f);
+                    else if (results.readsPerSecond >= 1600) rpsColor = ImVec4(0.3f, 0.8f, 0.3f, 1.0f);
+                    else if (results.readsPerSecond >= 1250) rpsColor = ImVec4(0.369f, 0.651f, 0.722f, 1.0f);
                     else rpsColor = Colors::Destructive;
                 }
-                else  // 256KB
+                else  // 256KB - Proportionally adjusted
                 {
-                    if (results.readsPerSecond >= 600) rpsColor = ImVec4(1.0f, 0.84f, 0.0f, 1.0f);
-                    else if (results.readsPerSecond >= 550) rpsColor = Colors::Success;
-                    else if (results.readsPerSecond >= 480) rpsColor = Colors::Info;
-                    else if (results.readsPerSecond >= 380) rpsColor = Colors::Warning;
+                    if (results.readsPerSecond >= 550) rpsColor = ImVec4(0.90f, 0.75f, 0.25f, 1.0f);
+                    else if (results.readsPerSecond >= 475) rpsColor = ImVec4(0.118f, 0.565f, 1.0f, 1.0f);
+                    else if (results.readsPerSecond >= 400) rpsColor = ImVec4(0.3f, 0.8f, 0.3f, 1.0f);
+                    else if (results.readsPerSecond >= 320) rpsColor = ImVec4(0.369f, 0.651f, 0.722f, 1.0f);
                     else rpsColor = Colors::Destructive;
                 }
             }
             else  // Quick Speed Test / Stress - standard thresholds
             {
-                if (results.readsPerSecond >= 7500) rpsColor = ImVec4(1.0f, 0.84f, 0.0f, 1.0f);
-                else if (results.readsPerSecond >= 6500) rpsColor = Colors::Success;
-                else if (results.readsPerSecond >= 5200) rpsColor = Colors::Info;
-                else if (results.readsPerSecond >= 4000) rpsColor = Colors::Warning;
-                else rpsColor = Colors::Destructive;
+                if (results.readsPerSecond >= 7000) rpsColor = ImVec4(0.90f, 0.75f, 0.25f, 1.0f);  // Gold - Elite
+                else if (results.readsPerSecond >= 6000) rpsColor = ImVec4(0.118f, 0.565f, 1.0f, 1.0f);  // #1E90FF - Amazing
+                else if (results.readsPerSecond >= 5000) rpsColor = ImVec4(0.3f, 0.8f, 0.3f, 1.0f);  // Green - Great
+                else if (results.readsPerSecond >= 4000) rpsColor = ImVec4(0.369f, 0.651f, 0.722f, 1.0f);  // #5EA6B8 - Okay
+                else rpsColor = Colors::Destructive;  // Red - Low
             }
             
             ImGui::TextColored(rpsColor, buffer);
@@ -855,42 +855,42 @@ namespace DMATool::UI::Tabs
         }
         else if (s_CurrentTestType == 3)  // Custom Test - show dynamic scale based on read size
         {
-            // Custom test scale adjusts based on read size
+            // Custom test scale adjusts based on read size - NEW THRESHOLDS
             uint32_t readSize = s_Config.customReadSizeBytes;
             
             if (readSize <= 4096)  // 1KB-4KB: Use standard RPS scale
             {
-                ImGui::TextColored(ImVec4(1.0f, 0.84f, 0.0f, 1.0f), "7500+ ELITE");
-                ImGui::TextColored(Colors::Success, "6500+ AMAZING");
-                ImGui::TextColored(Colors::Info, "5200+ GOOD");
-                ImGui::TextColored(Colors::Warning, "4000+ WARNING");
-                ImGui::TextColored(Colors::Destructive, "<4000 LOW");
+                ImGui::TextColored(ImVec4(0.90f, 0.75f, 0.25f, 1.0f), "7000+ ELITE");
+                ImGui::TextColored(ImVec4(0.118f, 0.565f, 1.0f, 1.0f), "6000+ AMAZING");
+                ImGui::TextColored(ImVec4(0.3f, 0.8f, 0.3f, 1.0f), "5000+ GREAT");
+                ImGui::TextColored(ImVec4(0.369f, 0.651f, 0.722f, 1.0f), "4000+ OKAY");
+                ImGui::TextColored(Colors::Destructive, "3000+ LOW");
             }
             else if (readSize == 65536)  // 64KB: Adjusted scale
             {
-                ImGui::TextColored(ImVec4(1.0f, 0.84f, 0.0f, 1.0f), "2400+ ELITE");
-                ImGui::TextColored(Colors::Success, "2200+ AMAZING");
-                ImGui::TextColored(Colors::Info, "1800+ GOOD");
-                ImGui::TextColored(Colors::Warning, "1400+ WARNING");
-                ImGui::TextColored(Colors::Destructive, "<1400 LOW");
+                ImGui::TextColored(ImVec4(0.90f, 0.75f, 0.25f, 1.0f), "2200+ ELITE");
+                ImGui::TextColored(ImVec4(0.118f, 0.565f, 1.0f, 1.0f), "1900+ AMAZING");
+                ImGui::TextColored(ImVec4(0.3f, 0.8f, 0.3f, 1.0f), "1600+ GREAT");
+                ImGui::TextColored(ImVec4(0.369f, 0.651f, 0.722f, 1.0f), "1250+ OKAY");
+                ImGui::TextColored(Colors::Destructive, "950+ LOW");
             }
             else  // 256KB: Adjusted scale for chunked reads
             {
-                ImGui::TextColored(ImVec4(1.0f, 0.84f, 0.0f, 1.0f), "600+ ELITE");
-                ImGui::TextColored(Colors::Success, "550+ AMAZING");
-                ImGui::TextColored(Colors::Info, "480+ GOOD");
-                ImGui::TextColored(Colors::Warning, "380+ WARNING");
-                ImGui::TextColored(Colors::Destructive, "<380 LOW");
+                ImGui::TextColored(ImVec4(0.90f, 0.75f, 0.25f, 1.0f), "550+ ELITE");
+                ImGui::TextColored(ImVec4(0.118f, 0.565f, 1.0f, 1.0f), "475+ AMAZING");
+                ImGui::TextColored(ImVec4(0.3f, 0.8f, 0.3f, 1.0f), "400+ GREAT");
+                ImGui::TextColored(ImVec4(0.369f, 0.651f, 0.722f, 1.0f), "320+ OKAY");
+                ImGui::TextColored(Colors::Destructive, "240+ LOW");
             }
         }
         else  // Speed test (Quick, Stress)
         {
-            // Speed test - show RPS scale
-            ImGui::TextColored(ImVec4(1.0f, 0.84f, 0.0f, 1.0f), "7500+ ELITE");
-            ImGui::TextColored(Colors::Success, "6500+ AMAZING");
-            ImGui::TextColored(Colors::Info, "5200+ GOOD");
-            ImGui::TextColored(Colors::Warning, "4000+ WARNING");
-            ImGui::TextColored(Colors::Destructive, "<4000 LOW");
+            // Speed test - show RPS scale - NEW THRESHOLDS
+            ImGui::TextColored(ImVec4(0.90f, 0.75f, 0.25f, 1.0f), "7000+ ELITE");
+            ImGui::TextColored(ImVec4(0.118f, 0.565f, 1.0f, 1.0f), "6000+ AMAZING");
+            ImGui::TextColored(ImVec4(0.3f, 0.8f, 0.3f, 1.0f), "5000+ GREAT");
+            ImGui::TextColored(ImVec4(0.369f, 0.651f, 0.722f, 1.0f), "4000+ OKAY");
+            ImGui::TextColored(Colors::Destructive, "3000+ LOW");
         }
         
         ImGui::SetWindowFontScale(1.0f);
@@ -948,18 +948,18 @@ namespace DMATool::UI::Tabs
                         ImGui::TextColored(Colors::Success, successPart.c_str());
                         ImGui::SameLine();
                         
-                        // Display rating part in appropriate color
+                        // Display rating part in appropriate color - NEW COLORS
                         ImVec4 ratingColor = Colors::MutedForeground;
                         if (ratingPart.find("ELITE") != std::string::npos)
-                            ratingColor = ImVec4(1.0f, 0.84f, 0.0f, 1.0f);  // Gold
+                            ratingColor = ImVec4(0.90f, 0.75f, 0.25f, 1.0f);  // Gold
                         else if (ratingPart.find("AMAZING") != std::string::npos)
-                            ratingColor = Colors::Success;
-                        else if (ratingPart.find("GOOD") != std::string::npos)
-                            ratingColor = Colors::Info;
-                        else if (ratingPart.find("WARNING") != std::string::npos)
-                            ratingColor = Colors::Warning;
+                            ratingColor = ImVec4(0.118f, 0.565f, 1.0f, 1.0f);  // #1E90FF Dodger Blue
+                        else if (ratingPart.find("GREAT") != std::string::npos || ratingPart.find("GOOD") != std::string::npos)
+                            ratingColor = ImVec4(0.3f, 0.8f, 0.3f, 1.0f);  // Green
+                        else if (ratingPart.find("OKAY") != std::string::npos || ratingPart.find("WARNING") != std::string::npos)
+                            ratingColor = ImVec4(0.369f, 0.651f, 0.722f, 1.0f);  // #5EA6B8 Teal
                         else if (ratingPart.find("LOW") != std::string::npos)
-                            ratingColor = Colors::Destructive;
+                            ratingColor = Colors::Destructive;  // Red
                         
                         ImGui::TextColored(ratingColor, ratingPart.c_str());
                     }
