@@ -535,10 +535,32 @@
     <None Include="scripts\Fix-Build-MT-Issue.ps1">
       <Filter>Scripts\Build</Filter>
     </None>
-    <None Include="BUILD_FIX_SUMMARY.md" />
     <None Include="scripts\Set-Release-NoConsole.ps1">
       <Filter>Scripts\Build</Filter>
     </None>
+    <None Include="CONSOLE_HIDDEN_RELEASE.md" />
+    <None Include="CONSOLE_WINDOW_CONFIG.md" />
+    <None Include="QUICK_START_AFTER_CLEANUP.md" />
+    <None Include="RELEASE_BUILD_FIXED.md" />
+    <None Include="scripts\Hide-Release-Console.ps1" />
+    <None Include="scripts\Fix-Benchmark-Resource-Issues.ps1" />
+    <None Include="BENCHMARK_ISSUES_DIAGNOSIS.md" />
+    <None Include="scripts\Copy-PCILeech-To-DMATool.ps1" />
+    <None Include="scripts\Update-Resources-RC.ps1" />
+    <None Include="RESOURCE_EMBEDDING_IMPLEMENTATION.md" />
+    <None Include="RESOURCE_EMBEDDING_SUCCESS.md" />
+    <None Include="scripts\Fix-Resource-Paths.ps1" />
+    <None Include="scripts\Test-Resource-Extraction.ps1" />
+    <None Include="RESOURCE_EXTRACTION_FIX_COMPLETE.md" />
+    <None Include="scripts\Test-Embedded-Resources.ps1" />
+    <None Include="RESOURCE_116_FIX.md" />
+    <None Include="RESOURCE_116_FIXED.md" />
+    <None Include="ALL_RESOURCE_ISSUES_FIXED.md" />
+    <None Include="FINAL_TESTING_GUIDE.md" />
+    <None Include="scripts\Quick-Test-DMATool.ps1" />
+    <None Include="STANDALONE_EXE_COMPLETE.md" />
+    <None Include="QUICK_REFERENCE_STANDALONE.md" />
+    <None Include="DRIVER_LEECHCORE_FIXES.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DMATool.rc">

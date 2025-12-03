@@ -141,6 +141,8 @@
   <ItemGroup>
     <None Include=".github\copilot-instructions.md" />
     <None Include="ADMINISTRATOR_MANIFEST_SETUP.md" />
+    <None Include="ALL_RESOURCE_ISSUES_FIXED.md" />
+    <None Include="BENCHMARK_ISSUES_DIAGNOSIS.md" />
     <None Include="COMPLETE_SETUP_GUIDE.md" />
     <None Include="CONSOLE_HIDDEN_RELEASE.md" />
     <None Include="CONSOLE_WINDOW_CONFIG.md" />
@@ -214,6 +216,8 @@
     <None Include="docs\XC7A50T_75T_IDCODE_ALIASING.md" />
     <None Include="docs\XC7A75T_SUPPORT_ADDED.md" />
     <None Include="DRIVER_FIX_REQUIRED.md" />
+    <None Include="DRIVER_LEECHCORE_FIXES.md" />
+    <None Include="FINAL_TESTING_GUIDE.md" />
     <None Include="FLASH_HANG_QUICK_FIX.md" />
     <None Include="FPGA_DETECTION_QUICK_REF.md" />
     <None Include="MANIFEST_CORRECT_LOCATION.md" />
@@ -221,10 +225,16 @@
     <None Include="NEXT_STEPS.md" />
     <None Include="OPENOCD_CLEANUP_QUICKSTART.md" />
     <None Include="QUICK_REFERENCE.md" />
+    <None Include="QUICK_REFERENCE_STANDALONE.md" />
     <None Include="QUICK_START_AFTER_CLEANUP.md" />
     <None Include="README.md" />
     <None Include=".gitignore" />
     <None Include="RELEASE_BUILD_FIXED.md" />
+    <None Include="RESOURCE_116_FIX.md" />
+    <None Include="RESOURCE_116_FIXED.md" />
+    <None Include="RESOURCE_EMBEDDING_IMPLEMENTATION.md" />
+    <None Include="RESOURCE_EMBEDDING_SUCCESS.md" />
+    <None Include="RESOURCE_EXTRACTION_FIX_COMPLETE.md" />
     <None Include="scripts\Add-BSCAN-Resources.ps1" />
     <None Include="scripts\Add-TempDirectoryManager.ps1" />
     <None Include="scripts\Check-OpenOCD-Status.ps1" />
@@ -232,21 +242,26 @@
     <None Include="scripts\Compare-CH347-Full.ps1" />
     <None Include="scripts\Compare-OpenOCD-Installations.ps1" />
     <None Include="scripts\Configure-Manifest.ps1" />
+    <None Include="scripts\Copy-PCILeech-To-DMATool.ps1" />
+    <None Include="scripts\Fix-Benchmark-Resource-Issues.ps1" />
     <None Include="scripts\Fix-Build-MT-Issue.ps1" />
     <None Include="scripts\Fix-ManifestBuild.ps1" />
     <None Include="scripts\Fix-MT-Tool-Issue.ps1" />
     <None Include="scripts\Fix-OpenOCD-Version.ps1" />
     <None Include="scripts\Fix-RC-Paths.ps1" />
+    <None Include="scripts\Fix-Resource-Paths.ps1" />
     <None Include="scripts\Hide-Release-Console.ps1" />
     <None Include="scripts\Kill-OpenOCD-Admin.ps1" />
     <None Include="scripts\Kill-OpenOCD-Processes.ps1" />
     <None Include="scripts\Quick-DMA-Test.ps1" />
     <None Include="scripts\Quick-FPGA-Test.ps1" />
+    <None Include="scripts\Quick-Test-DMATool.ps1" />
     <None Include="scripts\Reset-CH347-Adapter.ps1" />
     <None Include="scripts\Set-Release-NoConsole.ps1" />
     <None Include="scripts\Setup-PCILeech.ps1" />
     <None Include="scripts\Sync-OpenOCD-Files.ps1" />
     <None Include="scripts\Test-DeviceMasking.ps1" />
+    <None Include="scripts\Test-Embedded-Resources.ps1" />
     <None Include="scripts\Test-Flash-Debug.ps1" />
     <None Include="scripts\Test-Flash-Slow.ps1" />
     <None Include="scripts\Test-Flash-Working.ps1" />
@@ -254,11 +269,14 @@
     <None Include="scripts\Test-OpenOCD-Manual.ps1" />
     <None Include="scripts\Test-OpenOCD-Simple.ps1" />
     <None Include="scripts\Test-Resource-Embedding.ps1" />
+    <None Include="scripts\Test-Resource-Extraction.ps1" />
     <None Include="scripts\Update-DMATool-RC.ps1" />
+    <None Include="scripts\Update-Resources-RC.ps1" />
     <None Include="scripts\Verify-Flash-Resources.ps1" />
     <None Include="scripts\Verify-Flash.ps1" />
     <None Include="scripts\Verify-OpenOCD-Resources.ps1" />
     <None Include="scripts\Verify-Resources.ps1" />
+    <None Include="STANDALONE_EXE_COMPLETE.md" />
     <None Include="VISUAL_STUDIO_MANIFEST_GUIDE.md" />
   </ItemGroup>
   <ItemGroup>

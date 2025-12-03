@@ -21,19 +21,18 @@ IDR_CH347_DLL RCDATA "tools\\ch347\\drivers\\CH347DLL.DLL"
 IDR_CH347_DLL_A64 RCDATA "tools\\ch347\\drivers\\CH347DLLA64.DLL"
 
 // FT601 Driver Files
-IDR_FT601_INF RCDATA "tools\\ftdi601\\drivers\\FTD3XXWU.Inf"
-IDR_FT601_CAT RCDATA "tools\\ftdi601\\drivers\\FTD3XXWU.cat"
+IDR_FT601_INF RCDATA "dmafiles\\Winusb_D3XX_Release_1.4.0.1\\WU_FTD3XX_Driver\\FTD3XXWU.Inf"
+IDR_FT601_CAT RCDATA "dmafiles\\Winusb_D3XX_Release_1.4.0.1\\WU_FTD3XX_Driver\\FTD3XXWU.cat"
 
+// PCILeech Files for Benchmark Tests
+IDR_PCILEECH_EXE RCDATA "dmafiles\\pcileech\\pcileech.exe"
+IDR_LEECHCORE_DLL RCDATA "dmafiles\\pcileech\\leechcore.dll"
+IDR_FTD3XX_DLL RCDATA "dmafiles\\pcileech\\FTD3XX.dll"
+IDR_VMM_DLL RCDATA "dmafiles\\pcileech\\vmm.dll"
+IDR_DBGHELP_DLL RCDATA "dmafiles\\pcileech\\dbghelp.dll"
 /////////////////////////////////////////////////////////////////////////////
 //
 
-// LeechCore DLLs for Benchmark Tab
-IDR_LEECHCORE_DLL RCDATA "vendor\\leechcore\\leechcore.dll"
-IDR_FTD3XX_DLL RCDATA "vendor\\leechcore\\FTD3XX.dll"
-IDR_FTD3XXWU_DLL RCDATA "vendor\\leechcore\\FTD3XXWU.dll"
-IDR_LEECHCORE_DEVICE_HVSAVED RCDATA "vendor\\leechcore\\leechcore_device_hvsavedstate.dll"
-IDR_LEECHCORE_DEVICE_RAWTCP RCDATA "vendor\\leechcore\\leechcore_device_rawtcp.dll"
-IDR_LEECHCORE_DRIVER RCDATA "vendor\\leechcore\\leechcore_driver.dll"
 // BSCAN Bitstreams for FPGA Flash Programming
 //
 IDR_BSCAN_XC7A100T                RCDATA                  ".\\dmafiles\\CH347FPGATool\\OpenOCD_CH347\\share\\openocd\\scripts\\cpld\\xilinx\\bscan_spi_xc7a100t.bit"

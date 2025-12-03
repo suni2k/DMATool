@@ -22,6 +22,11 @@
 #define IDR_FT601_INF                   116
 #define IDR_FT601_CAT                   117
 
+// PCILeech executable for benchmark tests
+#define IDR_PCILEECH_EXE                120
+#define IDR_VMM_DLL                     121
+#define IDR_DBGHELP_DLL                 122
+
 // LeechCore embedded DLL resource IDs
 #define IDR_LEECHCORE_DLL               200
 #define IDR_FTD3XX_DLL                  201

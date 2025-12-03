@@ -1032,10 +1032,12 @@ namespace DMATool::UI::Tabs
         ImGui::SameLine(70);
         if (s_FT601DriverInfo.installed && s_FT601DriverInfo.isCorrectDriver)
             ImGui::TextColored(Colors::Success, "Installed");
+        else if (s_FT601DriverInfo.installed && !s_FT601DriverInfo.isCorrectDriver)
+            ImGui::TextColored(Colors::Warning, "Installed (out of date)");
         else if (!s_FT601DriverInfo.deviceName.empty() && !s_FT601DriverInfo.isCorrectDriver)
             ImGui::TextColored(Colors::Warning, "Driver Needed");
         else
-            ImGui::TextColored(Colors::Destructive, "Not Detected");
+            ImGui::Text("Not Detected");
         
         ImGui::PushStyleColor(ImGuiCol_Text, Colors::MutedForeground);
         ImGui::Text("Device:");
@@ -1133,12 +1135,20 @@ namespace DMATool::UI::Tabs
                     AddLog("[INFO] Driver Version: " + s_FT601DriverInfo.version);
                     AddLog("[INFO] VID/PID: " + s_FT601DriverInfo.vidPid);
                 }
+                else if (s_FT601DriverInfo.installed && !s_FT601DriverInfo.isCorrectDriver)
+                {
+                    AddLog("[WARNING] FTDI WinUSB driver is out of date");
+                    AddLog("[INFO] Device: " + s_FT601DriverInfo.deviceName);
+                    AddLog("[INFO] Current version: " + s_FT601DriverInfo.version);
+                    AddLog("[INFO] Required version: 1.4.0.1 or higher");
+                    AddLog("[INFO] Action: Click 'Install FTDI Driver' to update to version 1.4.0.1");
+                }
                 else if (!s_FT601DriverInfo.deviceName.empty() && !s_FT601DriverInfo.isCorrectDriver)
                 {
                     AddLog("[WARNING] FTDI WinUSB driver not installed");
                     AddLog("[INFO] Device detected: " + s_FT601DriverInfo.deviceName);
-                    AddLog("[INFO] Driver version: " + (s_FT601DriverInfo.version.empty() ? "Not installed" : s_FT601DriverInfo.version));
-                    AddLog("[INFO] Recommended version: 1.4.0.1 or higher");
+                    AddLog("[INFO] Driver version: Not installed (using default Windows driver)");
+                    AddLog("[INFO] Required version: 1.4.0.1 or higher");
                     AddLog("[INFO] Action: Click 'Install FTDI Driver' to install WinUSB driver");
                 }
                 else

@@ -15,8 +15,8 @@ namespace DMATool::Backend
         FT601DriverInfo info;
         std::string output;
 
-        // Query PnP devices for FTDI FT601 and get driver properties
-        // Use Get-PnpDeviceProperty to reliably get driver version
+        // Query PnP devices for FTDI FT601 and get driver INF version (not OS driver version)
+        // DEVPKEY_Device_DriverVersion returns OS version (10.0.x), we need the INF version
         std::string command = 
             "$device = Get-PnpDevice | Where-Object {$_.InstanceId -like '*VID_" + std::string(FT601_VID) + "&PID_" + std::string(FT601_PID) + "*'} | Select-Object -First 1; "
             "if ($device) { "
@@ -24,34 +24,63 @@ namespace DMATool::Backend
             "  $props['FriendlyName'] = $device.FriendlyName; "
             "  $props['InstanceId'] = $device.InstanceId; "
             "  $props['Status'] = $device.Status; "
-            "  $driverVersion = (Get-PnpDeviceProperty -InstanceId $device.InstanceId -KeyName 'DEVPKEY_Device_DriverVersion' -ErrorAction SilentlyContinue).Data; "
-            "  if ($driverVersion) { $props['DriverVersion'] = $driverVersion } else { $props['DriverVersion'] = '' } "
+            // Get the INF provider version from the driver package, not the OS driver version
+            "  $driverInf = (Get-PnpDeviceProperty -InstanceId $device.InstanceId -KeyName 'DEVPKEY_Device_DriverInfPath' -ErrorAction SilentlyContinue).Data; "
+            "  if ($driverInf) { "
+            "    $infFile = Join-Path $env:SystemRoot ('INF\\' + $driverInf); "
+            "    if (Test-Path $infFile) { "
+            "      $infContent = Get-Content $infFile -Raw; "
+            "      if ($infContent -match 'DriverVer\\s*=\\s*[^,]+,\\s*([\\d.]+)') { "
+            "        $props['DriverVersion'] = $Matches[1]; "
+            "      } else { $props['DriverVersion'] = ''; } "
+            "    } else { $props['DriverVersion'] = ''; } "
+            "  } else { $props['DriverVersion'] = ''; } "
             "  Write-Output \"FriendlyName: $($props['FriendlyName'])\"; "
             "  Write-Output \"InstanceId: $($props['InstanceId'])\"; "
             "  Write-Output \"Status: $($props['Status'])\"; "
             "  Write-Output \"DriverVersion: $($props['DriverVersion'])\" "
             "}";
+        std::cout << "====================" << std::endl;
+        std::cout << command << std::endl;
+        std::cout << "====================" << std::endl;
 
         if (ExecutePowerShell(command, output))
         {
             // Parse the output
             info = ParseDriverInfo(output);
             
-            // Determine if the correct driver is installed based on driver version
+            // Driver version logic:
+            // - Device detected (has friendly name) = device is connected
+            // - No version or empty version = driver NOT installed (using default Windows driver)
+            // - Version present = driver IS installed
+            //   - Version < 1.4.0.1 = out of date
+            //   - Version >= 1.4.0.1 = correct version
+            
             if (!info.deviceName.empty())
             {
-                // Check if driver version is present and is 1.4.0.1 or higher
-                if (!info.version.empty() && info.version != "Unknown")
+                // Device is detected
+                if (info.version.empty() || info.version == "Unknown")
                 {
-                    // Driver is installed - version 1.4.0.1 is the correct WinUSB driver
-                    info.isCorrectDriver = true;
-                    info.installed = true;
+                    // No driver version = not installed (using default Windows driver)
+                    info.installed = false;
+                    info.isCorrectDriver = false;
                 }
                 else
                 {
-                    // Device detected but no driver version = default Windows driver
-                    info.isCorrectDriver = false;
-                    info.installed = false;
+                    // Driver is installed - check version
+                    info.installed = true;
+                    
+                    // Compare version with 1.4.0.1
+                    if (CompareVersion(info.version, "1.4.0.1") < 0)
+                    {
+                        // Version is lower than 1.4.0.1 = out of date
+                        info.isCorrectDriver = false;  // Mark as incorrect (out of date)
+                    }
+                    else
+                    {
+                        // Version is 1.4.0.1 or higher = correct
+                        info.isCorrectDriver = true;
+                    }
                 }
             }
         }
@@ -66,93 +95,18 @@ namespace DMATool::Backend
         
         std::string driverPath;
         
-        // Try embedded resources first
-        std::cout << "[INFO] Extracting driver files..." << std::endl;
+        // Extract driver files from embedded resources - NO FALLBACK
+        std::cout << "[INFO] Extracting driver files from embedded resources..." << std::endl;
         if (progressCallback) progressCallback("Extracting driver files...");
         
-        if (ExtractDriverFiles(driverPath))
+        if (!ExtractDriverFiles(driverPath))
         {
-            std::cout << "[INFO] Using embedded driver files from temp" << std::endl;
+            std::cerr << "[ERROR] Failed to extract FTDI driver files from embedded resources" << std::endl;
+            if (progressCallback) progressCallback("Failed to extract driver files!");
+            return false;
         }
-        else
-        {
-            // Fallback: Copy from external directory (same as CH347)
-            std::cout << "[INFO] Embedded resources not found, using external driver files" << std::endl;
-            if (progressCallback) progressCallback("Loading external driver files...");
-            
-            // Create temp directory
-            char tempPath[MAX_PATH];
-            GetTempPathA(MAX_PATH, tempPath);
-            driverPath = std::string(tempPath) + "DMATool\\drivers";
-            
-            // Create directory
-            std::filesystem::create_directories(driverPath);
-            
-            // Find source directory - use tools folder like CH347
-            std::string sourceDir;
-            std::vector<std::string> searchPaths = {
-                "tools\\ftdi601\\drivers",  // From solution root
-                "..\\..\\tools\\ftdi601\\drivers",  // From bin\Debug-x64 or bin\Release-x64
-            };
-            
-            // Get exe directory to try absolute paths
-            char exePath[MAX_PATH];
-            GetModuleFileNameA(nullptr, exePath, MAX_PATH);
-            std::filesystem::path exeDir = std::filesystem::path(exePath).parent_path();
-            
-            // Try relative to exe directory
-            searchPaths.push_back((exeDir.parent_path().parent_path() / "tools\\ftdi601\\drivers").string());
-            
-            bool found = false;
-            for (const auto& path : searchPaths)
-            {
-                if (std::filesystem::exists(path))
-                {
-                    sourceDir = path;
-                    found = true;
-                    std::cout << "[DEBUG] Found driver files at: " << sourceDir << std::endl;
-                    break;
-                }
-            }
-            
-            if (!found)
-            {
-                std::cerr << "[ERROR] Driver source directory not found. Searched:" << std::endl;
-                for (const auto& path : searchPaths)
-                {
-                    std::cerr << "  - " << path << std::endl;
-                }
-                return false;
-            }
-            
-            std::cout << "[INFO] Copying driver files from: " << sourceDir << std::endl;
-            
-            try
-            {
-                // Copy INF file
-                std::filesystem::copy_file(
-                    sourceDir + "\\FTD3XXWU.Inf",
-                    driverPath + "\\FTD3XXWU.Inf",
-                    std::filesystem::copy_options::overwrite_existing
-                );
-                std::cout << "[DEBUG] Copied FTD3XXWU.Inf" << std::endl;
-                
-                // Copy CAT file
-                std::filesystem::copy_file(
-                    sourceDir + "\\FTD3XXWU.cat",
-                    driverPath + "\\FTD3XXWU.cat",
-                    std::filesystem::copy_options::overwrite_existing
-                );
-                std::cout << "[DEBUG] Copied FTD3XXWU.cat" << std::endl;
-                
-                std::cout << "[SUCCESS] Driver files copied to temp directory" << std::endl;
-            }
-            catch (const std::exception& e)
-            {
-                std::cerr << "[ERROR] Failed to copy driver files: " << e.what() << std::endl;
-                return false;
-            }
-        }
+        
+        std::cout << "[INFO] Using embedded driver files from temp" << std::endl;
 
         std::string driverInfPath = driverPath + "\\FTD3XXWU.Inf";
         
@@ -321,7 +275,7 @@ namespace DMATool::Backend
             return false;
         }
         
-        // Uninstall and delete the driver package - RUN SYNCHRONOUSLY
+        // Uninstall and delete the driver package - RUN SYNCHRONously
         std::cout << "[INFO] Uninstalling driver package: " << oemInf << std::endl;
         if (progressCallback) progressCallback("Removing driver from devices...");
         
@@ -540,7 +494,7 @@ namespace DMATool::Backend
             return false;
         }
         
-        HRSRC hRes = FindResourceA(hModule, MAKEINTRESOURCEA(resourceId), "RCDATA");
+        HRSRC hRes = FindResourceA(hModule, MAKEINTRESOURCEA(resourceId), MAKEINTRESOURCEA(RT_RCDATA));
         if (!hRes)
         {
             std::cerr << "[ERROR] Resource not found: " << resourceId << std::endl;
@@ -601,5 +555,50 @@ namespace DMATool::Backend
         {
             std::cerr << "[WARNING] Failed to cleanup driver files: " << e.what() << std::endl;
         }
+    }
+
+    int FT601DriverInterface::CompareVersion(const std::string& v1, const std::string& v2)
+    {
+        // Parse version strings like "1.4.0.1" and compare
+        // Returns: -1 if v1 < v2, 0 if equal, 1 if v1 > v2
+        
+        auto parseVersion = [](const std::string& ver) -> std::vector<int> {
+            std::vector<int> parts;
+            std::string current;
+            for (char c : ver)
+            {
+                if (c == '.')
+                {
+                    if (!current.empty())
+                    {
+                        parts.push_back(std::stoi(current));
+                        current.clear();
+                    }
+                }
+                else if (std::isdigit(c))
+                {
+                    current += c;
+                }
+            }
+            if (!current.empty())
+                parts.push_back(std::stoi(current));
+            return parts;
+        };
+        
+        std::vector<int> parts1 = parseVersion(v1);
+        std::vector<int> parts2 = parseVersion(v2);
+        
+        // Compare each part
+        size_t maxLen = (parts1.size() > parts2.size()) ? parts1.size() : parts2.size();
+        for (size_t i = 0; i < maxLen; ++i)
+        {
+            int p1 = (i < parts1.size()) ? parts1[i] : 0;
+            int p2 = (i < parts2.size()) ? parts2[i] : 0;
+            
+            if (p1 < p2) return -1;
+            if (p1 > p2) return 1;
+        }
+        
+        return 0;  // Equal
     }
 }

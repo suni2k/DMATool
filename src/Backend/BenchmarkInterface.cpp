@@ -1,10 +1,12 @@
 #include "BenchmarkInterface.h"
+#include "../resource.h"
 #include <Windows.h>
 #include <iostream>
 #include <sstream>
 #include <regex>
 #include <filesystem>
 #include <thread>
+#include <fstream>
 
 namespace DMATool::Backend
 {
@@ -19,22 +21,39 @@ namespace DMATool::Backend
 
     std::string BenchmarkInterface::GetPCILeechPath()
     {
-        // Check multiple locations for pcileech.exe
-        std::vector<std::string> searchPaths = {
-            "C:\\Tools\\PCILeech\\pcileech.exe",
-            "pcileech.exe", // Current directory
-            "tools\\pcileech\\pcileech.exe", // Embedded in project
-        };
-
-        for (const auto& path : searchPaths)
+        // Extract PCILeech from embedded resources to temp directory
+        char tempPath[MAX_PATH];
+        GetTempPathA(MAX_PATH, tempPath);
+        
+        std::string pcileechDir = std::string(tempPath) + "DMATool_PCILeech\\";
+        std::string pcileechExe = pcileechDir + "pcileech.exe";
+        
+        // Check if already extracted
+        if (std::filesystem::exists(pcileechExe))
         {
-            if (std::filesystem::exists(path))
-            {
-                return path;
-            }
+            return pcileechExe;
         }
-
-        return "";
+        
+        // Create temp directory
+        std::filesystem::create_directories(pcileechDir);
+        
+        // Extract PCILeech and dependencies from resources
+        std::cout << "[INFO] Extracting PCILeech from embedded resources..." << std::endl;
+        
+        if (!ExtractResourceToFile(IDR_PCILEECH_EXE, pcileechExe))
+        {
+            std::cout << "[ERROR] Failed to extract pcileech.exe from resources" << std::endl;
+            return "";
+        }
+        
+        ExtractResourceToFile(IDR_LEECHCORE_DLL, pcileechDir + "leechcore.dll");
+        ExtractResourceToFile(IDR_FTD3XX_DLL, pcileechDir + "FTD3XX.dll");
+        ExtractResourceToFile(IDR_VMM_DLL, pcileechDir + "vmm.dll");
+        ExtractResourceToFile(IDR_DBGHELP_DLL, pcileechDir + "dbghelp.dll");
+        
+        std::cout << "[SUCCESS] PCILeech extracted to: " << pcileechDir << std::endl;
+        
+        return pcileechExe;
     }
 
     bool BenchmarkInterface::IsPCILeechAvailable()
@@ -54,7 +73,7 @@ namespace DMATool::Backend
         if (!IsPCILeechAvailable())
         {
             if (logCallback)
-                logCallback("[ERROR] PCILeech not found! Install to C:\\Tools\\PCILeech\\");
+                logCallback("[ERROR] Failed to extract PCILeech from embedded resources!");
             return false;
         }
 
@@ -826,5 +845,55 @@ namespace DMATool::Backend
         
         // Also store in results
         m_CurrentResults.messages.push_back(message);
+    }
+
+    bool BenchmarkInterface::ExtractResourceToFile(int resourceId, const std::string& outputPath)
+    {
+        HMODULE hModule = GetModuleHandleA(nullptr);
+        if (!hModule)
+        {
+            std::cout << "[ERROR] Failed to get module handle" << std::endl;
+            return false;
+        }
+        
+        HRSRC hResource = FindResourceA(hModule, MAKEINTRESOURCEA(resourceId), MAKEINTRESOURCEA(RT_RCDATA));
+        if (!hResource)
+        {
+            std::cout << "[ERROR] Resource not found: " << resourceId << std::endl;
+            return false;
+        }
+
+        HGLOBAL hLoadedResource = LoadResource(hModule, hResource);
+        if (!hLoadedResource)
+        {
+            std::cout << "[ERROR] Failed to load resource: " << resourceId << std::endl;
+            return false;
+        }
+
+        LPVOID pLockedResource = LockResource(hLoadedResource);
+        if (!pLockedResource)
+        {
+            std::cout << "[ERROR] Failed to lock resource: " << resourceId << std::endl;
+            return false;
+        }
+
+        DWORD dwResourceSize = SizeofResource(hModule, hResource);
+        if (dwResourceSize == 0)
+        {
+            std::cout << "[ERROR] Resource size is 0: " << resourceId << std::endl;
+            return false;
+        }
+
+        std::ofstream outFile(outputPath, std::ios::binary);
+        if (!outFile.is_open())
+        {
+            std::cout << "[ERROR] Failed to create file: " << outputPath << std::endl;
+            return false;
+        }
+
+        outFile.write(static_cast<const char*>(pLockedResource), dwResourceSize);
+        outFile.close();
+
+        return true;
     }
 }

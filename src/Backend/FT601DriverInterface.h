@@ -45,6 +45,9 @@ namespace DMATool::Backend
         // Parse driver info from pnputil output
         FT601DriverInfo ParseDriverInfo(const std::string& output);
         
+        // Compare version strings (returns -1 if v1 < v2, 0 if equal, 1 if v1 > v2)
+        static int CompareVersion(const std::string& v1, const std::string& v2);
+        
         // Extract driver files from embedded resources
         bool ExtractDriverFiles(std::string& outPath);
         

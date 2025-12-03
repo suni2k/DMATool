@@ -86,6 +86,9 @@ namespace DMATool::Backend
         // PCILeech command execution
         bool ExecutePCILeechCommand(const std::string& args, std::string& output);
         
+        // Resource extraction
+        static bool ExtractResourceToFile(int resourceId, const std::string& outputPath);
+        
         // Result parsing
         void ParseQuickTestOutput(const std::string& output);
         void CalculateRating();
