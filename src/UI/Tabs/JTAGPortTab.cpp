@@ -1000,7 +1000,7 @@ namespace DMATool::UI::Tabs
             s_IsInstallingDriver = true;
             s_IsDetecting = true;
             s_LastOperation = "Install Driver";
-            s_CurrentProgress = "Launching installer...";
+            s_CurrentProgress = "Installing drivers...";
             AddLog("[INFO] Launching " + driverName + " driver installer...");
         }
         ImGui::EndDisabled();

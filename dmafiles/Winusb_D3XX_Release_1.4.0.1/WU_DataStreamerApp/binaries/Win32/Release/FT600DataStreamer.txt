@@ -1,0 +1,186 @@
+ ------------------------------------------------------------
+| FT600 Data Streamer
+| Built   Jul  2 2025 15:52:34
+| Started 07  14 2025 14:40:19
+ ------------------------------------------------------------
+
+[2025-07-14 14:40:19:260][017532] [0x02] Session Length: 262144
+[2025-07-14 14:40:19:260][017532] [0x82] Session Length: 262144
+[2025-07-14 14:40:19:350][017532] INITIALIZATION: CUIManager::OnStartWork
+[2025-07-14 14:40:19:350][017532] INITIALIZATION: CTaskManager::CTaskManager
+[2025-07-14 14:40:19:352][023448] INITIALIZATION: CTaskManager::Initialize
+[2025-07-14 14:40:20:498][023448] 
+List of Connected Devices!
+
+[2025-07-14 14:40:20:501][023448] Device[0]
+[2025-07-14 14:40:20:503][023448] 	Flags: 0x4 [USB 3]  |  Type: 601 [FT60X]  |  ID: 0x0403601F  |  ftHandle: 0xffffffff [Already open]
+[2025-07-14 14:40:20:508][023448] 	Description: FTDI SuperSpeed-FIFO Bridge
+[2025-07-14 14:40:20:511][023448] 	SerialNumber: 000000000001
+[2025-07-14 14:40:20:513][023448] 
+[2025-07-14 14:40:20:514][023448] FT_Open
+[2025-07-14 14:40:20:517][023448] Device with Serial Number [000000000001] opened! Device[0]!
+[2025-07-14 14:40:20:528][023448] 
+[2025-07-14 14:40:20:530][023448] Device Firmware Version: 0x0109!
+[2025-07-14 14:40:20:531][023448] D3XX Driver Version: 0x01040001 | D3XX Library Version: 0x01040001
+[2025-07-14 14:40:20:532][023448] 
+[2025-07-14 14:40:20:533][017532] [0x02] Session Length: 262144
+[2025-07-14 14:40:20:533][017532] [0x82] Session Length: 262144
+[2025-07-14 14:40:20:534][023448] DeviceDetectionRoutine end!
+[2025-07-14 14:40:20:534][023448] INITIALIZATION: CWriterThread::CWriterThread[02]
+[2025-07-14 14:40:20:534][023448] INITIALIZATION: CReaderThread::CReaderThread[82]
+[2025-07-14 14:40:20:534][020132] INITIALIZATION: CWriterThread::Initialize[02]
+[2025-07-14 14:40:20:535][013976] INITIALIZATION: CReaderThread::Initialize[82]
+[2025-07-14 14:40:23:204][013976] ASYNCHRONOUS: CReaderThread::ProcessTasks[82]
+[2025-07-14 14:40:23:212][017532] Read transfer started!
+[2025-07-14 14:40:23:212][017532] [0x82] Start
+[2025-07-14 14:40:24:215][006672] Read Transfer Rate : 213 MBps  
+[2025-07-14 14:40:25:225][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:26:240][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:27:264][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:28:269][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:29:278][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:30:296][006672] Read Transfer Rate : 213 MBps  
+[2025-07-14 14:40:31:311][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:32:326][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:33:346][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:34:358][006672] Read Transfer Rate : 213 MBps  
+[2025-07-14 14:40:35:393][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:36:399][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:37:418][006672] Read Transfer Rate : 213 MBps  
+[2025-07-14 14:40:38:424][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:39:439][006672] Read Transfer Rate : 213 MBps  
+[2025-07-14 14:40:40:451][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:41:462][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:42:476][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:43:500][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:44:514][006672] Read Transfer Rate : 213 MBps  
+[2025-07-14 14:40:45:529][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:46:550][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:47:568][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:48:587][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:49:602][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:50:611][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:51:630][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:52:640][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:53:658][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:54:679][006672] Read Transfer Rate : 213 MBps  
+[2025-07-14 14:40:55:696][006672] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:40:56:075][017532] [0x82] Stop
+[2025-07-14 14:40:56:076][023448] TRANSFER: CReaderThread::ProcessAStopTask[82] STOP!
+[2025-07-14 14:40:56:122][024956] Read transfer stopped!
+[2025-07-14 14:40:56:712][006672] Read Transfer Rate : 80 MBps  
+[2025-07-14 14:41:15:635][017532] [0x82] Session Length: 524288
+[2025-07-14 14:41:16:626][013976] ASYNCHRONOUS: CReaderThread::ProcessTasks[82]
+[2025-07-14 14:41:16:634][017532] Read transfer started!
+[2025-07-14 14:41:16:635][017532] [0x82] Start
+[2025-07-14 14:41:18:756][007508] Read Transfer Rate : 214 MBps  
+[2025-07-14 14:41:19:770][007508] Read Transfer Rate : 216 MBps  
+[2025-07-14 14:41:20:788][007508] Read Transfer Rate : 216 MBps  
+[2025-07-14 14:41:21:794][007508] Read Transfer Rate : 216 MBps  
+[2025-07-14 14:41:22:803][007508] Read Transfer Rate : 216 MBps  
+[2025-07-14 14:41:23:820][007508] Read Transfer Rate : 215 MBps  
+[2025-07-14 14:41:24:826][007508] Read Transfer Rate : 216 MBps  
+[2025-07-14 14:41:25:846][007508] Read Transfer Rate : 215 MBps  
+[2025-07-14 14:41:26:100][017532] [0x82] Stop
+[2025-07-14 14:41:26:100][023448] TRANSFER: CReaderThread::ProcessAStopTask[82] STOP!
+[2025-07-14 14:41:26:149][033228] Read transfer stopped!
+[2025-07-14 14:41:26:856][007508] Read Transfer Rate : 54 MBps  
+[2025-07-14 14:41:35:540][017532] Device detached! [\\?\USB#VID_0403&PID_601F&MI_00#6&1f7b2494&6&0000#{2afdd907-dfa5-4d07-ba68-fc608637f28a}]
+[2025-07-14 14:41:37:798][017532] UnregisterDeviceNotification! m_hDeviceNotify = 00AE2BD0
+[2025-07-14 14:41:37:815][034080] TERMINATION: CTaskManager::ExitThread
+[2025-07-14 14:41:37:835][023448] TERMINATION: CTaskManager::ProcessTasks
+[2025-07-14 14:41:37:835][023448] TERMINATION: CTaskManager::Cleanup
+[2025-07-14 14:41:37:835][023448] TERMINATION: CWriterThread::ExitThread[02]
+[2025-07-14 14:41:37:835][023448] TRANSFER: CWriterThread::ProcessAStopTask[02] STOP!
+[2025-07-14 14:41:37:835][023448] TERMINATION: CReaderThread::ExitThread[82]
+[2025-07-14 14:41:37:835][023448] TRANSFER: CReaderThread::ProcessAStopTask[82] STOP!
+[2025-07-14 14:41:37:835][023448] TERMINATION: CTaskManager::Cleanup 2
+[2025-07-14 14:41:37:835][023448] TERMINATION: CTaskManager::Cleanup 3
+[2025-07-14 14:41:37:835][023448] TERMINATION: CTaskManager::Cleanup 4
+[2025-07-14 14:41:37:865][020132] TERMINATION: CWriterThread::ProcessTasks[02]
+[2025-07-14 14:41:37:865][020132] TERMINATION: CWriterThread::Cleanup[02]
+[2025-07-14 14:41:37:865][020132] TRANSFER: CWriterThread::ProcessAStopTask[02] STOP!
+[2025-07-14 14:41:37:865][020132] TERMINATION: CWriterThread::~CWriterThread[02]
+[2025-07-14 14:41:37:929][013976] TERMINATION: CReaderThread::ProcessTasks[82]
+[2025-07-14 14:41:37:929][013976] TERMINATION: CReaderThread::Cleanup[82]
+[2025-07-14 14:41:37:929][013976] TRANSFER: CReaderThread::ProcessAStopTask[82] STOP!
+[2025-07-14 14:41:37:929][013976] TERMINATION: CReaderThread::~CReaderThread[82]
+[2025-07-14 14:41:38:867][034080] Plug-in device! Application will detect it automatically!
+[2025-07-14 14:41:38:875][034080] Open by: Serial Number
+[2025-07-14 14:41:53:809][017532] INITIALIZATION: CTaskManager::CTaskManager
+[2025-07-14 14:41:53:810][021052] INITIALIZATION: CTaskManager::Initialize
+[2025-07-14 14:41:54:953][021052] 
+List of Connected Devices!
+
+[2025-07-14 14:41:54:959][021052] Device[0]
+[2025-07-14 14:41:54:961][021052] 	Flags: 0x4 [USB 3]  |  Type: 601 [FT60X]  |  ID: 0x0403601F  |  ftHandle: 0xffffffff [Already open]
+[2025-07-14 14:41:54:961][021052] 	Description: FTDI SuperSpeed-FIFO Bridge
+[2025-07-14 14:41:54:965][021052] 	SerialNumber: 000000000001
+[2025-07-14 14:41:54:968][021052] 
+[2025-07-14 14:41:54:968][021052] FT_Open
+[2025-07-14 14:41:54:974][021052] Device with Serial Number [000000000001] opened! Device[0]!
+[2025-07-14 14:41:54:988][021052] 
+[2025-07-14 14:41:54:993][021052] Device Firmware Version: 0x0109!
+[2025-07-14 14:41:54:996][021052] D3XX Driver Version: 0x01040001 | D3XX Library Version: 0x01040001
+[2025-07-14 14:41:55:000][021052] 
+[2025-07-14 14:41:55:008][017532] [0x02] Session Length: 262144
+[2025-07-14 14:41:55:009][017532] [0x82] Session Length: 262144
+[2025-07-14 14:41:55:010][021052] DeviceDetectionRoutine end!
+[2025-07-14 14:41:55:010][021052] INITIALIZATION: CWriterThread::CWriterThread[02]
+[2025-07-14 14:41:55:010][021052] INITIALIZATION: CReaderThread::CReaderThread[82]
+[2025-07-14 14:41:55:010][015764] INITIALIZATION: CWriterThread::Initialize[02]
+[2025-07-14 14:41:55:011][013380] INITIALIZATION: CReaderThread::Initialize[82]
+[2025-07-14 14:41:56:574][013380] ASYNCHRONOUS: CReaderThread::ProcessTasks[82]
+[2025-07-14 14:41:56:588][017532] Read transfer started!
+[2025-07-14 14:41:56:588][017532] [0x82] Start
+[2025-07-14 14:41:57:581][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:41:58:598][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:41:59:601][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:00:612][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:01:627][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:02:633][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:03:647][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:04:654][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:05:660][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:06:679][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:07:692][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:08:695][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:09:710][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:10:713][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:11:726][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:12:734][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:13:749][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:14:755][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:15:765][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:16:770][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:17:784][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:18:793][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:19:810][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:20:817][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:21:834][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:22:843][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:23:852][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:24:871][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:25:874][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:26:891][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:27:895][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:28:901][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:29:912][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:30:919][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:31:930][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:32:944][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:33:955][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:34:961][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:35:972][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:36:983][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:37:995][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:39:010][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:40:025][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:41:030][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:42:047][002284] Read Transfer Rate : 344 MBps  
+[2025-07-14 14:42:42:460][017532] [0x82] Stop
+[2025-07-14 14:42:42:460][021052] TRANSFER: CReaderThread::ProcessAStopTask[82] STOP!
+[2025-07-14 14:42:42:513][000952] Read transfer stopped!
+[2025-07-14 14:42:43:060][002284] Read Transfer Rate : 141 MBps  
+[2025-07-14 14:43:14:457][017532] Device detached! [\\?\USB#VID_0403&PID_601F&MI_00#6&1f7b2494&6&0000#{2afdd907-dfa5-4d07-ba68-fc608637f28a}]
+[2025-07-14 14:44:45:071][017532] TERMINATION: CUIManager::~CUIManager

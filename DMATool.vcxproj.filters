@@ -13,6 +13,78 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\Backend">
+      <UniqueIdentifier>{239D6D24-B094-4D3C-9D66-3A09F326CAE7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\UI">
+      <UniqueIdentifier>{B9C115BE-D761-4D21-839D-F2A5A6A761EF}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\UI\Tabs">
+      <UniqueIdentifier>{3994AF91-C35D-4AB1-A323-2D237E79DC13}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Util">
+      <UniqueIdentifier>{242D6A4E-7B58-4532-B7C6-238F3F3707CC}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Backend">
+      <UniqueIdentifier>{9D162036-69CD-4938-81CA-A9009B797D47}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\UI">
+      <UniqueIdentifier>{131BB7BF-87DC-4249-9CF9-B3F2B53CE145}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\UI\Tabs">
+      <UniqueIdentifier>{F705283D-65D9-44AF-9BDC-445509B0C5FA}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Util">
+      <UniqueIdentifier>{40F7458D-5C99-4C9D-A3DE-4561D78FA5B3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="vendor">
+      <UniqueIdentifier>{46496BF1-7EDC-4FDC-A70C-835080F0AE96}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="vendor\ImGui">
+      <UniqueIdentifier>{9966526E-1B2A-4DB8-9007-9E78BB98966F}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="vendor\ImGui\Core">
+      <UniqueIdentifier>{7779E79E-833C-4074-832C-3CDF5C62D27A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="vendor\ImGui\Backends">
+      <UniqueIdentifier>{125B8659-9A5D-4C7C-8E6D-311DA6EFE991}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources">
+      <UniqueIdentifier>{99748F8D-3A1C-4C94-926F-1140CE1B305C}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\RC Files">
+      <UniqueIdentifier>{1615E465-A921-4628-9FB5-1AC88D546F7A}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resources\Manifests">
+      <UniqueIdentifier>{06E526D9-2902-4D73-8C88-D3F4ED5F32F8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documentation">
+      <UniqueIdentifier>{F880F9D3-EE2E-4FD9-9CD7-A290490A2E89}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documentation\Root Docs">
+      <UniqueIdentifier>{B407E28D-58BA-4CDA-A17D-20532E6654EC}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documentation\Guides">
+      <UniqueIdentifier>{AACE8899-80B7-4D6A-B860-1C410D23AA38}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documentation\Features">
+      <UniqueIdentifier>{42ECD810-B1F7-4D42-AF66-E5E4A7819788}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Documentation\Development">
+      <UniqueIdentifier>{06A7C224-305E-4396-AE5C-E193814362B9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scripts">
+      <UniqueIdentifier>{7F52E037-9840-4BD2-803E-40A1C2E87FA5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scripts\Utilities">
+      <UniqueIdentifier>{76C8D934-EE08-4F4E-86FC-1C7F80900AAD}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scripts\Testing">
+      <UniqueIdentifier>{2F16F5BC-2541-4E43-B444-19B0D78E1392}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Scripts\Build">
+      <UniqueIdentifier>{10ACE3B3-C47C-4F51-91B1-4ADB26525A17}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\main.cpp">
@@ -22,70 +94,70 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Theme.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\UI</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\MainWindow.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\UI</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Tabs\JTAGPortTab.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\UI\Tabs</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Tabs\JTAGFlashTab.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\UI\Tabs</Filter>
     </ClCompile>
     <ClCompile Include="src\UI\Tabs\DataPortTab.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\UI\Tabs</Filter>
     </ClCompile>
     <ClCompile Include="src\Backend\ProjectManager.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Backend</Filter>
     </ClCompile>
     <ClCompile Include="src\Backend\DMAInterface.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Backend</Filter>
     </ClCompile>
     <ClCompile Include="src\Backend\JTAGInterface.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Backend</Filter>
     </ClCompile>
     <ClCompile Include="vendor\imgui\imgui.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>vendor\ImGui\Core</Filter>
     </ClCompile>
     <ClCompile Include="vendor\imgui\imgui_demo.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>vendor\ImGui\Core</Filter>
     </ClCompile>
     <ClCompile Include="vendor\imgui\imgui_draw.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>vendor\ImGui\Core</Filter>
     </ClCompile>
     <ClCompile Include="vendor\imgui\imgui_tables.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>vendor\ImGui\Core</Filter>
     </ClCompile>
     <ClCompile Include="vendor\imgui\imgui_widgets.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>vendor\ImGui\Core</Filter>
     </ClCompile>
     <ClCompile Include="vendor\imgui\backends\imgui_impl_win32.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>vendor\ImGui\Backends</Filter>
     </ClCompile>
     <ClCompile Include="vendor\imgui\backends\imgui_impl_dx11.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>vendor\ImGui\Backends</Filter>
     </ClCompile>
     <ClCompile Include="src\Backend\OpenOCDInterface.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Backend</Filter>
     </ClCompile>
     <ClCompile Include="src\Backend\BenchmarkInterface.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Backend</Filter>
     </ClCompile>
     <ClCompile Include="src\Backend\FT601DriverInterface.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Backend</Filter>
     </ClCompile>
     <ClCompile Include="src\Backend\LeechCoreWrapper.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Backend</Filter>
     </ClCompile>
     <ClCompile Include="src\Util\ResourceExtractor.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Util</Filter>
     </ClCompile>
     <ClCompile Include="src\Backend\FlashInterface.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Backend</Filter>
     </ClCompile>
     <ClCompile Include="src\Util\TempDirectoryManager.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -93,178 +165,389 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\UI\Theme.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\UI</Filter>
     </ClInclude>
     <ClInclude Include="src\UI\MainWindow.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\UI</Filter>
     </ClInclude>
     <ClInclude Include="src\UI\Tabs\JTAGPortTab.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\UI\Tabs</Filter>
     </ClInclude>
     <ClInclude Include="src\UI\Tabs\JTAGFlashTab.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\UI\Tabs</Filter>
     </ClInclude>
     <ClInclude Include="src\UI\Tabs\DataPortTab.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\UI\Tabs</Filter>
     </ClInclude>
     <ClInclude Include="src\Backend\ProjectManager.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Backend</Filter>
     </ClInclude>
     <ClInclude Include="src\Backend\DMAInterface.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Backend</Filter>
     </ClInclude>
     <ClInclude Include="src\Backend\JTAGInterface.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Backend</Filter>
     </ClInclude>
     <ClInclude Include="src\Backend\OpenOCDInterface.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Backend</Filter>
     </ClInclude>
     <ClInclude Include="src\resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="src\Backend\BenchmarkInterface.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Backend</Filter>
     </ClInclude>
     <ClInclude Include="src\Backend\FT601DriverInterface.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Backend</Filter>
     </ClInclude>
     <ClInclude Include="src\Backend\LeechCoreWrapper.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Backend</Filter>
     </ClInclude>
     <ClInclude Include="src\Util\ResourceExtractor.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Util</Filter>
     </ClInclude>
     <ClInclude Include="src\Backend\FlashInterface.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Backend</Filter>
     </ClInclude>
     <ClInclude Include="src\Util\TempDirectoryManager.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\Util</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="README.md" />
+    <None Include="README.md">
+      <Filter>Documentation\Root Docs</Filter>
+    </None>
     <None Include=".gitignore" />
-    <None Include="docs\DNA_ID_TAB_COMPLETE.md" />
-    <None Include="docs\ARCHITECTURE.md" />
-    <None Include="docs\BUILD_INSTRUCTIONS.md" />
-    <None Include="docs\TROUBLESHOOTING.md" />
-    <None Include="docs\DNA_ID_STATUS.md" />
-    <None Include="docs\DMA_TESTING_GUIDE.md" />
-    <None Include="scripts\Setup-PCILeech.ps1" />
-    <None Include="docs\DMA_BENCHMARKING_GUIDE.md" />
-    <None Include="docs\BENCHMARK_TAB_SPEC.md" />
-    <None Include="docs\BENCHMARK_DOCUMENTATION_SUMMARY.md" />
-    <None Include="QUICK_REFERENCE.md" />
-    <None Include="docs\PERFORMANCE_RATINGS.md" />
-    <None Include="scripts\Quick-DMA-Test.ps1" />
-    <None Include="docs\75T_TEST_RESULTS.md" />
-    <None Include="docs\BENCHMARK_TAB_FINAL_FIXES.md" />
-    <None Include="docs\BENCHMARK_TAB_IMPROVEMENTS.md" />
-    <None Include="docs\BENCHMARK_UI_FIXES.md" />
-    <None Include="docs\FT601_DRIVER_EMBEDDING.md" />
-    <None Include="docs\FT601_DRIVER_MANAGEMENT_COMPLETE.md" />
-    <None Include="docs\FT601_DRIVER_PANEL.md" />
-    <None Include="docs\MANUAL_RC_UPDATE_REQUIRED.md" />
-    <None Include="docs\STRESS_TEST_DURATION_FIX.md" />
-    <None Include="docs\STRESS_TEST_IMPLEMENTATION.md" />
-    <None Include="docs\TEST_RESULTS_LAYOUT_CONSISTENCY.md" />
-    <None Include="docs\FT601_DRIVER_FINAL_FIXES.md" />
-    <None Include="docs\FT601_DRIVER_POPUP_AND_UNINSTALL_FIX.md" />
-    <None Include="docs\FTDI_DRIVER_UNINSTALL_FIX.md" />
-    <None Include="docs\FTDI_DRIVER_NON_BLOCKING_OPERATIONS.md" />
-    <None Include="docs\FT601_DRIVER_PROGRESS_CALLBACKS.md" />
-    <None Include="docs\DATA_PORT_TAB_LAYOUT_UPDATE.md" />
-    <None Include="docs\UI_LAYOUT_CONSISTENCY_FIXES.md" />
-    <None Include="docs\UI_SPACING_FIXES_FINAL.md" />
-    <None Include="docs\FTDI_DRIVER_PERFORMANCE_ANALYSIS.md" />
-    <None Include="docs\FTDI_CHECK_BUTTON_RESTORED.md" />
-    <None Include="docs\BENCHMARK_PANEL_HEIGHT_ADJUSTMENTS.md" />
-    <None Include="docs\CONSOLE_LOG_SPACING_AND_VERTICAL_RESIZER.md" />
-    <None Include="docs\HORIZONTAL_RESIZER_UPDATE.md" />
-    <None Include="docs\HORIZONTAL_RESIZER_FINAL.md" />
-    <None Include="docs\JTAG_PORT_TAB_ID_STACK_FIX.md" />
-    <None Include="docs\JTAG_PORT_TAB_IMPROVEMENTS.md" />
-    <None Include="docs\XC7A75T_SUPPORT_ADDED.md" />
-    <None Include="docs\DMA_FLASH_GUIDE.md" />
-    <None Include="scripts\Test-FPGAFlash.ps1" />
-    <None Include="docs\FLASH_TESTING_QUICK_REF.md" />
-    <None Include="docs\FLASH_IMPLEMENTATION_SUMMARY.md" />
-    <None Include="scripts\Test-OpenOCD-Simple.ps1" />
-    <None Include="docs\OPENOCD_FLASH_PROGRESS.md" />
-    <None Include="scripts\Sync-OpenOCD-Files.ps1" />
-    <None Include="scripts\Compare-OpenOCD-Installations.ps1" />
-    <None Include="scripts\Compare-CH347-Full.ps1" />
-    <None Include="scripts\Test-Flash-Debug.ps1" />
-    <None Include="scripts\Test-Flash-Slow.ps1" />
-    <None Include="scripts\Test-Flash-Working.ps1" />
-    <None Include="scripts\Verify-Flash.ps1" />
-    <None Include="scripts\Test-DeviceMasking.ps1" />
-    <None Include="docs\FLASH_TAB_IMPLEMENTATION_COMPLETE.md" />
-    <None Include="docs\FLASH_DETECTION_TROUBLESHOOTING.md" />
-    <None Include="scripts\Add-BSCAN-Resources.ps1" />
-    <None Include="scripts\Verify-Resources.ps1" />
-    <None Include="scripts\Update-DMATool-RC.ps1" />
-    <None Include="docs\RESOURCE_EMBEDDING_COMPLETE.md" />
-    <None Include="scripts\Fix-OpenOCD-Version.ps1" />
-    <None Include="docs\OPENOCD_VERSION_FIX.md" />
-    <None Include="scripts\Fix-RC-Paths.ps1" />
-    <None Include="scripts\Verify-Flash-Resources.ps1" />
-    <None Include="docs\FLASH_RESOURCES_PATH_VERIFICATION.md" />
-    <None Include="docs\OPENOCD_CONFIG_PATH_FIX.md" />
-    <None Include="docs\DNA_EXTRACTION_FIX.md" />
-    <None Include="scripts\Add-TempDirectoryManager.ps1" />
-    <None Include="docs\CH347_COMMUNICATION_ERROR_GUIDE.md" />
-    <None Include="docs\CRITICAL_FLASH_INTERFACE_LOOP_FIX.md" />
-    <None Include="docs\FLASH_TAB_READY_FOR_TESTING.md" />
-    <None Include="docs\FPGA_DETECTION_COMPLETE_FIX_SUMMARY.md" />
-    <None Include="docs\OPENOCD_CONFIG_CPLD_PATH_FIX.md" />
-    <None Include="docs\OPENOCD_PROCESS_LEAK_FIX.md" />
-    <None Include="docs\XC7A50T_75T_IDCODE_ALIASING.md" />
+    <None Include="docs\DNA_ID_TAB_COMPLETE.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\ARCHITECTURE.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\BUILD_INSTRUCTIONS.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\TROUBLESHOOTING.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\DNA_ID_STATUS.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\DMA_TESTING_GUIDE.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="scripts\Setup-PCILeech.ps1">
+      <Filter>Scripts\Utilities</Filter>
+    </None>
+    <None Include="docs\DMA_BENCHMARKING_GUIDE.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\BENCHMARK_TAB_SPEC.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\BENCHMARK_DOCUMENTATION_SUMMARY.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="QUICK_REFERENCE.md">
+      <Filter>Documentation\Root Docs</Filter>
+    </None>
+    <None Include="docs\PERFORMANCE_RATINGS.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="scripts\Quick-DMA-Test.ps1">
+      <Filter>Scripts\Utilities</Filter>
+    </None>
+    <None Include="docs\75T_TEST_RESULTS.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\BENCHMARK_TAB_FINAL_FIXES.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\BENCHMARK_TAB_IMPROVEMENTS.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\BENCHMARK_UI_FIXES.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FT601_DRIVER_EMBEDDING.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FT601_DRIVER_MANAGEMENT_COMPLETE.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FT601_DRIVER_PANEL.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\MANUAL_RC_UPDATE_REQUIRED.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\STRESS_TEST_DURATION_FIX.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\STRESS_TEST_IMPLEMENTATION.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\TEST_RESULTS_LAYOUT_CONSISTENCY.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FT601_DRIVER_FINAL_FIXES.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FT601_DRIVER_POPUP_AND_UNINSTALL_FIX.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FTDI_DRIVER_UNINSTALL_FIX.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FTDI_DRIVER_NON_BLOCKING_OPERATIONS.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FT601_DRIVER_PROGRESS_CALLBACKS.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\DATA_PORT_TAB_LAYOUT_UPDATE.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\UI_LAYOUT_CONSISTENCY_FIXES.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\UI_SPACING_FIXES_FINAL.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FTDI_DRIVER_PERFORMANCE_ANALYSIS.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FTDI_CHECK_BUTTON_RESTORED.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\BENCHMARK_PANEL_HEIGHT_ADJUSTMENTS.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\CONSOLE_LOG_SPACING_AND_VERTICAL_RESIZER.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\HORIZONTAL_RESIZER_UPDATE.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\HORIZONTAL_RESIZER_FINAL.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\JTAG_PORT_TAB_ID_STACK_FIX.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\JTAG_PORT_TAB_IMPROVEMENTS.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\XC7A75T_SUPPORT_ADDED.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\DMA_FLASH_GUIDE.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="scripts\Test-FPGAFlash.ps1">
+      <Filter>Scripts\Testing</Filter>
+    </None>
+    <None Include="docs\FLASH_TESTING_QUICK_REF.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FLASH_IMPLEMENTATION_SUMMARY.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="scripts\Test-OpenOCD-Simple.ps1">
+      <Filter>Scripts\Testing</Filter>
+    </None>
+    <None Include="docs\OPENOCD_FLASH_PROGRESS.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="scripts\Sync-OpenOCD-Files.ps1">
+      <Filter>Scripts\Utilities</Filter>
+    </None>
+    <None Include="scripts\Compare-OpenOCD-Installations.ps1">
+      <Filter>Scripts\Utilities</Filter>
+    </None>
+    <None Include="scripts\Compare-CH347-Full.ps1">
+      <Filter>Scripts\Utilities</Filter>
+    </None>
+    <None Include="scripts\Test-Flash-Debug.ps1">
+      <Filter>Scripts\Testing</Filter>
+    </None>
+    <None Include="scripts\Test-Flash-Slow.ps1">
+      <Filter>Scripts\Testing</Filter>
+    </None>
+    <None Include="scripts\Test-Flash-Working.ps1">
+      <Filter>Scripts\Testing</Filter>
+    </None>
+    <None Include="scripts\Verify-Flash.ps1">
+      <Filter>Scripts\Testing</Filter>
+    </None>
+    <None Include="scripts\Test-DeviceMasking.ps1">
+      <Filter>Scripts\Testing</Filter>
+    </None>
+    <None Include="docs\FLASH_TAB_IMPLEMENTATION_COMPLETE.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FLASH_DETECTION_TROUBLESHOOTING.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="scripts\Add-BSCAN-Resources.ps1">
+      <Filter>Scripts\Utilities</Filter>
+    </None>
+    <None Include="scripts\Verify-Resources.ps1">
+      <Filter>Scripts\Testing</Filter>
+    </None>
+    <None Include="scripts\Update-DMATool-RC.ps1">
+      <Filter>Scripts\Utilities</Filter>
+    </None>
+    <None Include="docs\RESOURCE_EMBEDDING_COMPLETE.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="scripts\Fix-OpenOCD-Version.ps1">
+      <Filter>Scripts\Build</Filter>
+    </None>
+    <None Include="docs\OPENOCD_VERSION_FIX.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="scripts\Fix-RC-Paths.ps1">
+      <Filter>Scripts\Build</Filter>
+    </None>
+    <None Include="scripts\Verify-Flash-Resources.ps1">
+      <Filter>Scripts\Testing</Filter>
+    </None>
+    <None Include="docs\FLASH_RESOURCES_PATH_VERIFICATION.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\OPENOCD_CONFIG_PATH_FIX.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\DNA_EXTRACTION_FIX.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="scripts\Add-TempDirectoryManager.ps1">
+      <Filter>Scripts\Utilities</Filter>
+    </None>
+    <None Include="docs\CH347_COMMUNICATION_ERROR_GUIDE.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\CRITICAL_FLASH_INTERFACE_LOOP_FIX.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FLASH_TAB_READY_FOR_TESTING.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FPGA_DETECTION_COMPLETE_FIX_SUMMARY.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\OPENOCD_CONFIG_CPLD_PATH_FIX.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\OPENOCD_PROCESS_LEAK_FIX.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\XC7A50T_75T_IDCODE_ALIASING.md">
+      <Filter>Documentation</Filter>
+    </None>
     <None Include="FPGA_DETECTION_QUICK_REF.md" />
     <None Include="OPENOCD_CLEANUP_QUICKSTART.md" />
-    <None Include="scripts\Kill-OpenOCD-Admin.ps1" />
-    <None Include="scripts\Kill-OpenOCD-Processes.ps1" />
-    <None Include="scripts\Quick-FPGA-Test.ps1" />
-    <None Include="scripts\Reset-CH347-Adapter.ps1" />
-    <None Include="scripts\Test-OpenOCD-Manual.ps1" />
-    <None Include="scripts\Test-Resource-Embedding.ps1" />
-    <None Include="scripts\Verify-OpenOCD-Resources.ps1" />
-    <None Include="docs\FLASH_INTERFACE_LOOP_FIX.md" />
-    <None Include="docs\FLASH_LOOP_FIX_SUMMARY.md" />
-    <None Include="scripts\Check-OpenOCD-Status.ps1" />
-    <None Include="docs\FLASH_HANG_TROUBLESHOOTING.md" />
-    <None Include="docs\FLASH_HANG_FIX_SUMMARY.md" />
+    <None Include="scripts\Kill-OpenOCD-Admin.ps1">
+      <Filter>Scripts\Utilities</Filter>
+    </None>
+    <None Include="scripts\Kill-OpenOCD-Processes.ps1">
+      <Filter>Scripts\Utilities</Filter>
+    </None>
+    <None Include="scripts\Quick-FPGA-Test.ps1">
+      <Filter>Scripts\Utilities</Filter>
+    </None>
+    <None Include="scripts\Reset-CH347-Adapter.ps1">
+      <Filter>Scripts\Utilities</Filter>
+    </None>
+    <None Include="scripts\Test-OpenOCD-Manual.ps1">
+      <Filter>Scripts\Testing</Filter>
+    </None>
+    <None Include="scripts\Test-Resource-Embedding.ps1">
+      <Filter>Scripts\Testing</Filter>
+    </None>
+    <None Include="scripts\Verify-OpenOCD-Resources.ps1">
+      <Filter>Scripts\Testing</Filter>
+    </None>
+    <None Include="docs\FLASH_INTERFACE_LOOP_FIX.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FLASH_LOOP_FIX_SUMMARY.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="scripts\Check-OpenOCD-Status.ps1">
+      <Filter>Scripts\Utilities</Filter>
+    </None>
+    <None Include="docs\FLASH_HANG_TROUBLESHOOTING.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FLASH_HANG_FIX_SUMMARY.md">
+      <Filter>Documentation</Filter>
+    </None>
     <None Include="FLASH_HANG_QUICK_FIX.md" />
-    <None Include="docs\FLASH_PROGRESS_AND_VERIFICATION_FIX.md" />
-    <None Include="docs\FLASH_STDERR_PARSING_FIX.md" />
-    <None Include="docs\FLASH_VERIFICATION_PERFORMANCE_FIX.md" />
-    <None Include="docs\PROGRESS_BAR_COLOR_ENHANCEMENT.md" />
-    <None Include="docs\FLASH_UI_FINAL_POLISH.md" />
-    <None Include="docs\FLASH_VERIFICATION_SHA256_ENHANCEMENT.md" />
-    <None Include="docs\FLASH_MULTI_PHASE_PROGRESS.md" />
-    <None Include="docs\FLASH_PROGRESS_REFINEMENT_FINAL.md" />
-    <None Include="docs\FLASH_LOG_CLEANUP.md" />
+    <None Include="docs\FLASH_PROGRESS_AND_VERIFICATION_FIX.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FLASH_STDERR_PARSING_FIX.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FLASH_VERIFICATION_PERFORMANCE_FIX.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\PROGRESS_BAR_COLOR_ENHANCEMENT.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FLASH_UI_FINAL_POLISH.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FLASH_VERIFICATION_SHA256_ENHANCEMENT.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FLASH_MULTI_PHASE_PROGRESS.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FLASH_PROGRESS_REFINEMENT_FINAL.md">
+      <Filter>Documentation</Filter>
+    </None>
+    <None Include="docs\FLASH_LOG_CLEANUP.md">
+      <Filter>Documentation</Filter>
+    </None>
     <None Include="DRIVER_FIX_REQUIRED.md" />
     <None Include="ADMINISTRATOR_MANIFEST_SETUP.md" />
     <None Include="COMPLETE_SETUP_GUIDE.md" />
-    <None Include="scripts\Configure-Manifest.ps1" />
+    <None Include="scripts\Configure-Manifest.ps1">
+      <Filter>Scripts\Utilities</Filter>
+    </None>
     <None Include=".github\copilot-instructions.md" />
     <None Include="NEXT_STEPS.md" />
     <None Include="MANIFEST_FINAL_FIX.md" />
-    <None Include="scripts\Clean-Build.ps1" />
+    <None Include="scripts\Clean-Build.ps1">
+      <Filter>Scripts\Build</Filter>
+    </None>
     <None Include="VISUAL_STUDIO_MANIFEST_GUIDE.md" />
     <None Include="MANIFEST_CORRECT_LOCATION.md" />
-    <None Include="scripts\Fix-ManifestBuild.ps1" />
-    <None Include="scripts\Fix-MT-Tool-Issue.ps1" />
-    <None Include="scripts\Fix-Build-MT-Issue.ps1" />
+    <None Include="scripts\Fix-ManifestBuild.ps1">
+      <Filter>Scripts\Build</Filter>
+    </None>
+    <None Include="scripts\Fix-MT-Tool-Issue.ps1">
+      <Filter>Scripts\Build</Filter>
+    </None>
+    <None Include="scripts\Fix-Build-MT-Issue.ps1">
+      <Filter>Scripts\Build</Filter>
+    </None>
     <None Include="BUILD_FIX_SUMMARY.md" />
+    <None Include="scripts\Set-Release-NoConsole.ps1">
+      <Filter>Scripts\Build</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DMATool.rc">
-      <Filter>Resource Files</Filter>
+      <Filter>Resources\RC Files</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Manifest Include="app.manifest" />
+    <Manifest Include="app.manifest">
+      <Filter>Resources\Manifests</Filter>
+    </Manifest>
   </ItemGroup>
 </Project>
