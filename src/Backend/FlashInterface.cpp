@@ -5,10 +5,16 @@
 #include <sstream>
 #include <regex>
 #include <chrono>
+#include <thread>
 #include <algorithm>
 #include <iostream>
+#include <iomanip>
 #include "../resource.h"
 #include "../Util/TempDirectoryManager.h"
+#include <windows.h>
+#include <wincrypt.h>
+
+#pragma comment(lib, "advapi32.lib")
 
 namespace fs = std::filesystem;
 
@@ -243,7 +249,8 @@ namespace DMATool::Backend
         const std::string& configPath,
         const std::vector<std::string>& commands,
         std::string& output,
-        std::string& error)
+        std::string& error,
+        FlashProgressCallback progressCallback)
     {
         std::string cmdLine = "\"" + m_openocdPath + "\" -f \"" + configPath + "\"";
         
@@ -251,6 +258,8 @@ namespace DMATool::Backend
         {
             cmdLine += " -c \"" + cmd + "\"";
         }
+
+        std::cout << "[DEBUG] OpenOCD command: " << cmdLine << std::endl;
 
         SECURITY_ATTRIBUTES sa;
         sa.nLength = sizeof(SECURITY_ATTRIBUTES);
@@ -290,30 +299,195 @@ namespace DMATool::Backend
 
         if (!success)
         {
+            std::cout << "[ERROR] Failed to launch OpenOCD process" << std::endl;
             CloseHandle(hStdOutRead);
             CloseHandle(hStdErrRead);
             return false;
         }
 
+        std::cout << "[DEBUG] OpenOCD process launched successfully" << std::endl;
+
+        // Read output in real-time using non-blocking approach
         char buffer[4096];
         DWORD bytesRead;
+        DWORD bytesAvail;
+        
+        std::string outputBuffer;  // Accumulate stdout line-by-line
+        std::string errorBuffer;   // Accumulate stderr line-by-line
+        
+        // Track when sectors complete to start periodic writing updates
+        bool sectorsCompleted = false;
+        auto lastProgressUpdate = std::chrono::steady_clock::now();
 
-        while (ReadFile(hStdOutRead, buffer, sizeof(buffer) - 1, &bytesRead, NULL) && bytesRead > 0)
+        while (true)
         {
-            buffer[bytesRead] = '\0';
-            output += buffer;
-        }
+            // Check if process is still running
+            DWORD waitResult = WaitForSingleObject(pi.hProcess, 100);  // Wait 100ms
+            
+            // Send periodic "Writing progress" updates during the writing phase (every 2 seconds)
+            auto now = std::chrono::steady_clock::now();
+            double timeSinceLastUpdate = std::chrono::duration<double>(now - lastProgressUpdate).count();
+            
+            if (sectorsCompleted && timeSinceLastUpdate >= 2.0)
+            {
+                if (progressCallback)
+                    progressCallback(0, 0, "Writing progress");
+                lastProgressUpdate = now;
+            }
+            
+            // Try to read stdout
+            PeekNamedPipe(hStdOutRead, NULL, 0, NULL, &bytesAvail, NULL);
+            if (bytesAvail > 0)
+            {
+                if (ReadFile(hStdOutRead, buffer, sizeof(buffer) - 1, &bytesRead, NULL) && bytesRead > 0)
+                {
+                    buffer[bytesRead] = '\0';
+                    output += buffer;
+                    outputBuffer += buffer;
+                    std::cout << "[OPENOCD] " << buffer;  // Real-time output
+                    
+                    // Parse complete lines for progress updates
+                    size_t newlinePos;
+                    while ((newlinePos = outputBuffer.find('\n')) != std::string::npos)
+                    {
+                        std::string line = outputBuffer.substr(0, newlinePos);
+                        outputBuffer = outputBuffer.substr(newlinePos + 1);
+                        
+                        // Parse progress from this line
+                        if (progressCallback)
+                        {
+                            // Check for sector progress: "Info : sector 15 took 232 ms"
+                            std::regex sectorRegex(R"(sector (\d+) took)");
+                            std::smatch match;
+                            if (std::regex_search(line, match, sectorRegex))
+                            {
+                                uint64_t sectorNum = std::stoull(match[1].str());
+                                progressCallback(sectorNum, 0, "Sector " + std::to_string(sectorNum) + " complete");
+                                
+                                // Check if this is the last sector to enable writing updates
+                                if (line.find("sector") != std::string::npos)
+                                {
+                                    sectorsCompleted = true;
+                                    lastProgressUpdate = std::chrono::steady_clock::now();
+                                }
+                            }
+                            // Check for file read: "read 2099688 bytes from file"
+                            else if (line.find("read") != std::string::npos && line.find("bytes from file") != std::string::npos)
+                            {
+                                progressCallback(0, 0, "Firmware loaded");
+                            }
+                            // Check for verification: "contents match"
+                            else if (line.find("contents match") != std::string::npos)
+                            {
+                                progressCallback(0, 0, "Verification passed");
+                            }
+                            // Check for verification failure: "contents differ"
+                            else if (line.find("contents differ") != std::string::npos)
+                            {
+                                progressCallback(0, 0, "Verification failed");
+                            }
+                        }
+                    }
+                }
+            }
 
-        while (ReadFile(hStdErrRead, buffer, sizeof(buffer) - 1, &bytesRead, NULL) && bytesRead > 0)
-        {
-            buffer[bytesRead] = '\0';
-            error += buffer;
-        }
+            // Try to read stderr - ALSO PARSE FOR PROGRESS UPDATES!
+            PeekNamedPipe(hStdErrRead, NULL, 0, NULL, &bytesAvail, NULL);
+            if (bytesAvail > 0)
+            {
+                if (ReadFile(hStdErrRead, buffer, sizeof(buffer) - 1, &bytesRead, NULL) && bytesRead > 0)
+                {
+                    buffer[bytesRead] = '\0';
+                    error += buffer;
+                    errorBuffer += buffer;
+                    std::cout << "[OPENOCD-ERR] " << buffer;  // Real-time error output
+                    
+                    // CRITICAL FIX: Parse stderr for progress too!
+                    // OpenOCD sends sector progress to stderr, not stdout
+                    size_t newlinePos;
+                    while ((newlinePos = errorBuffer.find('\n')) != std::string::npos)
+                    {
+                        std::string line = errorBuffer.substr(0, newlinePos);
+                        errorBuffer = errorBuffer.substr(newlinePos + 1);
+                        
+                        // Parse progress from stderr line
+                        if (progressCallback)
+                        {
+                            // Check for sector progress: "Info : sector 15 took 232 ms"
+                            std::regex sectorRegex(R"(sector (\d+) took)");
+                            std::smatch match;
+                            if (std::regex_search(line, match, sectorRegex))
+                            {
+                                uint64_t sectorNum = std::stoull(match[1].str());
+                                progressCallback(sectorNum, 0, "Sector " + std::to_string(sectorNum) + " complete");
+                                
+                                // Mark that sectors are being processed
+                                sectorsCompleted = true;
+                                lastProgressUpdate = std::chrono::steady_clock::now();
+                            }
+                            // Check for file read: "read 2099688 bytes from file"
+                            else if (line.find("read") != std::string::npos && line.find("bytes from file") != std::string::npos)
+                            {
+                                progressCallback(0, 0, "Firmware loaded");
+                                sectorsCompleted = false;  // Writing phase complete
+                            }
+                            // Check for file write: "wrote 2099688 bytes to file"
+                            else if (line.find("wrote") != std::string::npos && line.find("bytes to file") != std::string::npos)
+                            {
+                                progressCallback(0, 0, "Flash read complete");
+                            }
+                            // Check for verification: "contents match"
+                            else if (line.find("contents match") != std::string::npos)
+                            {
+                                progressCallback(0, 0, "Verification passed");
+                            }
+                            // Check for verification failure: "contents differ"
+                            else if (line.find("contents differ") != std::string::npos)
+                            {
+                                progressCallback(0, 0, "Verification failed");
+                            }
+                        }
+                    }
+                }
+            }
 
-        WaitForSingleObject(pi.hProcess, INFINITE);
+            // If process exited, read any remaining data and break
+            if (waitResult == WAIT_OBJECT_0)
+            {
+                // Read any remaining stdout
+                while (PeekNamedPipe(hStdOutRead, NULL, 0, NULL, &bytesAvail, NULL) && bytesAvail > 0)
+                {
+                    if (ReadFile(hStdOutRead, buffer, sizeof(buffer) - 1, &bytesRead, NULL) && bytesRead > 0)
+                    {
+                        buffer[bytesRead] = '\0';
+                        output += buffer;
+                        std::cout << "[OPENOCD] " << buffer;
+                    }
+                    else
+                        break;
+                }
+
+                // Read any remaining stderr
+                while (PeekNamedPipe(hStdErrRead, NULL, 0, NULL, &bytesAvail, NULL) && bytesAvail > 0)
+                {
+                    if (ReadFile(hStdErrRead, buffer, sizeof(buffer) - 1, &bytesRead, NULL) && bytesRead > 0)
+                    {
+                        buffer[bytesRead] = '\0';
+                        error += buffer;
+                        std::cout << "[OPENOCD-ERR] " << buffer;
+                    }
+                    else
+                        break;
+                }
+
+                break;
+            }
+        }
 
         DWORD exitCode;
         GetExitCodeProcess(pi.hProcess, &exitCode);
+
+        std::cout << "[DEBUG] OpenOCD process exited with code: " << exitCode << std::endl;
 
         CloseHandle(pi.hProcess);
         CloseHandle(pi.hThread);
@@ -399,32 +573,143 @@ namespace DMATool::Backend
         if (progressCallback)
             progressCallback(0, 100, "Preparing to flash firmware...");
 
+        std::cout << "[INFO] Creating OpenOCD config for " << ChipModelToString(chipModel) << std::endl;
+        
         std::string configPath = CreateOpenOCDConfig(chipModel);
         std::string bscanPath = GetBSCANBitstreamPath(chipModel);
         std::string firmwarePathUnix = firmwarePath;
         std::replace(bscanPath.begin(), bscanPath.end(), '\\', '/');
         std::replace(firmwarePathUnix.begin(), firmwarePathUnix.end(), '\\', '/');
 
+        std::cout << "[INFO] BSCAN bitstream: " << bscanPath << std::endl;
+        std::cout << "[INFO] Firmware file: " << firmwarePathUnix << std::endl;
+
+        // Calculate total sectors for progress tracking
+        uint64_t firmwareSize = fs::file_size(firmwarePath);
+        uint64_t totalSectors = (firmwareSize + 65535) / 65536;  // Round up (64KB sectors)
+        
+        std::cout << "[INFO] Firmware size: " << firmwareSize << " bytes (" << totalSectors << " sectors)" << std::endl;
+        
+        // Estimate writing time based on typical speed (~200 KiB/s)
+        double estimatedWriteSeconds = (firmwareSize / 1024.0) / 200.0;  // ~200 KiB/s typical
+        std::cout << "[INFO] Estimated write time: " << estimatedWriteSeconds << " seconds" << std::endl;
+
+        // CRITICAL FIX: Do NOT run xc7_program between jtagspi_program and verify!
+        // The xc7_program command reloads the FPGA which invalidates the flash state
         std::vector<std::string> cmds = {
             "init",
             "jtagspi_init 0 \"" + bscanPath + "\"",
-            "jtagspi_program \"" + firmwarePathUnix + "\" 0x0",
-            "xc7_program xc7.tap"
+            "jtagspi_program \"" + firmwarePathUnix + "\" 0x0"
+            // DO NOT add xc7_program here - it corrupts verification!
         };
 
+        // Only add verification if requested
         if (verifyAfter)
         {
             cmds.push_back("flash verify_bank 0 \"" + firmwarePathUnix + "\"");
         }
 
+        // Reload FPGA configuration at the very end (after verification)
+        cmds.push_back("xc7_program xc7.tap");
         cmds.push_back("shutdown");
 
         if (progressCallback)
-            progressCallback(10, 100, "Programming flash...");
+            progressCallback(10, 100, "Initializing flash...");
 
+        std::cout << "[INFO] Executing OpenOCD flash programming..." << std::endl;
+        
         std::string output, error;
-        result.success = ExecuteOpenOCDCommand(configPath, cmds, output, error);
+        
+        // Track phase transitions
+        bool sectorsComplete = false;
+        bool writingComplete = false;
+        auto sectorsStartTime = std::chrono::steady_clock::now();
+        auto writingStartTime = std::chrono::steady_clock::now();
+        uint64_t lastLoggedElapsedSeconds = 0;  // Track last logged elapsed time
+        
+        // Create a progress callback that handles different phases
+        auto sectorProgressCallback = [&](uint64_t sectorNum, uint64_t unused, const std::string& msg) {
+            if (msg.find("Sector") != std::string::npos && msg.find("complete") != std::string::npos)
+            {
+                // PHASE 1: Erasing sectors (10% - 40%)
+                // Each sector takes ~230ms, total ~8 seconds for 33 sectors
+                float sectorProgress = ((float)(sectorNum + 1) / (float)totalSectors) * 30.0f;  // 0-30%
+                float totalProgress = 10.0f + sectorProgress;  // 10-40%
+                
+                std::string progressMsg = "Erasing sector " + std::to_string(sectorNum + 1) + "/" + std::to_string(totalSectors);
+                
+                if (progressCallback)
+                    progressCallback((uint64_t)totalProgress, 100, progressMsg);
+                    
+                // Mark when sectors are complete
+                if (sectorNum + 1 == totalSectors)
+                {
+                    sectorsComplete = true;
+                    writingStartTime = std::chrono::steady_clock::now();
+                    lastLoggedElapsedSeconds = 0;
+                }
+            }
+            else if (msg.find("Firmware loaded") != std::string::npos || msg.find("read") != std::string::npos)
+            {
+                // Firmware loaded into memory, start writing
+                if (progressCallback && sectorsComplete && !writingComplete)
+                {
+                    progressCallback(42, 100, "Writing flash contents...");
+                    std::cout << "[INFO] Flash writing started" << std::endl;
+                }
+            }
+            else if (msg.find("Writing progress") != std::string::npos)
+            {
+                // PHASE 2: Writing flash (40% - 90%)
+                // This takes most of the time (~120-130 seconds for 2MB)
+                if (sectorsComplete && !writingComplete)
+                {
+                    auto now = std::chrono::steady_clock::now();
+                    double elapsedWrite = std::chrono::duration<double>(now - writingStartTime).count();
+                    
+                    // Progress from 40% to 90% based on ACTUAL elapsed time (not estimated)
+                    // Cap at 90% after 130 seconds
+                    double ratio = elapsedWrite / 130.0;  // 130 seconds to reach 90%
+                    if (ratio > 1.0) ratio = 1.0;  // Cap at 90%
+                    double writeProgress = ratio * 50.0;  // 0-50%
+                    float totalProgress = 40.0f + (float)writeProgress;  // 40-90%
+                    
+                    // Log elapsed time every 10 seconds (not every 2 seconds to avoid spam)
+                    uint64_t currentElapsedSeconds = (uint64_t)elapsedWrite;
+                    if (currentElapsedSeconds >= lastLoggedElapsedSeconds + 10)
+                    {
+                        std::string progressMsg = "Writing flash contents... (elapsed: " + std::to_string(currentElapsedSeconds) + "s)";
+                        if (progressCallback)
+                            progressCallback((uint64_t)totalProgress, 100, progressMsg);
+                        lastLoggedElapsedSeconds = currentElapsedSeconds;
+                    }
+                }
+            }
+            else if (msg.find("Verification passed") != std::string::npos)
+            {
+                // Mark writing as complete, verification started
+                if (!writingComplete)
+                {
+                    writingComplete = true;
+                    std::cout << "[INFO] Flash writing completed, starting verification..." << std::endl;
+                }
+                
+                // PHASE 3: Verification (90% - 95%)
+                if (progressCallback)
+                    progressCallback(95, 100, "Verification passed!");
+            }
+            else if (msg.find("Verification failed") != std::string::npos)
+            {
+                writingComplete = true;
+                if (progressCallback)
+                    progressCallback(90, 100, "Verification failed!");
+            }
+        };
+        
+        result.success = ExecuteOpenOCDCommand(configPath, cmds, output, error, sectorProgressCallback);
 
+        std::cout << "[INFO] OpenOCD execution complete" << std::endl;
+        
         if (fs::exists(configPath))
             fs::remove(configPath);
 
@@ -433,22 +718,67 @@ namespace DMATool::Backend
 
         if (result.success)
         {
+            std::cout << "[SUCCESS] Flash programming succeeded!" << std::endl;
+            
+            // CRITICAL FIX: Search both stdout AND stderr for byte count and verification
+            // OpenOCD outputs to stderr!
+            std::string combinedOutput = output + error;
+            
             std::regex bytesRegex(R"(read (\d+) bytes from file)");
             std::smatch match;
-            if (std::regex_search(output, match, bytesRegex))
+            if (std::regex_search(combinedOutput, match, bytesRegex))
             {
                 result.bytesProcessed = std::stoull(match[1].str());
             }
 
-            result.message = "Flash programming completed successfully";
+            // Check if verification passed (search both stdout and stderr!)
+            bool verifyPassed = (combinedOutput.find("contents match") != std::string::npos);
+            bool verifyFailed = (combinedOutput.find("contents differ") != std::string::npos);
+            
+            if (verifyAfter)
+            {
+                if (verifyPassed)
+                {
+                    result.message = "Flash programming and verification completed successfully";
+                    std::cout << "[SUCCESS] Verification passed!" << std::endl;
+                }
+                else if (verifyFailed)
+                {
+                    result.success = false;
+                    result.message = "Flash programming completed but verification FAILED!\n";
+                    result.message += "The flash contents do not match the firmware file.\n";
+                    result.message += "This may indicate a programming error or flash corruption.";
+                    std::cout << "[ERROR] Verification failed!" << std::endl;
+                }
+                else
+                {
+                    result.message = "Flash programming completed (verification status unknown)";
+                }
+            }
+            else
+            {
+                result.message = "Flash programming completed successfully (not verified)";
+            }
+            
             if (progressCallback)
                 progressCallback(100, 100, result.message);
         }
         else
         {
-            result.message = "Flash programming failed: " + error;
+            std::cout << "[ERROR] Flash programming failed!" << std::endl;
+            std::cout << "[ERROR] Output: " << output << std::endl;
+            std::cout << "[ERROR] Error: " << error << std::endl;
+            
+            result.message = "Flash programming failed";
+            
+            // Combine output and error for detailed message
+            if (!error.empty())
+                result.message += "\n\nError Output:\n" + error;
+            if (!output.empty())
+                result.message += "\n\nOpenOCD Output:\n" + output;
+            
             if (progressCallback)
-                progressCallback(0, 100, result.message);
+                progressCallback(0, 100, "Flash programming failed");
         }
 
         return result;
@@ -480,6 +810,9 @@ namespace DMATool::Backend
 
         uint64_t firmwareSize = fs::file_size(firmwarePath);
         result.bytesProcessed = firmwareSize;
+        
+        std::cout << "[INFO] Firmware size: " << firmwareSize << " bytes (" 
+                  << (firmwareSize / 1024 / 1024) << " MB)" << std::endl;
 
         if (progressCallback)
             progressCallback(10, 100, "Reading flash contents...");
@@ -505,7 +838,20 @@ namespace DMATool::Backend
             progressCallback(30, 100, "Reading " + std::to_string(firmwareSize / 1024 / 1024) + " MB from flash...");
 
         std::string output, error;
-        bool readSuccess = ExecuteOpenOCDCommand(configPath, cmds, output, error);
+        
+        // Track read progress with callback and extract speed info
+        std::string flashReadSpeed;
+        auto verifyStartTime = std::chrono::steady_clock::now();
+        
+        auto readProgressCallback = [&](uint64_t unused1, uint64_t unused2, const std::string& msg) {
+            if (msg.find("Flash read complete") != std::string::npos)
+            {
+                if (progressCallback)
+                    progressCallback(65, 100, "Flash read complete");
+            }
+        };
+        
+        bool readSuccess = ExecuteOpenOCDCommand(configPath, cmds, output, error, readProgressCallback);
 
         if (fs::exists(configPath))
             fs::remove(configPath);
@@ -517,71 +863,105 @@ namespace DMATool::Backend
                 fs::remove(readbackPath);
             return result;
         }
-
-        if (progressCallback)
-            progressCallback(70, 100, "Comparing files...");
-
-        std::ifstream originalFile(firmwarePath, std::ios::binary);
-        std::ifstream readbackFile(readbackPath, std::ios::binary);
-
-        if (!originalFile.is_open() || !readbackFile.is_open())
+        
+        // Extract speed from OpenOCD output
+        std::regex speedRegex(R"((\d+\.\d+)\s+KiB/s)");
+        std::smatch speedMatch;
+        std::string combinedOutput = output + error;
+        if (std::regex_search(combinedOutput, speedMatch, speedRegex))
         {
-            result.message = "Failed to open files for comparison";
+            flashReadSpeed = speedMatch[1].str() + " KiB/s";
+        }
+        
+        // Verify readback file exists and has correct size
+        if (!fs::exists(readbackPath))
+        {
+            result.message = "Flash readback file was not created";
+            return result;
+        }
+        
+        uint64_t readbackSize = fs::file_size(readbackPath);
+        std::cout << "[INFO] Readback file size: " << readbackSize << " bytes" << std::endl;
+        
+        if (readbackSize != firmwareSize)
+        {
+            result.message = "Flash readback size mismatch! Expected " 
+                + std::to_string(firmwareSize) + " bytes, got " 
+                + std::to_string(readbackSize) + " bytes";
             if (fs::exists(readbackPath))
                 fs::remove(readbackPath);
             return result;
         }
 
-        bool filesMatch = true;
-        uint64_t bytesCompared = 0;
-        const size_t bufferSize = 4096;
-        char buffer1[bufferSize];
-        char buffer2[bufferSize];
+        // Spread SHA256 computation over remaining time (7 seconds total verification)
+        // Progress from 70% to 90% during SHA256 calculation
+        
+        if (progressCallback)
+            progressCallback(70, 100, "Computing SHA256 hashes...");
 
-        while (originalFile.read(buffer1, bufferSize) && readbackFile.read(buffer2, bufferSize))
-        {
-            size_t bytesRead = originalFile.gcount();
-            
-            if (std::memcmp(buffer1, buffer2, bytesRead) != 0)
-            {
-                filesMatch = false;
-                break;
-            }
+        // Calculate SHA256 hash for original file
+        std::string originalHash = CalculateSHA256(firmwarePath);
+        
+        // Check elapsed time and update progress proportionally
+        auto now = std::chrono::steady_clock::now();
+        double elapsedVerify = std::chrono::duration<double>(now - verifyStartTime).count();
+        double progressPercent = 70.0 + (elapsedVerify / 7.0) * 20.0;  // 70% + (0-20%) over 7 seconds
+        if (progressPercent > 90.0) progressPercent = 90.0;  // Cap at 90%
+        
+        if (progressCallback)
+            progressCallback((uint64_t)progressPercent, 100, "Computing SHA256 hashes...");
+        
+        // Calculate SHA256 hash for readback file
+        std::string readbackHash = CalculateSHA256(readbackPath);
+        
+        // Update progress again after second hash
+        now = std::chrono::steady_clock::now();
+        elapsedVerify = std::chrono::duration<double>(now - verifyStartTime).count();
+        progressPercent = 70.0 + (elapsedVerify / 7.0) * 20.0;
+        if (progressPercent > 90.0) progressPercent = 90.0;  // Cap at 90%
+        
+        if (progressCallback)
+            progressCallback((uint64_t)progressPercent, 100, "Comparing hashes...");
 
-            bytesCompared += bytesRead;
+        bool filesMatch = (originalHash == readbackHash && !originalHash.empty());
 
-            if (progressCallback && firmwareSize > 0)
-            {
-                float percent = 70.0f + (30.0f * (float)bytesCompared / (float)firmwareSize);
-                progressCallback((uint64_t)percent, 100, "Comparing: " + std::to_string(bytesCompared / 1024 / 1024) + " MB...");
-            }
-        }
-
-        if (originalFile.gcount() != readbackFile.gcount())
-        {
-            filesMatch = false;
-        }
-
-        originalFile.close();
-        readbackFile.close();
-
+        // Clean up readback file
         if (fs::exists(readbackPath))
             fs::remove(readbackPath);
 
         auto endTime = std::chrono::steady_clock::now();
         result.durationSeconds = std::chrono::duration<double>(endTime - startTime).count();
+        
+        std::cout << "[INFO] Verification completed in " << result.durationSeconds << " seconds" << std::endl;
+        std::cout << "[INFO] Original SHA256: " << originalHash << std::endl;
+        std::cout << "[INFO] Readback SHA256: " << readbackHash << std::endl;
 
         if (filesMatch)
         {
             result.success = true;
-            result.message = "Verification passed! Flash contents match firmware file exactly.";
+            result.message = "Verification passed! Flash contents match firmware file exactly.\n";
+            result.message += "Original SHA256: " + originalHash + "\n";
+            result.message += "Readback SHA256: " + readbackHash + "\n";
+            result.message += "Speed: " + flashReadSpeed;
+            std::cout << "[SUCCESS] Verification PASSED - Hashes match perfectly!" << std::endl;
+            
+            // Stay at 90% briefly, then jump to 100%
             if (progressCallback)
+            {
+                progressCallback(90, 100, "Verification complete - MATCH!");
+                std::this_thread::sleep_for(std::chrono::milliseconds(200));  // Brief pause
                 progressCallback(100, 100, "Verification complete - MATCH!");
+            }
         }
         else
         {
             result.success = false;
-            result.message = "Verification failed! Flash contents do NOT match firmware file.";
+            result.message = "Verification failed! Flash contents do NOT match firmware file.\n";
+            result.message += "Original SHA256: " + originalHash + "\n";
+            result.message += "Readback SHA256: " + readbackHash;
+            
+            std::cout << "[ERROR] Verification FAILED - Hash mismatch detected!" << std::endl;
+            
             if (progressCallback)
                 progressCallback(0, 100, "Verification failed - MISMATCH!");
         }
@@ -696,5 +1076,83 @@ namespace DMATool::Backend
         }
         
         std::cout << "[INFO] Extracted " << extracted << " BSCAN bitstream(s)" << std::endl;
+    }
+
+    std::string FlashInterface::CalculateSHA256(const std::string& filePath)
+    {
+        std::cout << "[DEBUG] Calculating SHA256 for: " << filePath << std::endl;
+        
+        std::ifstream file(filePath, std::ios::binary);
+        if (!file.is_open())
+        {
+            std::cout << "[ERROR] Failed to open file for SHA256: " << filePath << std::endl;
+            return "";
+        }
+
+        // Initialize Windows Crypto API
+        HCRYPTPROV hProv = 0;
+        HCRYPTHASH hHash = 0;
+        
+        if (!CryptAcquireContextA(&hProv, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT))
+        {
+            std::cout << "[ERROR] CryptAcquireContext failed" << std::endl;
+            return "";
+        }
+
+        if (!CryptCreateHash(hProv, CALG_SHA_256, 0, 0, &hHash))
+        {
+            std::cout << "[ERROR] CryptCreateHash failed" << std::endl;
+            CryptReleaseContext(hProv, 0);
+            return "";
+        }
+
+        // Read file and hash in chunks
+        const size_t bufferSize = 8192;
+        char buffer[bufferSize];
+        
+        while (file.read(buffer, bufferSize) || file.gcount() > 0)
+        {
+            DWORD bytesRead = static_cast<DWORD>(file.gcount());
+            if (!CryptHashData(hHash, reinterpret_cast<BYTE*>(buffer), bytesRead, 0))
+            {
+                std::cout << "[ERROR] CryptHashData failed" << std::endl;
+                CryptDestroyHash(hHash);
+                CryptReleaseContext(hProv, 0);
+                return "";
+            }
+        }
+        
+        file.close();
+
+        // Get hash value
+        BYTE hashBytes[32]; // SHA-256 = 32 bytes
+        DWORD hashLen = 32;
+        
+        if (!CryptGetHashParam(hHash, HP_HASHVAL, hashBytes, &hashLen, 0))
+        {
+            std::cout << "[ERROR] CryptGetHashParam failed" << std::endl;
+            CryptDestroyHash(hHash);
+            CryptReleaseContext(hProv, 0);
+            return "";
+        }
+
+        // Convert to hex string
+        std::stringstream ss;
+        for (DWORD i = 0; i < hashLen; i++)
+        {
+            ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>(hashBytes[i]);
+        }
+        
+        std::string hashString = ss.str();
+        
+        // Convert to uppercase for consistency with PowerShell
+        std::transform(hashString.begin(), hashString.end(), hashString.begin(), ::toupper);
+
+        CryptDestroyHash(hHash);
+        CryptReleaseContext(hProv, 0);
+        
+        std::cout << "[DEBUG] SHA256: " << hashString << std::endl;
+        
+        return hashString;
     }
 }

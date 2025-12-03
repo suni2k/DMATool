@@ -213,6 +213,35 @@
     <None Include="docs\OPENOCD_CONFIG_PATH_FIX.md" />
     <None Include="docs\DNA_EXTRACTION_FIX.md" />
     <None Include="scripts\Add-TempDirectoryManager.ps1" />
+    <None Include="docs\CH347_COMMUNICATION_ERROR_GUIDE.md" />
+    <None Include="docs\CRITICAL_FLASH_INTERFACE_LOOP_FIX.md" />
+    <None Include="docs\FLASH_TAB_READY_FOR_TESTING.md" />
+    <None Include="docs\FPGA_DETECTION_COMPLETE_FIX_SUMMARY.md" />
+    <None Include="docs\OPENOCD_CONFIG_CPLD_PATH_FIX.md" />
+    <None Include="docs\OPENOCD_PROCESS_LEAK_FIX.md" />
+    <None Include="docs\XC7A50T_75T_IDCODE_ALIASING.md" />
+    <None Include="FPGA_DETECTION_QUICK_REF.md" />
+    <None Include="OPENOCD_CLEANUP_QUICKSTART.md" />
+    <None Include="scripts\Kill-OpenOCD-Admin.ps1" />
+    <None Include="scripts\Kill-OpenOCD-Processes.ps1" />
+    <None Include="scripts\Quick-FPGA-Test.ps1" />
+    <None Include="scripts\Reset-CH347-Adapter.ps1" />
+    <None Include="scripts\Test-OpenOCD-Manual.ps1" />
+    <None Include="scripts\Test-Resource-Embedding.ps1" />
+    <None Include="scripts\Verify-OpenOCD-Resources.ps1" />
+    <None Include="docs\FLASH_INTERFACE_LOOP_FIX.md" />
+    <None Include="docs\FLASH_LOOP_FIX_SUMMARY.md" />
+    <None Include="scripts\Check-OpenOCD-Status.ps1" />
+    <None Include="docs\FLASH_HANG_TROUBLESHOOTING.md" />
+    <None Include="docs\FLASH_HANG_FIX_SUMMARY.md" />
+    <None Include="FLASH_HANG_QUICK_FIX.md" />
+    <None Include="docs\FLASH_PROGRESS_AND_VERIFICATION_FIX.md" />
+    <None Include="docs\FLASH_STDERR_PARSING_FIX.md" />
+    <None Include="docs\FLASH_VERIFICATION_PERFORMANCE_FIX.md" />
+    <None Include="docs\PROGRESS_BAR_COLOR_ENHANCEMENT.md" />
+    <None Include="docs\FLASH_UI_FINAL_POLISH.md" />
+    <None Include="docs\FLASH_VERIFICATION_SHA256_ENHANCEMENT.md" />
+    <None Include="docs\FLASH_MULTI_PHASE_PROGRESS.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DMATool.rc">

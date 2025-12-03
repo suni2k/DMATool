@@ -121,31 +121,33 @@ namespace DMATool::Backend
             FlashProgressCallback progressCallback = nullptr
         );
 
-        // Resource extraction
-        bool ExtractEmbeddedResource(int resourceId, const std::string& outputPath);
-        void ExtractBSCANBitstreams();
-
         // Utility functions
         bool IsOpenOCDAvailable();
         bool IsCH347Connected();
         std::string GetOpenOCDVersion();
 
     private:
-        // Helper functions
+        // Paths
+        std::string m_openocdPath;
+        std::string m_openocdScriptsPath;
+        std::string m_bscanBasePath;
+        
+        // Helper methods
         std::string CreateOpenOCDConfig(FPGAChipModel model, int clockSpeed = 10000000);
         bool ExecuteOpenOCDCommand(
             const std::string& configPath,
             const std::vector<std::string>& commands,
             std::string& output,
-            std::string& error
+            std::string& error,
+            FlashProgressCallback progressCallback = nullptr
         );
-        
-        // Parse OpenOCD output for flash info
         FlashDeviceInfo ParseFlashInfo(const std::string& openocdOutput);
-
-        // Paths
-        std::string m_openocdPath;
-        std::string m_openocdScriptsPath;
-        std::string m_bscanBasePath;
+        
+        // Resource extraction (private implementation)
+        bool ExtractEmbeddedResource(int resourceId, const std::string& outputPath);
+        void ExtractBSCANBitstreams();
+        
+        // SHA256 hash calculation
+        std::string CalculateSHA256(const std::string& filePath);
     };
 }

@@ -30,9 +30,14 @@ namespace DMATool::UI::Tabs
     std::string JTAGFlashTab::s_CurrentOperation = "None";
     std::string JTAGFlashTab::s_CurrentProgress = "";
     float JTAGFlashTab::s_ProgressPercent = 0.0f;
+    JTAGFlashTab::ProgressState JTAGFlashTab::s_ProgressState = JTAGFlashTab::ProgressState::Ready;  // NEW
     
     // SINGLE INSTANCE - Reuse across all operations
     static Backend::FlashInterface* s_FlashInterface = nullptr;
+    
+    // Prevent re-entry of async operations
+    static bool s_FlashThreadRunning = false;
+    static bool s_VerifyThreadRunning = false;
 
     void JTAGFlashTab::AddLog(const std::string& message)
     {
@@ -56,6 +61,17 @@ namespace DMATool::UI::Tabs
         s_ProgressPercent = percent;
         s_CurrentProgress = message;
         AddLog("[PROGRESS] " + message);
+        
+        // Auto-update state based on progress
+        if (percent > 0 && percent < 100)
+        {
+            s_ProgressState = ProgressState::InProgress;  // Yellow for in-progress
+        }
+    }
+
+    void JTAGFlashTab::SetProgressState(ProgressState state)
+    {
+        s_ProgressState = state;
     }
 
     void JTAGFlashTab::Render()
@@ -72,7 +88,7 @@ namespace DMATool::UI::Tabs
         }
 
         // Track frames for async operations
-        bool isAnyOperationActive = s_IsDetecting || s_IsFlashing || s_IsVerifying;
+        bool isAnyOperationActive = s_IsDetecting || s_IsFlashing || s_IsVerifying || s_FlashThreadRunning || s_VerifyThreadRunning;
         static bool wasOperationActive = false;
 
         if (isAnyOperationActive && !wasOperationActive)
@@ -168,23 +184,84 @@ namespace DMATool::UI::Tabs
         ImGui::Separator();
         ImGui::Spacing();
         
-        // Progress bar
+        // ENHANCED PROGRESS BAR with colored states and centered text
         char progressLabel[256];
-        if (s_IsFlashing || s_IsDetecting || s_IsVerifying)
-        {
-            snprintf(progressLabel, sizeof(progressLabel), "%.0f%% - %s", 
-                s_ProgressPercent, s_CurrentProgress.c_str());
-        }
-        else
-        {
-            snprintf(progressLabel, sizeof(progressLabel), "Ready");
-        }
+        bool isOperationActive = s_IsFlashing || s_IsVerifying || s_FlashThreadRunning || s_VerifyThreadRunning;
         
-        ImGui::ProgressBar(s_ProgressPercent / 100.0f, ImVec2(-1, 30), progressLabel);
+        // Only show progress bar if flash/verify operations are active
+        bool showProgressBar = isOperationActive;
         
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
+        if (showProgressBar)
+        {
+            if (isOperationActive)
+            {
+                snprintf(progressLabel, sizeof(progressLabel), "%.0f%% - %s", 
+                    s_ProgressPercent, s_CurrentProgress.c_str());
+            }
+            else
+            {
+                snprintf(progressLabel, sizeof(progressLabel), "%s", s_CurrentProgress.empty() ? "Ready" : s_CurrentProgress.c_str());
+            }
+            
+            // Select color based on state
+            ImVec4 progressBarColor;
+            
+            switch (s_ProgressState)
+            {
+            case ProgressState::Success:
+                // Darker green for success
+                progressBarColor = ImVec4(0.15f, 0.65f, 0.15f, 1.0f);     // Darker green bar
+                break;
+                
+            case ProgressState::Failure:
+                // Red for failure
+                progressBarColor = ImVec4(0.9f, 0.2f, 0.2f, 1.0f);     // Bright red bar
+                break;
+                
+            case ProgressState::InProgress:
+                // Yellow for in-progress
+                progressBarColor = ImVec4(0.95f, 0.75f, 0.1f, 1.0f);   // Bright yellow/gold bar
+                break;
+                
+            case ProgressState::Ready:
+            default:
+                // Default gray/white for ready state
+                progressBarColor = ImVec4(0.4f, 0.4f, 0.4f, 0.6f);     // Subtle gray bar
+                break;
+            }
+            
+            // Custom progress bar with colored background
+            ImGui::PushStyleColor(ImGuiCol_PlotHistogram, progressBarColor);
+            ImGui::PushStyleColor(ImGuiCol_FrameBg, ImVec4(0.2f, 0.2f, 0.2f, 1.0f));  // Dark background
+            
+            float progressFraction = isOperationActive ? (s_ProgressPercent / 100.0f) : 
+                                      (s_ProgressState == ProgressState::Success || s_ProgressState == ProgressState::Failure ? 1.0f : 0.0f);
+            
+            ImGui::ProgressBar(progressFraction, ImVec2(-1, 35), "");  // Empty overlay text
+            
+            ImGui::PopStyleColor(2);
+            
+            // Render centered text overlay on progress bar - WHITE TEXT ONLY
+            ImVec2 progressBarMin = ImVec2(ImGui::GetItemRectMin().x, ImGui::GetItemRectMin().y);
+            ImVec2 progressBarMax = ImVec2(ImGui::GetItemRectMax().x, ImGui::GetItemRectMax().y);
+            ImVec2 progressBarCenter = ImVec2((progressBarMin.x + progressBarMax.x) * 0.5f, 
+                                              (progressBarMin.y + progressBarMax.y) * 0.5f);
+            
+            ImVec2 textSize = ImGui::CalcTextSize(progressLabel);
+            ImVec2 textPos = ImVec2(progressBarCenter.x - textSize.x * 0.5f, 
+                                    progressBarCenter.y - textSize.y * 0.5f);
+            
+            // Draw centered white text (no shadow)
+            ImGui::GetWindowDrawList()->AddText(
+                textPos,
+                IM_COL32(255, 255, 255, 255),  // Pure white text
+                progressLabel
+            );
+            
+            ImGui::Spacing();
+            ImGui::Separator();
+            ImGui::Spacing();
+        }
         
         // Log output with scrolling
         ImGui::BeginChild("LogScrollRegion", ImVec2(0, 0), false, ImGuiWindowFlags_HorizontalScrollbar);
@@ -236,11 +313,11 @@ namespace DMATool::UI::Tabs
                 s_FlashInterface = new Backend::FlashInterface();
             }
             
-            UpdateProgress(0, "Starting flash detection...");
+            // No progress bar for detection, just log messages
             
             s_FlashInfo = s_FlashInterface->DetectFlashDevice([](uint64_t current, uint64_t total, const std::string& msg) {
-                float percent = total > 0 ? (float)current / (float)total * 100.0f : 0.0f;
-                UpdateProgress(percent, msg);
+                // Just log, don't update progress bar for detection
+                AddLog("[PROGRESS] " + msg);
             });
             
             if (s_FlashInfo.detected)
@@ -259,8 +336,6 @@ namespace DMATool::UI::Tabs
                 
                 // Auto-populate the flash device info display
                 AddLog("[INFO] Flash ready for programming");
-                
-                UpdateProgress(100, "Detection complete!");
             }
             else
             {
@@ -269,7 +344,6 @@ namespace DMATool::UI::Tabs
                 AddLog("[INFO]   1. CH347 adapter is connected");
                 AddLog("[INFO]   2. JTAG cable is properly connected");
                 AddLog("[INFO]   3. Target device is powered on");
-                UpdateProgress(0, "Detection failed");
             }
             
             s_IsDetecting = false;
@@ -279,102 +353,201 @@ namespace DMATool::UI::Tabs
         // Perform flashing after UI renders
         if (s_IsFlashing && s_FramesSinceOperation >= 2)
         {
-            // Ensure FlashInterface exists
-            if (!s_FlashInterface)
+            // CRITICAL FIX: Prevent re-entry! Set flag to false IMMEDIATELY
+            s_IsFlashing = false;
+            
+            // Don't launch if already running
+            if (s_FlashThreadRunning)
             {
-                s_FlashInterface = new Backend::FlashInterface();
+                AddLog("[WARNING] Flash operation already in progress!");
+                s_FramesSinceOperation = 0;
             }
-            
-            // Launch flash operation in background thread to avoid UI freeze
-            std::thread flashThread([&]() {
-                UpdateProgress(0, "Preparing to flash firmware...");
-                AddLog("[INFO] Starting flash programming...");
-                AddLog("[INFO] Firmware: " + s_FirmwarePath);
-                AddLog("[INFO] Target chip: " + Backend::FlashInterface::ChipModelToString(s_SelectedChipModel));
+            else
+            {
+                s_FlashThreadRunning = true;
                 
-                auto result = s_FlashInterface->ProgramFirmware(
-                    s_FirmwarePath,
-                    s_SelectedChipModel,
-                    true,  // Verify after
-                    false, // No backup for now
-                    [](uint64_t current, uint64_t total, const std::string& msg) {
-                        float percent = total > 0 ? (float)current / (float)total * 100.0f : 0.0f;
-                        UpdateProgress(percent, msg);
+                // Ensure FlashInterface exists
+                if (!s_FlashInterface)
+                {
+                    s_FlashInterface = new Backend::FlashInterface();
+                }
+                
+                // Launch flash operation in background thread to avoid UI freeze
+                std::thread flashThread([&]() {
+                    SetProgressState(ProgressState::InProgress);  // YELLOW
+                    UpdateProgress(0, "Preparing to flash firmware...");
+                    AddLog("[INFO] Starting flash programming...");
+                    AddLog("[INFO] Firmware: " + s_FirmwarePath);
+                    AddLog("[INFO] Target chip: " + Backend::FlashInterface::ChipModelToString(s_SelectedChipModel));
+                    
+                    auto result = s_FlashInterface->ProgramFirmware(
+                        s_FirmwarePath,
+                        s_SelectedChipModel,
+                        true,  // Verify after
+                        false, // No backup for now
+                        [](uint64_t current, uint64_t total, const std::string& msg) {
+                            float percent = total > 0 ? (float)current / (float)total * 100.0f : 0.0f;
+                            UpdateProgress(percent, msg);
+                        }
+                    );
+                    
+                    if (result.success)
+                    {
+                        AddLog("[INFO] ");
+                        AddLog("[SUCCESS] ===============================================");
+                        AddLog("[SUCCESS] Flash programming and verification completed successfully!");
+                        AddLog("[SUCCESS] ===============================================");
+                        AddLog("[SUCCESS] Bytes written: " + std::to_string(result.bytesProcessed));
+                        AddLog("[SUCCESS] Duration: " + std::to_string(result.durationSeconds) + " seconds");
+                        AddLog("[INFO] ");
+                        UpdateProgress(100, "Complete!");
+                        SetProgressState(ProgressState::Success);  // GREEN
                     }
-                );
+                    else
+                    {
+                        AddLog("[ERROR] Flash programming failed!");
+                        AddLog("[ERROR] " + result.message);
+                        UpdateProgress(0, "Flash failed");
+                        SetProgressState(ProgressState::Failure);  // RED
+                    }
+                    
+                    s_FlashThreadRunning = false;
+                });
                 
-                if (result.success)
-                {
-                    AddLog("[SUCCESS] Flash programming completed!");
-                    AddLog("[INFO] Bytes written: " + std::to_string(result.bytesProcessed));
-                    AddLog("[INFO] Duration: " + std::to_string(result.durationSeconds) + " seconds");
-                    UpdateProgress(100, "Flash complete!");
-                }
-                else
-                {
-                    AddLog("[ERROR] Flash programming failed!");
-                    AddLog("[ERROR] " + result.message);
-                    UpdateProgress(0, "Flash failed");
-                }
-                
-                s_IsFlashing = false;
-            });
-            
-            flashThread.detach();  // Let thread run independently
-            s_FramesSinceOperation = 0;
+                flashThread.detach();  // Let thread run independently
+                s_FramesSinceOperation = 0;
+            }
         }
         
         // Perform verification after UI renders
         if (s_IsVerifying && s_FramesSinceOperation >= 2)
         {
-            // Ensure FlashInterface exists
-            if (!s_FlashInterface)
+            // CRITICAL FIX: Prevent re-entry! Set flag to false IMMEDIATELY
+            s_IsVerifying = false;
+            
+            // Don't launch if already running
+            if (s_VerifyThreadRunning)
             {
-                s_FlashInterface = new Backend::FlashInterface();
+                AddLog("[WARNING] Verification operation already in progress!");
+                s_FramesSinceOperation = 0;
             }
-            
-            // Launch verify operation in background thread
-            std::thread verifyThread([&]() {
-                UpdateProgress(0, "Preparing to verify firmware...");
-                AddLog("[INFO] Starting firmware verification...");
-                AddLog("[INFO] Firmware: " + s_FirmwarePath);
-                AddLog("[INFO] Target chip: " + Backend::FlashInterface::ChipModelToString(s_SelectedChipModel));
-                AddLog("[INFO] This will read the entire flash and compare byte-by-byte");
+            else
+            {
+                s_VerifyThreadRunning = true;
                 
-                auto result = s_FlashInterface->VerifyFirmware(
-                    s_FirmwarePath,
-                    s_SelectedChipModel,
-                    [](uint64_t current, uint64_t total, const std::string& msg) {
-                        float percent = total > 0 ? (float)current / (float)total * 100.0f : 0.0f;
-                        UpdateProgress(percent, msg);
+                // Ensure FlashInterface exists
+                if (!s_FlashInterface)
+                {
+                    s_FlashInterface = new Backend::FlashInterface();
+                }
+                
+                // Launch verify operation in background thread
+                std::thread verifyThread([&]() {
+                    SetProgressState(ProgressState::InProgress);  // YELLOW
+                    UpdateProgress(0, "Preparing to verify firmware...");
+                    
+                    AddLog("[INFO] ========================================");
+                    AddLog("[INFO] Flash Verification");
+                    AddLog("[INFO] ========================================");
+                    AddLog("[INFO] ");
+                    AddLog("[INFO] Original file: " + s_FirmwarePath);
+                    AddLog("[INFO] Target chip: " + Backend::FlashInterface::ChipModelToString(s_SelectedChipModel));
+                    AddLog("[INFO] This will read the entire flash and compare SHA256 hashes");
+                    AddLog("[INFO] ");
+                    
+                    auto result = s_FlashInterface->VerifyFirmware(
+                        s_FirmwarePath,
+                        s_SelectedChipModel,
+                        [](uint64_t current, uint64_t total, const std::string& msg) {
+                            float percent = total > 0 ? (float)current / (float)total * 100.0f : 0.0f;
+                            UpdateProgress(percent, msg);
+                        }
+                    );
+                    
+                    if (result.success)
+                    {
+                        AddLog("[INFO] ");
+                        AddLog("[SUCCESS] ============================================");
+                        AddLog("[SUCCESS] VERIFICATION PASSED!");
+                        AddLog("[SUCCESS] ============================================");
+                        AddLog("[INFO] ");
+                        AddLog("[SUCCESS] Flash contents match the firmware file exactly");
+                        AddLog("[SUCCESS] The firmware was written correctly");
+                        AddLog("[INFO] ");
+                        
+                        // Extract SHA256 hashes from message
+                        std::string msg = result.message;
+                        size_t origPos = msg.find("Original SHA256: ");
+                        size_t readPos = msg.find("Readback SHA256: ");
+                        size_t speedPos = msg.find("Speed: ");
+                        
+                        if (origPos != std::string::npos && readPos != std::string::npos)
+                        {
+                            std::string origHash = msg.substr(origPos + 17, 64);
+                            std::string readHash = msg.substr(readPos + 17, 64);
+                            AddLog("[INFO] Original SHA256:  " + origHash);
+                            AddLog("[INFO] Readback SHA256:  " + readHash);
+                            AddLog("[INFO] ");
+                        }
+                        
+                        AddLog("[INFO] Bytes verified: " + std::to_string(result.bytesProcessed));
+                        AddLog("[INFO] Duration: " + std::to_string(result.durationSeconds) + " seconds");
+                        
+                        // Extract and display speed if available
+                        if (speedPos != std::string::npos)
+                        {
+                            std::string speed = msg.substr(speedPos + 7);
+                            if (speed.find('\n') != std::string::npos)
+                                speed = speed.substr(0, speed.find('\n'));
+                            AddLog("[INFO] Speed: " + speed);
+                        }
+                        
+                        AddLog("[INFO] ");
+                        
+                        UpdateProgress(100, "Verification complete - MATCH!");
+                        SetProgressState(ProgressState::Success);  // GREEN
                     }
-                );
+                    else
+                    {
+                        AddLog("[INFO] ");
+                        AddLog("[ERROR] ============================================");
+                        AddLog("[ERROR] VERIFICATION FAILED!");
+                        AddLog("[ERROR] ============================================");
+                        AddLog("[INFO] ");
+                        AddLog("[ERROR] Flash contents DO NOT match!");
+                        AddLog("[ERROR] The flash may be corrupted");
+                        AddLog("[INFO] ");
+                        
+                        // Extract SHA256 hashes from message
+                        std::string msg = result.message;
+                        size_t origPos = msg.find("Original SHA256: ");
+                        size_t readPos = msg.find("Readback SHA256: ");
+                        
+                        if (origPos != std::string::npos && readPos != std::string::npos)
+                        {
+                            std::string origHash = msg.substr(origPos + 17, 64);
+                            std::string readHash = msg.substr(readPos + 17, 64);
+                            AddLog("[INFO] Original SHA256:  " + origHash);
+                            AddLog("[INFO] Readback SHA256:  " + readHash);
+                            AddLog("[INFO] ");
+                        }
+                        
+                        AddLog("[WARNING] Troubleshooting:");
+                        AddLog("[WARNING]   1. Try reflashing with slower clock speed");
+                        AddLog("[WARNING]   2. Check JTAG connections");
+                        AddLog("[WARNING]   3. Verify hardware is working correctly");
+                        AddLog("[INFO] ");
+                        
+                        UpdateProgress(0, "Verification failed - MISMATCH!");
+                        SetProgressState(ProgressState::Failure);  // RED
+                    }
+                    
+                    s_VerifyThreadRunning = false;
+                });
                 
-                if (result.success)
-                {
-                    AddLog("[SUCCESS] Firmware verification PASSED!");
-                    AddLog("[SUCCESS] Flash contents match the firmware file exactly!");
-                    AddLog("[INFO] Bytes verified: " + std::to_string(result.bytesProcessed));
-                    AddLog("[INFO] Duration: " + std::to_string(result.durationSeconds) + " seconds");
-                    UpdateProgress(100, "Verification complete - MATCH!");
-                }
-                else
-                {
-                    AddLog("[ERROR] Firmware verification FAILED!");
-                    AddLog("[ERROR] " + result.message);
-                    AddLog("[WARNING] Flash contents do NOT match the firmware file!");
-                    AddLog("[WARNING] Possible causes:");
-                    AddLog("[WARNING]   - Firmware was not flashed correctly");
-                    AddLog("[WARNING]   - Wrong firmware file selected");
-                    AddLog("[WARNING]   - Flash corruption");
-                    UpdateProgress(0, "Verification failed - MISMATCH!");
-                }
-                
-                s_IsVerifying = false;
-            });
-            
-            verifyThread.detach();
-            s_FramesSinceOperation = 0;
+                verifyThread.detach();
+                s_FramesSinceOperation = 0;
+            }
         }
         
         ImGui::EndChild();  // End JTAGFlashContent
@@ -481,7 +654,7 @@ namespace DMATool::UI::Tabs
         ImGui::Dummy(ImVec2(0, 2));
         
         // Detect button
-        ImGui::BeginDisabled(s_IsDetecting || s_IsFlashing || s_IsVerifying);
+        ImGui::BeginDisabled(s_IsDetecting || s_IsFlashing || s_IsVerifying || s_FlashThreadRunning || s_VerifyThreadRunning);
         
         std::string detectButtonText = s_IsDetecting ? "Detecting..." : "Detect Flash Device";
         
@@ -490,6 +663,7 @@ namespace DMATool::UI::Tabs
             s_IsDetecting = true;
             ClearLog();
             s_CurrentOperation = "Flash Detection";
+            // No progress state for detection
             AddLog("[INFO] Starting flash device detection...");
         }
         
@@ -507,7 +681,7 @@ namespace DMATool::UI::Tabs
         ImGui::Text("Flash Operations");
         ImGui::Dummy(ImVec2(0, 1));
         ImGui::Separator();
-        ImGui::Dummy(ImVec2(0, 2));
+        ImGui::Dummy(ImVec2(0, 1));
         
         // Firmware File Selection
         ImGui::PushStyleColor(ImGuiCol_Text, Colors::Info);
@@ -565,25 +739,38 @@ namespace DMATool::UI::Tabs
             ImGui::PopStyleColor();
         }
         
-        ImGui::Dummy(ImVec2(0, 2));
+        ImGui::Dummy(ImVec2(0, 1));
         ImGui::Separator();
-        ImGui::Dummy(ImVec2(0, 2));
+        ImGui::Dummy(ImVec2(0, 1));
         
-        // Flash Operations
+        // Flash Programming Section
         ImGui::PushStyleColor(ImGuiCol_Text, Colors::Warning);
-        ImGui::Text("Flash Operations");
+        ImGui::Text("Programming Options");
         ImGui::PopStyleColor();
         ImGui::Spacing();
         
-        // Program Firmware button
-        ImGui::BeginDisabled(s_IsFlashing || s_IsDetecting || s_FirmwarePath.empty());
+        // Verify after programming checkbox
+        static bool verifyAfterWrite = true;
+        ImGui::Checkbox("Verify after programming", &verifyAfterWrite);
         
-        std::string flashButtonText = s_IsFlashing ? "Flashing..." : "Program Firmware";
+        ImGui::Dummy(ImVec2(0, 1));
+        ImGui::Separator();
+        ImGui::Dummy(ImVec2(0, 1));
+        
+        // Reduced spacing to align buttons without scroll bar
+        ImGui::Spacing();
+        ImGui::Spacing();
+        
+        // Program Firmware button
+        ImGui::BeginDisabled(s_IsFlashing || s_IsDetecting || s_FirmwarePath.empty() || s_FlashThreadRunning || s_VerifyThreadRunning);
+        
+        std::string flashButtonText = (s_IsFlashing || s_FlashThreadRunning) ? "Flashing..." : "Program Firmware";
         
         if (Theme::ButtonPrimary(flashButtonText.c_str(), ImVec2(-1, 40)))
         {
             s_IsFlashing = true;
             s_CurrentOperation = "Flash Programming";
+            s_ProgressState = ProgressState::InProgress;  // YELLOW when starting
             AddLog("[INFO] User initiated flash programming");
         }
         
@@ -592,65 +779,19 @@ namespace DMATool::UI::Tabs
         ImGui::Spacing();
         
         // Verify Firmware button
-        ImGui::BeginDisabled(s_IsFlashing || s_IsDetecting || s_IsVerifying || s_FirmwarePath.empty() || !s_FlashInfo.detected);
+        ImGui::BeginDisabled(s_IsFlashing || s_IsDetecting || s_IsVerifying || s_FirmwarePath.empty() || !s_FlashInfo.detected || s_FlashThreadRunning || s_VerifyThreadRunning);
         
-        std::string verifyButtonText = s_IsVerifying ? "Verifying..." : "Verify Firmware";
+        std::string verifyButtonText = (s_IsVerifying || s_VerifyThreadRunning) ? "Verifying..." : "Verify Firmware";
         
         if (Theme::ButtonSecondary(verifyButtonText.c_str(), ImVec2(-1, 35)))
         {
             s_IsVerifying = true;
             s_CurrentOperation = "Firmware Verification";
+            s_ProgressState = ProgressState::InProgress;  // YELLOW when starting
             AddLog("[INFO] User initiated firmware verification");
         }
         
         ImGui::EndDisabled();
-        
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
-        
-        // Read Operations
-        ImGui::PushStyleColor(ImGuiCol_Text, Colors::Info);
-        ImGui::Text("Read Operations");
-        ImGui::PopStyleColor();
-        ImGui::Spacing();
-        
-        ImGui::BeginDisabled(true);  // Not implemented yet
-        if (Theme::ButtonSecondary("Read Full Flash", ImVec2(-1, 35)))
-        {
-            // TODO: Implement read
-        }
-        ImGui::EndDisabled();
-        
-        ImGui::Spacing();
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
-        
-        // Dangerous Operations
-        ImGui::PushStyleColor(ImGuiCol_Text, Colors::Destructive);
-        ImGui::Text("? Destructive Operations");
-        ImGui::PopStyleColor();
-        ImGui::Spacing();
-        
-        ImGui::BeginDisabled(true);  // Not implemented yet
-        if (Theme::ButtonDestructive("Erase Chip", ImVec2(-1, 35)))
-        {
-            // TODO: Implement erase with confirmation dialog
-        }
-        ImGui::EndDisabled();
-        
-        ImGui::Spacing();
-        ImGui::Spacing();
-        ImGui::Separator();
-        ImGui::Spacing();
-        
-        // Options
-        static bool verifyAfterWrite = true;
-        static bool backupBeforeWrite = false;
-        
-        ImGui::Checkbox("Verify after programming", &verifyAfterWrite);
-        ImGui::Checkbox("Backup before programming", &backupBeforeWrite);
         
         ImGui::EndChild();
     }

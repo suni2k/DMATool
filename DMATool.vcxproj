@@ -155,11 +155,21 @@
     <None Include="docs\DNA_ID_STATUS.md" />
     <None Include="docs\DNA_ID_TAB_COMPLETE.md" />
     <None Include="docs\FLASH_DETECTION_TROUBLESHOOTING.md" />
+    <None Include="docs\FLASH_HANG_FIX_SUMMARY.md" />
+    <None Include="docs\FLASH_HANG_TROUBLESHOOTING.md" />
     <None Include="docs\FLASH_IMPLEMENTATION_SUMMARY.md" />
+    <None Include="docs\FLASH_INTERFACE_LOOP_FIX.md" />
+    <None Include="docs\FLASH_LOOP_FIX_SUMMARY.md" />
+    <None Include="docs\FLASH_MULTI_PHASE_PROGRESS.md" />
+    <None Include="docs\FLASH_PROGRESS_AND_VERIFICATION_FIX.md" />
     <None Include="docs\FLASH_RESOURCES_PATH_VERIFICATION.md" />
+    <None Include="docs\FLASH_STDERR_PARSING_FIX.md" />
     <None Include="docs\FLASH_TAB_IMPLEMENTATION_COMPLETE.md" />
     <None Include="docs\FLASH_TAB_READY_FOR_TESTING.md" />
     <None Include="docs\FLASH_TESTING_QUICK_REF.md" />
+    <None Include="docs\FLASH_UI_FINAL_POLISH.md" />
+    <None Include="docs\FLASH_VERIFICATION_PERFORMANCE_FIX.md" />
+    <None Include="docs\FLASH_VERIFICATION_SHA256_ENHANCEMENT.md" />
     <None Include="docs\FPGA_DETECTION_COMPLETE_FIX_SUMMARY.md" />
     <None Include="docs\FT601_DRIVER_EMBEDDING.md" />
     <None Include="docs\FT601_DRIVER_FINAL_FIXES.md" />
@@ -182,6 +192,7 @@
     <None Include="docs\OPENOCD_PROCESS_LEAK_FIX.md" />
     <None Include="docs\OPENOCD_VERSION_FIX.md" />
     <None Include="docs\PERFORMANCE_RATINGS.md" />
+    <None Include="docs\PROGRESS_BAR_COLOR_ENHANCEMENT.md" />
     <None Include="docs\RESOURCE_EMBEDDING_COMPLETE.md" />
     <None Include="docs\STRESS_TEST_DURATION_FIX.md" />
     <None Include="docs\STRESS_TEST_IMPLEMENTATION.md" />
@@ -191,6 +202,7 @@
     <None Include="docs\UI_SPACING_FIXES_FINAL.md" />
     <None Include="docs\XC7A50T_75T_IDCODE_ALIASING.md" />
     <None Include="docs\XC7A75T_SUPPORT_ADDED.md" />
+    <None Include="FLASH_HANG_QUICK_FIX.md" />
     <None Include="FPGA_DETECTION_QUICK_REF.md" />
     <None Include="OPENOCD_CLEANUP_QUICKSTART.md" />
     <None Include="QUICK_REFERENCE.md" />
@@ -198,6 +210,7 @@
     <None Include=".gitignore" />
     <None Include="scripts\Add-BSCAN-Resources.ps1" />
     <None Include="scripts\Add-TempDirectoryManager.ps1" />
+    <None Include="scripts\Check-OpenOCD-Status.ps1" />
     <None Include="scripts\Compare-CH347-Full.ps1" />
     <None Include="scripts\Compare-OpenOCD-Installations.ps1" />
     <None Include="scripts\Fix-OpenOCD-Version.ps1" />
