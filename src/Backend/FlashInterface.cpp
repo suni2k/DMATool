@@ -317,11 +317,23 @@ namespace DMATool::Backend
         
         // Track when sectors complete to start periodic writing updates
         bool sectorsCompleted = false;
+        auto lastProgressUpdate = std::chrono::steady_clock::now();
 
         while (true)
         {
             // Check if process is still running
             DWORD waitResult = WaitForSingleObject(pi.hProcess, 100);  // Wait 100ms
+            
+            // Send periodic "Writing progress" updates during the writing phase (every 2 seconds)
+            auto now = std::chrono::steady_clock::now();
+            double timeSinceLastUpdate = std::chrono::duration<double>(now - lastProgressUpdate).count();
+            
+            if (sectorsCompleted && timeSinceLastUpdate >= 2.0)
+            {
+                if (progressCallback)
+                    progressCallback(0, 0, "Writing progress");
+                lastProgressUpdate = now;
+            }
             
             // Try to read stdout
             PeekNamedPipe(hStdOutRead, NULL, 0, NULL, &bytesAvail, NULL);
@@ -332,20 +344,7 @@ namespace DMATool::Backend
                     buffer[bytesRead] = '\0';
                     output += buffer;
                     outputBuffer += buffer;
-                    
-                    // Parse for 0x address lines (only show these, not [OPENOCD] prefix)
-                    std::string bufferStr(buffer);
-                    if (bufferStr.find("0x") != std::string::npos && 
-                        bufferStr.find(".") != std::string::npos)
-                    {
-                        // This is an address progress line - show it without [OPENOCD] prefix
-                        std::cout << buffer;
-                    }
-                    else
-                    {
-                        // Other output - show with [OPENOCD] prefix
-                        std::cout << "[OPENOCD] " << buffer;
-                    }
+                    std::cout << "[OPENOCD] " << buffer;  // Real-time output
                     
                     // Parse complete lines for progress updates
                     size_t newlinePos;
@@ -369,6 +368,7 @@ namespace DMATool::Backend
                                 if (line.find("sector") != std::string::npos)
                                 {
                                     sectorsCompleted = true;
+                                    lastProgressUpdate = std::chrono::steady_clock::now();
                                 }
                             }
                             // Check for file read: "read 2099688 bytes from file"
@@ -423,6 +423,7 @@ namespace DMATool::Backend
                                 
                                 // Mark that sectors are being processed
                                 sectorsCompleted = true;
+                                lastProgressUpdate = std::chrono::steady_clock::now();
                             }
                             // Check for file read: "read 2099688 bytes from file"
                             else if (line.find("read") != std::string::npos && line.find("bytes from file") != std::string::npos)
@@ -460,18 +461,7 @@ namespace DMATool::Backend
                     {
                         buffer[bytesRead] = '\0';
                         output += buffer;
-                        
-                        // Check for 0x address lines
-                        std::string bufferStr(buffer);
-                        if (bufferStr.find("0x") != std::string::npos && 
-                            bufferStr.find(".") != std::string::npos)
-                        {
-                            std::cout << buffer;
-                        }
-                        else
-                        {
-                            std::cout << "[OPENOCD] " << buffer;
-                        }
+                        std::cout << "[OPENOCD] " << buffer;
                     }
                     else
                         break;
@@ -669,14 +659,47 @@ namespace DMATool::Backend
                     lastLoggedElapsedSeconds = 0;
                 }
             }
+            else if (msg.find("Writing progress") != std::string::npos)
+            {
+                // PHASE 2: Writing flash (40% - 90%)
+                // This takes most of the time (~120-130 seconds for 2MB)
+                if (sectorsComplete && !writingComplete)
+                {
+                    auto now = std::chrono::steady_clock::now();
+                    double elapsedWrite = std::chrono::duration<double>(now - writingStartTime).count();
+                    
+                    // Progress from 40% to 90% based on ACTUAL elapsed time (not estimated)
+                    // Cap at 90% after 130 seconds
+                    double ratio = elapsedWrite / 130.0;  // 130 seconds to reach 90%
+                    if (ratio > 1.0) ratio = 1.0;  // Cap at 90%
+                    double writeProgress = ratio * 50.0;  // 0-50%
+                    float totalProgress = 40.0f + (float)writeProgress;  // 40-90%
+                    
+                    // Log elapsed time every 10 seconds (not every 2 seconds to avoid spam)
+                    uint64_t currentElapsedSeconds = (uint64_t)elapsedWrite;
+                    if (currentElapsedSeconds >= lastLoggedElapsedSeconds + 10)
+                    {
+                        std::string progressMsg = "Writing flash contents... (elapsed: " + std::to_string(currentElapsedSeconds) + "s)";
+                        if (progressCallback)
+                            progressCallback((uint64_t)totalProgress, 100, progressMsg);
+                        lastLoggedElapsedSeconds = currentElapsedSeconds;
+                    }
+                }
+            }
             else if (msg.find("Verification passed") != std::string::npos)
             {
                 // Mark writing as complete
                 writingComplete = true;
+                
+                // PHASE 3: Verification (90% - 95%)
+                if (progressCallback)
+                    progressCallback(95, 100, "Verification passed!");
             }
             else if (msg.find("Verification failed") != std::string::npos)
             {
                 writingComplete = true;
+                if (progressCallback)
+                    progressCallback(90, 100, "Verification failed!");
             }
         };
         
