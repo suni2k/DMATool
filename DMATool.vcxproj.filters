@@ -244,10 +244,27 @@
     <None Include="docs\FLASH_MULTI_PHASE_PROGRESS.md" />
     <None Include="docs\FLASH_PROGRESS_REFINEMENT_FINAL.md" />
     <None Include="docs\FLASH_LOG_CLEANUP.md" />
+    <None Include="DRIVER_FIX_REQUIRED.md" />
+    <None Include="ADMINISTRATOR_MANIFEST_SETUP.md" />
+    <None Include="COMPLETE_SETUP_GUIDE.md" />
+    <None Include="scripts\Configure-Manifest.ps1" />
+    <None Include=".github\copilot-instructions.md" />
+    <None Include="NEXT_STEPS.md" />
+    <None Include="MANIFEST_FINAL_FIX.md" />
+    <None Include="scripts\Clean-Build.ps1" />
+    <None Include="VISUAL_STUDIO_MANIFEST_GUIDE.md" />
+    <None Include="MANIFEST_CORRECT_LOCATION.md" />
+    <None Include="scripts\Fix-ManifestBuild.ps1" />
+    <None Include="scripts\Fix-MT-Tool-Issue.ps1" />
+    <None Include="scripts\Fix-Build-MT-Issue.ps1" />
+    <None Include="BUILD_FIX_SUMMARY.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DMATool.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="app.manifest" />
   </ItemGroup>
 </Project>

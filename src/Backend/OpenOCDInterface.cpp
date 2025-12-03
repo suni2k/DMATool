@@ -586,49 +586,9 @@ namespace DMATool::Backend
             }
         }
         
-        // Find the driver folder in the source directory
-        std::cout << "[INFO] Looking for driver files..." << std::endl;
+        // Extract driver files from embedded resources to temp directory
+        std::cout << "[INFO] Extracting driver files from embedded resources..." << std::endl;
         
-        // Get executable directory
-        char exePath[MAX_PATH];
-        GetModuleFileNameA(NULL, exePath, MAX_PATH);
-        std::filesystem::path exeDir = std::filesystem::path(exePath).parent_path();
-        
-        std::cout << "[DEBUG] Executable directory: " << exeDir.string() << std::endl;
-        
-        // Look for drivers in multiple locations relative to exe
-        std::vector<std::filesystem::path> searchPaths = {
-            exeDir / "tools" / "ch347" / "drivers",
-            exeDir / ".." / "tools" / "ch347" / "drivers",  // One level up (for Debug/Release builds)
-            exeDir / ".." / ".." / "tools" / "ch347" / "drivers",  // Two levels up
-            std::filesystem::path("C:/Users/suni/source/repos/DMATool/tools/ch347/drivers")  // Absolute fallback for development
-        };
-        
-        std::filesystem::path sourceDriverDir;
-        for (const auto& path : searchPaths)
-        {
-            if (std::filesystem::exists(path / "CH341WDM.INF"))
-            {
-                sourceDriverDir = std::filesystem::canonical(path);
-                std::cout << "[INFO] Found drivers at: " << sourceDriverDir.string() << std::endl;
-                break;
-            }
-        }
-        
-        if (sourceDriverDir.empty())
-        {
-            std::cout << "[ERROR] Could not find driver files in any search location" << std::endl;
-            std::cout << "[INFO] Searched locations:" << std::endl;
-            for (const auto& path : searchPaths)
-            {
-                std::cout << "[INFO]   - " << path.string() << std::endl;
-            }
-            std::cout << "[INFO] Opening browser to download driver manually..." << std::endl;
-            ShellExecuteA(nullptr, "open", "https://www.wch.cn/downloads/CH347SER_ZIP.html", nullptr, nullptr, SW_SHOWNORMAL);
-            return false;
-        }
-        
-        // Copy entire driver folder to temp directory
         std::string tempDir = GetTempDirectory();
         std::filesystem::path destDriverDir = std::filesystem::path(tempDir) / "drivers";
         
@@ -643,34 +603,89 @@ namespace DMATool::Backend
             // Create destination directory
             std::filesystem::create_directories(destDriverDir);
             
-            // Copy all files from source to destination
-            std::cout << "[INFO] Copying driver files to temp directory..." << std::endl;
-            for (const auto& entry : std::filesystem::directory_iterator(sourceDriverDir))
+            // Extract all driver files from embedded resources
+            std::cout << "[INFO] Extracting driver files to temp directory..." << std::endl;
+            
+            if (!ExtractEmbeddedResource(IDR_CH341_INF, (destDriverDir / "CH341WDM.INF").string()))
             {
-                if (entry.is_regular_file())
-                {
-                    std::filesystem::path destFile = destDriverDir / entry.path().filename();
-                    std::filesystem::copy_file(entry.path(), destFile, std::filesystem::copy_options::overwrite_existing);
-                    std::cout << "[DEBUG] Copied: " << entry.path().filename().string() << std::endl;
-                }
+                std::cout << "[ERROR] Failed to extract CH341WDM.INF" << std::endl;
+                return false;
             }
+            std::cout << "[DEBUG] Extracted: CH341WDM.INF" << std::endl;
+            
+            if (!ExtractEmbeddedResource(IDR_CH341_SYS, (destDriverDir / "CH341WDM.SYS").string()))
+            {
+                std::cout << "[ERROR] Failed to extract CH341WDM.SYS" << std::endl;
+                return false;
+            }
+            std::cout << "[DEBUG] Extracted: CH341WDM.SYS" << std::endl;
+            
+            if (!ExtractEmbeddedResource(IDR_CH341_M64_SYS, (destDriverDir / "CH341M64.SYS").string()))
+            {
+                std::cout << "[ERROR] Failed to extract CH341M64.SYS" << std::endl;
+                return false;
+            }
+            std::cout << "[DEBUG] Extracted: CH341M64.SYS" << std::endl;
+            
+            if (!ExtractEmbeddedResource(IDR_CH341_W64_SYS, (destDriverDir / "CH341W64.SYS").string()))
+            {
+                std::cout << "[ERROR] Failed to extract CH341W64.SYS" << std::endl;
+                return false;
+            }
+            std::cout << "[DEBUG] Extracted: CH341W64.SYS" << std::endl;
+            
+            if (!ExtractEmbeddedResource(IDR_CH341_CAT, (destDriverDir / "CH341WDM.CAT").string()))
+            {
+                std::cout << "[ERROR] Failed to extract CH341WDM.CAT" << std::endl;
+                return false;
+            }
+            std::cout << "[DEBUG] Extracted: CH341WDM.CAT" << std::endl;
+            
+            if (!ExtractEmbeddedResource(IDR_CH347_DLL, (destDriverDir / "CH347DLL.DLL").string()))
+            {
+                std::cout << "[ERROR] Failed to extract CH347DLL.DLL" << std::endl;
+                return false;
+            }
+            std::cout << "[DEBUG] Extracted: CH347DLL.DLL" << std::endl;
+            
+            if (!ExtractEmbeddedResource(IDR_CH347_DLL_A64, (destDriverDir / "CH347DLLA64.DLL").string()))
+            {
+                std::cout << "[ERROR] Failed to extract CH347DLLA64.DLL" << std::endl;
+                return false;
+            }
+            std::cout << "[DEBUG] Extracted: CH347DLLA64.DLL" << std::endl;
+            
+            // Extract CH341 DLL files (required by INF file)
+            if (!ExtractEmbeddedResource(IDR_CH341_DLL, (destDriverDir / "CH341DLL.DLL").string()))
+            {
+                std::cout << "[ERROR] Failed to extract CH341DLL.DLL" << std::endl;
+                return false;
+            }
+            std::cout << "[DEBUG] Extracted: CH341DLL.DLL" << std::endl;
+            
+            if (!ExtractEmbeddedResource(IDR_CH341_DLL_A64, (destDriverDir / "CH341DLLA64.DLL").string()))
+            {
+                std::cout << "[ERROR] Failed to extract CH341DLLA64.DLL" << std::endl;
+                return false;
+            }
+            std::cout << "[DEBUG] Extracted: CH341DLLA64.DLL" << std::endl;
         }
         catch (const std::exception& e)
         {
-            std::cout << "[ERROR] Failed to copy driver files: " << e.what() << std::endl;
+            std::cout << "[ERROR] Failed to extract driver files: " << e.what() << std::endl;
             return false;
         }
         
-        std::cout << "[SUCCESS] Driver files copied successfully" << std::endl;
+        std::cout << "[SUCCESS] Driver files extracted successfully" << std::endl;
         
-        // Use the copied INF file
+        // Use the extracted INF file
         std::filesystem::path infPath = destDriverDir / "CH341WDM.INF";
         std::cout << "[INFO] Using driver INF at: " << infPath.string() << std::endl;
         
         // Verify INF exists
         if (!std::filesystem::exists(infPath))
         {
-            std::cout << "[ERROR] INF file not found after copy: " << infPath.string() << std::endl;
+            std::cout << "[ERROR] INF file not found after extraction: " << infPath.string() << std::endl;
             return false;
         }
         

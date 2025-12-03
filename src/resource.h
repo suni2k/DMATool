@@ -17,6 +17,8 @@
 #define IDR_CH341_CAT                   113
 #define IDR_CH347_DLL                   114
 #define IDR_CH347_DLL_A64               115
+#define IDR_CH341_DLL                   118
+#define IDR_CH341_DLL_A64               119
 #define IDR_FT601_INF                   116
 #define IDR_FT601_CAT                   117
 

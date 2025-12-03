@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -21,13 +21,13 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -68,7 +68,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>d3d11.lib;dxgi.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalManifestFiles>app.manifest</AdditionalManifestFiles>
-      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -90,7 +89,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalDependencies>d3d11.lib;dxgi.lib;d3dcompiler.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalManifestFiles>app.manifest</AdditionalManifestFiles>
-      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -141,7 +139,6 @@
   <ItemGroup>
     <None Include=".github\copilot-instructions.md" />
     <None Include="ADMINISTRATOR_MANIFEST_SETUP.md" />
-    <None Include="BUILD_FIX_SUMMARY.md" />
     <None Include="COMPLETE_SETUP_GUIDE.md" />
     <None Include="docs\75T_TEST_RESULTS.md" />
     <None Include="docs\ARCHITECTURE.md" />
@@ -229,7 +226,6 @@
     <None Include="scripts\Compare-CH347-Full.ps1" />
     <None Include="scripts\Compare-OpenOCD-Installations.ps1" />
     <None Include="scripts\Configure-Manifest.ps1" />
-    <None Include="scripts\Fix-Build-MT-Issue.ps1" />
     <None Include="scripts\Fix-ManifestBuild.ps1" />
     <None Include="scripts\Fix-MT-Tool-Issue.ps1" />
     <None Include="scripts\Fix-OpenOCD-Version.ps1" />
