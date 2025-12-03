@@ -142,6 +142,7 @@
     <None Include=".github\copilot-instructions.md" />
     <None Include="ADMINISTRATOR_MANIFEST_SETUP.md" />
     <None Include="ALL_RESOURCE_ISSUES_FIXED.md" />
+    <None Include="BENCHMARK_DIAGNOSTIC.md" />
     <None Include="BENCHMARK_ISSUES_DIAGNOSIS.md" />
     <None Include="COMPLETE_SETUP_GUIDE.md" />
     <None Include="CONSOLE_HIDDEN_RELEASE.md" />
@@ -217,6 +218,7 @@
     <None Include="docs\XC7A75T_SUPPORT_ADDED.md" />
     <None Include="DRIVER_FIX_REQUIRED.md" />
     <None Include="DRIVER_LEECHCORE_FIXES.md" />
+    <None Include="DRIVER_VERSION_AND_BENCHMARK_FIXES.md" />
     <None Include="FINAL_TESTING_GUIDE.md" />
     <None Include="FLASH_HANG_QUICK_FIX.md" />
     <None Include="FPGA_DETECTION_QUICK_REF.md" />
@@ -266,6 +268,7 @@
     <None Include="scripts\Test-Flash-Slow.ps1" />
     <None Include="scripts\Test-Flash-Working.ps1" />
     <None Include="scripts\Test-FPGAFlash.ps1" />
+    <None Include="scripts\Test-FT601-DriverVersion.ps1" />
     <None Include="scripts\Test-OpenOCD-Manual.ps1" />
     <None Include="scripts\Test-OpenOCD-Simple.ps1" />
     <None Include="scripts\Test-Resource-Embedding.ps1" />

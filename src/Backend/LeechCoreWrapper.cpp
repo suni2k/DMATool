@@ -39,40 +39,44 @@ namespace DMATool::Backend
         LC_CONFIG config = { 0 };
         config.dwVersion = LC_CONFIG_VERSION;
         config.dwPrintfVerbosity = 0;  // No debug output
-        strcpy_s(config.szDevice, "fpga://algo=0");  // FPGA with algorithm 0 (auto-detect)
+        strcpy_s(config.szDevice, "fpga");  // Use simple "fpga" device string
         config.szRemote[0] = 0;  // Not remote
         config.pfn_printf_opt = nullptr;
         config.paMax = 0;  // Auto-detect max address
+
+        std::cout << "[INFO] Attempting to create LeechCore device with config: " << config.szDevice << std::endl;
 
         // Create device with config
         m_hDevice = m_pfnLcCreate(&config);
         if (!m_hDevice)
         {
-            // Try alternative device string
-            std::cout << "[WARNING] Failed with fpga://algo=0, trying 'fpga'" << std::endl;
-            strcpy_s(config.szDevice, "fpga");
-            m_hDevice = m_pfnLcCreate(&config);
+            m_LastError = "Failed to create LeechCore device.\n";
+            m_LastError += "Device config used: " + std::string(config.szDevice) + "\n";
+            m_LastError += "\nPossible causes:\n";
+            m_LastError += "  1. DMA hardware not connected or not recognized\n";
+            m_LastError += "  2. FTDI driver installed but device not in correct mode\n";
+            m_LastError += "  3. Bitstream not loaded or wrong bitstream\n";
+            m_LastError += "  4. Device in use by another application\n";
+            m_LastError += "  5. USB port doesn't have enough power\n";
+            m_LastError += "  6. Run as Administrator required\n";
+            m_LastError += "\nTroubleshooting:\n";
+            m_LastError += "  - Check Device Manager: Device should show as 'FTDI SuperSpeed-FIFO Bridge'\n";
+            m_LastError += "  - If it shows as 'USB Composite Device', driver may need reinstall\n";
+            m_LastError += "  - Try unplugging and replugging the device\n";
+            m_LastError += "  - Make sure device is connected to a USB 3.0 port (blue port)\n";
+            m_LastError += "  - Check if device has any LED indicators (should be stable, not blinking)\n";
+            m_LastError += "  - Verify no other DMA tools are running (PCILeech, Arbiter, etc.)\n";
+            m_LastError += "  - Try running DMATool as Administrator";
             
-            if (!m_hDevice)
-            {
-                m_LastError = "Failed to create LeechCore device.\n";
-                m_LastError += "Possible causes:\n";
-                m_LastError += "  1. DMA hardware not connected\n";
-                m_LastError += "  2. FTDI WinUSB driver not installed (version 1.4.0.1 required)\n";
-                m_LastError += "  3. Device in use by another application\n";
-                m_LastError += "  4. Run as Administrator\n";
-                m_LastError += "  5. Device may be in UPDATE mode instead of DATA mode\n";
-                m_LastError += "\nTroubleshooting:\n";
-                m_LastError += "  - Check Data Port tab and install FTDI driver if needed\n";
-                m_LastError += "  - Disconnect and reconnect the DMA device\n";
-                m_LastError += "  - Ensure device is in DATA mode (not UPDATE mode)";
-                FreeLibrary(m_hLeechCore);
-                m_hLeechCore = nullptr;
-                return false;
-            }
+            std::cout << "[ERROR] " << m_LastError << std::endl;
+            
+            FreeLibrary(m_hLeechCore);
+            m_hLeechCore = nullptr;
+            return false;
         }
 
         m_LastError = "Success - Device: " + std::string(config.szDeviceName);
+        std::cout << "[SUCCESS] LeechCore device created: " << config.szDeviceName << std::endl;
         return true;
     }
 
@@ -150,26 +154,72 @@ namespace DMATool::Backend
 
     bool LeechCoreWrapper::LoadDLL()
     {
-        // ONLY use temp directory - no fallbacks to external DLLs
-        // All DLLs are extracted by GetPCILeechPath() to the temp directory
+        // ONLY use temp directory - LeechCore DLLs are extracted by BenchmarkInterface
+        // All DLLs must be extracted before LeechCore can initialize
         
         char tempPath[MAX_PATH];
         GetTempPathA(MAX_PATH, tempPath);
         std::string pcileechTempDir = std::string(tempPath) + "DMATool_PCILeech\\";
         std::string leechcorePath = pcileechTempDir + "leechcore.dll";
+        std::string ftd3xxPath = pcileechTempDir + "FTD3XX.dll";
         
-        // Try to load from temp directory (where PCILeech extracts all DLLs)
+        // Check if required DLLs exist before attempting to load
+        if (!std::filesystem::exists(leechcorePath))
+        {
+            m_LastError = "leechcore.dll not found at: " + leechcorePath + "\n";
+            m_LastError += "Resources have not been extracted yet.\n";
+            m_LastError += "This should happen automatically when using the Benchmark tab.";
+            std::cout << "[ERROR] " << m_LastError << std::endl;
+            return false;
+        }
+        
+        if (!std::filesystem::exists(ftd3xxPath))
+        {
+            m_LastError = "FTD3XX.dll not found at: " + ftd3xxPath + "\n";
+            m_LastError += "Required dependency missing.\n";
+            m_LastError += "Please try reopening the Benchmark tab to re-extract resources.";
+            std::cout << "[ERROR] " << m_LastError << std::endl;
+            return false;
+        }
+        
+        // Load FTD3XX.dll first (dependency of leechcore.dll)
+        HMODULE hFtd3xx = LoadLibraryA(ftd3xxPath.c_str());
+        if (!hFtd3xx)
+        {
+            DWORD dwError = ::GetLastError();
+            m_LastError = "Failed to load FTD3XX.dll (error " + std::to_string(dwError) + ")\n";
+            m_LastError += "This is a required dependency for LeechCore.\n";
+            m_LastError += "Ensure FTDI driver is installed (see Data Port tab).";
+            std::cout << "[ERROR] " << m_LastError << std::endl;
+            return false;
+        }
+        
+        std::cout << "[INFO] FTD3XX.dll loaded successfully" << std::endl;
+        
+        // Now load leechcore.dll
         m_hLeechCore = LoadLibraryA(leechcorePath.c_str());
         if (m_hLeechCore)
         {
             m_LastError = "Loaded from: " + leechcorePath;
+            std::cout << "[INFO] leechcore.dll loaded successfully" << std::endl;
             return true;
         }
 
-        // If not found, DLLs haven't been extracted yet or extraction failed
-        m_LastError = "Failed to load leechcore.dll from: " + leechcorePath + "\n";
-        m_LastError += "Ensure PCILeech resources have been extracted.\n";
-        m_LastError += "This happens automatically when accessing the Benchmark tab.";
+        // Failed to load leechcore.dll
+        DWORD dwError = ::GetLastError();
+        m_LastError = "Failed to load leechcore.dll (error " + std::to_string(dwError) + ")\n";
+        m_LastError += "Location: " + leechcorePath + "\n";
+        m_LastError += "Possible causes:\n";
+        m_LastError += "  1. Missing dependencies (FTD3XX.dll loaded successfully)\n";
+        m_LastError += "  2. Corrupted DLL file\n";
+        m_LastError += "  3. Incompatible architecture (x64 vs x86)\n";
+        m_LastError += "\nTry reopening the Benchmark tab to re-extract resources.";
+        
+        std::cout << "[ERROR] " << m_LastError << std::endl;
+        
+        // Clean up FTD3XX.dll if leechcore.dll failed to load
+        FreeLibrary(hFtd3xx);
+        
         return false;
     }
 

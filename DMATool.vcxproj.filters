@@ -561,6 +561,9 @@
     <None Include="STANDALONE_EXE_COMPLETE.md" />
     <None Include="QUICK_REFERENCE_STANDALONE.md" />
     <None Include="DRIVER_LEECHCORE_FIXES.md" />
+    <None Include="DRIVER_VERSION_AND_BENCHMARK_FIXES.md" />
+    <None Include="scripts\Test-FT601-DriverVersion.ps1" />
+    <None Include="BENCHMARK_DIAGNOSTIC.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DMATool.rc">

@@ -15,73 +15,107 @@ namespace DMATool::Backend
         FT601DriverInfo info;
         std::string output;
 
-        // Query PnP devices for FTDI FT601 and get driver INF version (not OS driver version)
-        // DEVPKEY_Device_DriverVersion returns OS version (10.0.x), we need the INF version
+        // Query for FTDI FT601 device - search by device name to get the FIFO bridge, not USB composite
+        // The USB composite device has VID/PID but uses Microsoft driver
+        // The actual FTDI FIFO bridge device is what we want
         std::string command = 
-            "$device = Get-PnpDevice | Where-Object {$_.InstanceId -like '*VID_" + std::string(FT601_VID) + "&PID_" + std::string(FT601_PID) + "*'} | Select-Object -First 1; "
+            "$device = Get-PnpDevice | Where-Object {"
+            "  ($_.FriendlyName -like '*FTDI*FIFO*' -or $_.FriendlyName -like '*SuperSpeed*FIFO*') -and "
+            "  $_.InstanceId -like '*VID_" + std::string(FT601_VID) + "&PID_" + std::string(FT601_PID) + "*'"
+            "} | Select-Object -First 1; "
             "if ($device) { "
             "  $props = @{}; "
             "  $props['FriendlyName'] = $device.FriendlyName; "
             "  $props['InstanceId'] = $device.InstanceId; "
             "  $props['Status'] = $device.Status; "
-            // Get the INF provider version from the driver package, not the OS driver version
-            "  $driverInf = (Get-PnpDeviceProperty -InstanceId $device.InstanceId -KeyName 'DEVPKEY_Device_DriverInfPath' -ErrorAction SilentlyContinue).Data; "
-            "  if ($driverInf) { "
-            "    $infFile = Join-Path $env:SystemRoot ('INF\\' + $driverInf); "
-            "    if (Test-Path $infFile) { "
-            "      $infContent = Get-Content $infFile -Raw; "
-            "      if ($infContent -match 'DriverVer\\s*=\\s*[^,]+,\\s*([\\d.]+)') { "
-            "        $props['DriverVersion'] = $Matches[1]; "
-            "      } else { $props['DriverVersion'] = ''; } "
-            "    } else { $props['DriverVersion'] = ''; } "
-            "  } else { $props['DriverVersion'] = ''; } "
+            // Get driver provider (e.g., "FTDI" for custom driver, "Microsoft" for default)
+            "  $provider = (Get-PnpDeviceProperty -InstanceId $device.InstanceId -KeyName 'DEVPKEY_Device_DriverProvider' -ErrorAction SilentlyContinue).Data; "
+            "  if ($provider) { $props['Provider'] = $provider; } else { $props['Provider'] = 'Unknown'; } "
+            // Get the driver version directly from device property (this is the INF version)
+            "  $driverVer = (Get-PnpDeviceProperty -InstanceId $device.InstanceId -KeyName 'DEVPKEY_Device_DriverVersion' -ErrorAction SilentlyContinue).Data; "
+            "  if ($driverVer) { $props['DriverVersion'] = $driverVer; } else { $props['DriverVersion'] = ''; } "
             "  Write-Output \"FriendlyName: $($props['FriendlyName'])\"; "
             "  Write-Output \"InstanceId: $($props['InstanceId'])\"; "
             "  Write-Output \"Status: $($props['Status'])\"; "
+            "  Write-Output \"Provider: $($props['Provider'])\"; "
             "  Write-Output \"DriverVersion: $($props['DriverVersion'])\" "
             "}";
-        std::cout << "====================" << std::endl;
-        std::cout << command << std::endl;
-        std::cout << "====================" << std::endl;
+        // Remove debug output - too verbose
+        // std::cout << "====================" << std::endl;
+        // std:: << command << std::endl;
+        // std::cout << "====================" << std::endl;
 
         if (ExecutePowerShell(command, output))
         {
             // Parse the output
             info = ParseDriverInfo(output);
             
-            // Driver version logic:
-            // - Device detected (has friendly name) = device is connected
-            // - No version or empty version = driver NOT installed (using default Windows driver)
-            // - Version present = driver IS installed
-            //   - Version < 1.4.0.1 = out of date
-            //   - Version >= 1.4.0.1 = correct version
+            // Driver detection logic:
+            // 1. Device detected (has friendly name) = device is physically connected
+            // 2. Check provider: "FTDI" = custom driver, "Microsoft" = default Windows driver
+            // 3. No INF version or empty = using default Windows driver (no custom driver installed)
+            // 4. Version present = custom FTDI driver installed
+            //    - Version < 1.4.0.1 = out of date
+            //    - Version >= 1.4.0.1 = correct version
             
             if (!info.deviceName.empty())
             {
                 // Device is detected
-                if (info.version.empty() || info.version == "Unknown")
+                std::cout << "[DEBUG] Device detected: " << info.deviceName << std::endl;
+                std::cout << "[DEBUG] Provider: " << info.provider << std::endl;
+                std::cout << "[DEBUG] Version: " << info.version << std::endl;
+                
+                // Check provider - if Microsoft, then using default Windows driver
+                if (info.provider == "Microsoft" || info.provider == "Unknown")
                 {
-                    // No driver version = not installed (using default Windows driver)
+                    // Using default Windows driver (winusb.sys)
+                    std::cout << "[DEBUG] Using default Windows driver (no FTDI driver installed)" << std::endl;
                     info.installed = false;
                     info.isCorrectDriver = false;
                 }
-                else
+                else if (info.provider == "FTDI")
                 {
-                    // Driver is installed - check version
-                    info.installed = true;
-                    
-                    // Compare version with 1.4.0.1
-                    if (CompareVersion(info.version, "1.4.0.1") < 0)
+                    // FTDI driver is installed - check version
+                    if (info.version.empty() || info.version == "Unknown")
                     {
-                        // Version is lower than 1.4.0.1 = out of date
-                        info.isCorrectDriver = false;  // Mark as incorrect (out of date)
+                        // Provider is FTDI but no version = corrupt installation?
+                        std::cout << "[WARNING] FTDI provider detected but no version found" << std::endl;
+                        info.installed = true;  // Installed but unknown version
+                        info.isCorrectDriver = false;
                     }
                     else
                     {
-                        // Version is 1.4.0.1 or higher = correct
-                        info.isCorrectDriver = true;
+                        // FTDI driver installed with version - check if it's correct
+                        info.installed = true;
+                        
+                        std::cout << "[DEBUG] Comparing version " << info.version << " with 1.4.0.1" << std::endl;
+                        int cmp = CompareVersion(info.version, "1.4.0.1");
+                        
+                        if (cmp < 0)
+                        {
+                            // Version is lower than 1.4.0.1 = out of date
+                            std::cout << "[DEBUG] Driver version is OUT OF DATE (< 1.4.0.1)" << std::endl;
+                            info.isCorrectDriver = false;
+                        }
+                        else
+                        {
+                            // Version is 1.4.0.1 or higher = correct
+                            std::cout << "[DEBUG] Driver version is CORRECT (>= 1.4.0.1)" << std::endl;
+                            info.isCorrectDriver = true;
+                        }
                     }
                 }
+                else
+                {
+                    // Unknown provider - assume not FTDI driver
+                    std::cout << "[DEBUG] Unknown provider: " << info.provider << std::endl;
+                    info.installed = false;
+                    info.isCorrectDriver = false;
+                }
+            }
+            else
+            {
+                std::cout << "[DEBUG] No device detected" << std::endl;
             }
         }
 
@@ -405,9 +439,21 @@ namespace DMATool::Backend
             info.installed = (status == "OK");
         }
 
-        // Parse DriverVersion - CRITICAL: Get this from device properties, not the basic query
-        // The basic DriverVersion field from Get-PnpDevice doesn't always populate correctly
-        // We need to use Get-PnpDeviceProperty to get the actual driver version
+        // Parse Provider (CRITICAL: Determines if FTDI driver or Microsoft default driver)
+        std::regex providerRegex(R"(Provider\s*:\s*(.+))");
+        if (std::regex_search(output, match, providerRegex))
+        {
+            info.provider = match[1].str();
+            // Trim whitespace
+            info.provider.erase(0, info.provider.find_first_not_of(" \t\r\n"));
+            info.provider.erase(info.provider.find_last_not_of(" \t\r\n") + 1);
+        }
+        else
+        {
+            info.provider = "Unknown";
+        }
+
+        // Parse DriverVersion from INF file (provider version, NOT OS driver version)
         std::regex versionRegex(R"(DriverVersion\s*:\s*([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+))");
         if (std::regex_search(output, match, versionRegex))
         {
@@ -446,9 +492,6 @@ namespace DMATool::Backend
             
             info.location = instanceId;
         }
-
-        // Set provider (always FTDI for FT601)
-        info.provider = "FTDI";
 
         return info;
     }

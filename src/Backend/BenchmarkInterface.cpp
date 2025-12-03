@@ -28,9 +28,22 @@ namespace DMATool::Backend
         std::string pcileechDir = std::string(tempPath) + "DMATool_PCILeech\\";
         std::string pcileechExe = pcileechDir + "pcileech.exe";
         
-        // Check if already extracted
-        if (std::filesystem::exists(pcileechExe))
+        // Always check ALL required files, not just pcileech.exe
+        bool needsExtraction = false;
+        
+        if (!std::filesystem::exists(pcileechExe) ||
+            !std::filesystem::exists(pcileechDir + "leechcore.dll") ||
+            !std::filesystem::exists(pcileechDir + "FTD3XX.dll") ||
+            !std::filesystem::exists(pcileechDir + "vmm.dll") ||
+            !std::filesystem::exists(pcileechDir + "dbghelp.dll"))
         {
+            needsExtraction = true;
+        }
+        
+        if (!needsExtraction)
+        {
+            // Don't log every time - resources are already extracted
+            // std::cout << "[INFO] PCILeech resources already extracted to temp" << std::endl;
             return pcileechExe;
         }
         
@@ -38,7 +51,7 @@ namespace DMATool::Backend
         std::filesystem::create_directories(pcileechDir);
         
         // Extract PCILeech and dependencies from resources
-        std::cout << "[INFO] Extracting PCILeech from embedded resources..." << std::endl;
+        std::cout << "[INFO] Extracting PCILeech and dependencies from embedded resources..." << std::endl;
         
         if (!ExtractResourceToFile(IDR_PCILEECH_EXE, pcileechExe))
         {
@@ -46,12 +59,31 @@ namespace DMATool::Backend
             return "";
         }
         
-        ExtractResourceToFile(IDR_LEECHCORE_DLL, pcileechDir + "leechcore.dll");
-        ExtractResourceToFile(IDR_FTD3XX_DLL, pcileechDir + "FTD3XX.dll");
-        ExtractResourceToFile(IDR_VMM_DLL, pcileechDir + "vmm.dll");
-        ExtractResourceToFile(IDR_DBGHELP_DLL, pcileechDir + "dbghelp.dll");
+        if (!ExtractResourceToFile(IDR_LEECHCORE_DLL, pcileechDir + "leechcore.dll"))
+        {
+            std::cout << "[ERROR] Failed to extract leechcore.dll from resources" << std::endl;
+            return "";
+        }
         
-        std::cout << "[SUCCESS] PCILeech extracted to: " << pcileechDir << std::endl;
+        if (!ExtractResourceToFile(IDR_FTD3XX_DLL, pcileechDir + "FTD3XX.dll"))
+        {
+            std::cout << "[ERROR] Failed to extract FTD3XX.dll from resources" << std::endl;
+            return "";
+        }
+        
+        if (!ExtractResourceToFile(IDR_VMM_DLL, pcileechDir + "vmm.dll"))
+        {
+            std::cout << "[ERROR] Failed to extract vmm.dll from resources" << std::endl;
+            return "";
+        }
+        
+        if (!ExtractResourceToFile(IDR_DBGHELP_DLL, pcileechDir + "dbghelp.dll"))
+        {
+            std::cout << "[ERROR] Failed to extract dbghelp.dll from resources" << std::endl;
+            return "";
+        }
+        
+        std::cout << "[SUCCESS] All PCILeech resources extracted to: " << pcileechDir << std::endl;
         
         return pcileechExe;
     }
@@ -171,6 +203,12 @@ namespace DMATool::Backend
         AddLog("");
         AddLog("[INFO] Enumerating memory ranges...");
         
+        // Clear previous memory ranges if this is a fallback (avoid duplication)
+        if (!m_CurrentResults.memoryRanges.empty())
+        {
+            m_CurrentResults.memoryRanges.clear();
+        }
+        
         // Simulate memory range enumeration
         m_CurrentResults.memoryRanges.push_back("1000 - 5E000");
         m_CurrentResults.memoryRanges.push_back("5F000 - A0000");
@@ -198,6 +236,15 @@ namespace DMATool::Backend
         if (!ExecutePCILeechCommand("benchmark", output))
         {
             AddLog("[ERROR] Failed to execute PCILeech benchmark");
+            AddLog("[DEBUG] PCILeech output (if any):");
+            if (!output.empty())
+            {
+                AddLog(output);
+            }
+            else
+            {
+                AddLog("  (no output - PCILeech may have crashed or failed to start)");
+            }
             return false;
         }
         
