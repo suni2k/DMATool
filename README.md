@@ -118,6 +118,9 @@
 
 ### Core Documentation
 - ?? **[DNA ID Tab - Complete Guide](docs/DNA_ID_TAB_COMPLETE.md)** - Full feature documentation
+- ?? **[DMA Flash Guide](docs/DMA_FLASH_GUIDE.md)** - Firmware flashing guide & OpenOCD usage
+- ?? **[Flash Testing Reference](docs/FLASH_TESTING_QUICK_REF.md)** - Command-line flash testing
+- ?? **[Flash Implementation Summary](docs/FLASH_IMPLEMENTATION_SUMMARY.md)** - Integration roadmap
 - ?? **[DMA Benchmarking Guide](docs/DMA_BENCHMARKING_GUIDE.md)** - Performance testing and validation
 - ?? **[Benchmark Tab Specification](docs/BENCHMARK_TAB_SPEC.md)** - Technical implementation details
 - ?? **[DMA Testing Guide](docs/DMA_TESTING_GUIDE.md)** - Manual testing with PCILeech

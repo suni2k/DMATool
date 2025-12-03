@@ -13,6 +13,7 @@ namespace DMATool::Backend
     {
         Unknown,
         XC7A35T,    // Artix-7 35T
+        XC7A50T,    // Artix-7 50T
         XC7A75T,    // Artix-7 75T
         XC7A100T    // Artix-7 100T
     };

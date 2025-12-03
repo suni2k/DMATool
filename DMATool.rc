@@ -1,13 +1,13 @@
 #include "src\resource.h"
 
-IDR_OPENOCD_EXE RCDATA "dmafiles\\ch347\\CH347FPGATool\\OpenOCD_CH347\\bin\\openocd.exe"
-IDR_CH347_CFG RCDATA "dmafiles\\ch347\\CH347FPGATool\\OpenOCD_CH347\\bin\\ch347.cfg"
-IDR_LIBUSB_DLL RCDATA "dmafiles\\ch347\\CH347FPGATool\\OpenOCD_CH347\\bin\\libusb-1.0.dll"
-IDR_LIBHIDAPI_DLL RCDATA "dmafiles\\ch347\\CH347FPGATool\\OpenOCD_CH347\\bin\\libhidapi-0.dll"
-IDR_XILINX_DNA_347_CFG RCDATA "dmafiles\\ch347\\CH347FPGATool\\OpenOCD_CH347\\bin\\xilinx-dna-347.cfg"
-IDR_XILINX_XC7_CFG RCDATA "dmafiles\\ch347\\CH347FPGATool\\OpenOCD_CH347\\bin\\xilinx-xc7.cfg"
-IDR_JTAGSPI_CFG RCDATA "dmafiles\\ch347\\CH347FPGATool\\OpenOCD_CH347\\bin\\jtagspi.cfg"
-IDR_XILINX_DNA_CFG RCDATA "dmafiles\\ch347\\CH347FPGATool\\OpenOCD_CH347\\bin\\xilinx-dna.cfg"
+IDR_OPENOCD_EXE RCDATA "dmafiles\\CH347FPGATool\\OpenOCD_CH347\\bin\\openocd.exe"
+IDR_CH347_CFG RCDATA "dmafiles\\CH347FPGATool\\OpenOCD_CH347\\bin\\ch347.cfg"
+IDR_LIBUSB_DLL RCDATA "dmafiles\\CH347FPGATool\\OpenOCD_CH347\\bin\\libusb-1.0.dll"
+IDR_LIBHIDAPI_DLL RCDATA "dmafiles\\CH347FPGATool\\OpenOCD_CH347\\bin\\libhidapi-0.dll"
+IDR_XILINX_DNA_347_CFG RCDATA "dmafiles\\CH347FPGATool\\OpenOCD_CH347\\bin\\xilinx-dna-347.cfg"
+IDR_XILINX_XC7_CFG RCDATA "dmafiles\\CH347FPGATool\\OpenOCD_CH347\\bin\\xilinx-xc7.cfg"
+IDR_JTAGSPI_CFG RCDATA "dmafiles\\CH347FPGATool\\OpenOCD_CH347\\bin\\jtagspi.cfg"
+IDR_XILINX_DNA_CFG RCDATA "dmafiles\\CH347FPGATool\\OpenOCD_CH347\\bin\\xilinx-dna.cfg"
 
 // CH341/CH347 Driver Files
 IDR_CH341_INF RCDATA "tools\\ch347\\drivers\\CH341WDM.INF"
@@ -21,3 +21,22 @@ IDR_CH347_DLL_A64 RCDATA "tools\\ch347\\drivers\\CH347DLLA64.DLL"
 // FT601 Driver Files
 IDR_FT601_INF RCDATA "tools\\ftdi601\\drivers\\FTD3XXWU.Inf"
 IDR_FT601_CAT RCDATA "tools\\ftdi601\\drivers\\FTD3XXWU.cat"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+
+// LeechCore DLLs for Benchmark Tab
+IDR_LEECHCORE_DLL RCDATA "vendor\\leechcore\\leechcore.dll"
+IDR_FTD3XX_DLL RCDATA "vendor\\leechcore\\FTD3XX.dll"
+IDR_FTD3XXWU_DLL RCDATA "vendor\\leechcore\\FTD3XXWU.dll"
+IDR_LEECHCORE_DEVICE_HVSAVED RCDATA "vendor\\leechcore\\leechcore_device_hvsavedstate.dll"
+IDR_LEECHCORE_DEVICE_RAWTCP RCDATA "vendor\\leechcore\\leechcore_device_rawtcp.dll"
+IDR_LEECHCORE_DRIVER RCDATA "vendor\\leechcore\\leechcore_driver.dll"
+// BSCAN Bitstreams for FPGA Flash Programming
+//
+IDR_BSCAN_XC7A100T                RCDATA                  ".\\dmafiles\\CH347FPGATool\\OpenOCD_CH347\\share\\openocd\\scripts\\cpld\\xilinx\\bscan_spi_xc7a100t.bit"
+IDR_BSCAN_XC7A75T                RCDATA                  ".\\dmafiles\\CH347FPGATool\\OpenOCD_CH347\\share\\openocd\\scripts\\cpld\\xilinx\\bscan_spi_xc7a75t.bit"
+IDR_BSCAN_XC7A35T                RCDATA                  ".\\dmafiles\\CH347FPGATool\\OpenOCD_CH347\\share\\openocd\\scripts\\cpld\\xilinx\\bscan_spi_xc7a35t.bit"
+IDR_BSCAN_XC7A200T                RCDATA                  ".\\dmafiles\\CH347FPGATool\\OpenOCD_CH347\\share\\openocd\\scripts\\cpld\\xilinx\\bscan_spi_xc7a200t.bit"
+IDR_BSCAN_XC7A50T                RCDATA                  ".\\dmafiles\\CH347FPGATool\\OpenOCD_CH347\\share\\openocd\\scripts\\cpld\\xilinx\\bscan_spi_xc7a50t.bit"
+

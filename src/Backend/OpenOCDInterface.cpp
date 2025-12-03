@@ -23,6 +23,12 @@ namespace DMATool::Backend
 
     bool OpenOCDInterface::ExtractEmbeddedResource(int resourceId, const std::string& outputPath)
     {
+        // If file already exists, don't re-extract (optimization)
+        if (std::filesystem::exists(outputPath))
+        {
+            return true;
+        }
+
         // Find the resource
         HRSRC hResource = FindResourceA(NULL, MAKEINTRESOURCEA(resourceId), MAKEINTRESOURCEA(RT_RCDATA));
         if (!hResource)
@@ -72,11 +78,12 @@ namespace DMATool::Backend
 
     bool OpenOCDInterface::FindOpenOCD()
     {
-        // First, try to extract embedded resources to temp directory
+        // Extract embedded resources to temp directory
         std::string tempDir = GetTempDirectory();
         std::string openocdPath = tempDir + "openocd.exe";
         std::string configPath = tempDir + "ch347.cfg";
 
+        std::cout << "[INFO] Searching for OpenOCD executable..." << std::endl;
         std::cout << "[DEBUG] Attempting to extract resources to: " << tempDir << std::endl;
 
         // Extract OpenOCD executable from resources
@@ -104,72 +111,87 @@ namespace DMATool::Backend
             return true;
         }
 
-        std::cout << "[DEBUG] Failed to extract embedded resources, trying fallback paths" << std::endl;
-
-        // Fallback: Check multiple possible locations for OpenOCD
-        std::vector<std::string> possiblePaths = {
-            "openocd.exe",
-            "tools\\openocd.exe",
-            "dmafiles\\ch347\\OpenOCD_CH347\\bin\\openocd.exe",
-            "dmafiles\\ch347\\CH347FPGATool\\OpenOCD_CH347\\bin\\openocd.exe",
-            "tools\\openocd\\openocd-347.exe",
-            "tools\\openocd\\openocd.exe"
-        };
-
-        for (const auto& path : possiblePaths)
-        {
-            if (std::filesystem::exists(path))
-            {
-                m_OpenOCDPath = path;
-                
-                // Try to find corresponding config file
-                std::vector<std::string> configPaths = {
-                    "ch347.cfg",
-                    "tools\\ch347.cfg",
-                    "dmafiles\\ch347\\CH347FPGATool\\OpenOCD_CH347\\bin\\ch347.cfg",
-                };
-                
-                for (const auto& cfgPath : configPaths)
-                {
-                    if (std::filesystem::exists(cfgPath))
-                    {
-                        m_ConfigPath = cfgPath;
-                        break;
-                    }
-                }
-                
-                return true;
-            }
-        }
-
+        std::cout << "[ERROR] Failed to extract OpenOCD from embedded resources" << std::endl;
+        std::cout << "[ERROR] The application may not have been built correctly" << std::endl;
+        std::cout << "[ERROR] Please rebuild DMATool and ensure DMATool.rc includes all OpenOCD resources" << std::endl;
+        
         return false;
     }
 
     std::string OpenOCDInterface::ExecuteCommand(const std::string& command)
     {
-        std::array<char, 128> buffer;
         std::string result;
 
         // Output command to console for debugging
         std::cout << "[EXEC] Running command: " << command << std::endl;
 
-        // Create a pipe to capture output
-        FILE* pipe = _popen(command.c_str(), "r");
-        if (!pipe)
+        // Use CreateProcess instead of _popen for better process management
+        SECURITY_ATTRIBUTES sa;
+        sa.nLength = sizeof(SECURITY_ATTRIBUTES);
+        sa.bInheritHandle = TRUE;
+        sa.lpSecurityDescriptor = NULL;
+
+        HANDLE hStdOutRead, hStdOutWrite;
+        CreatePipe(&hStdOutRead, &hStdOutWrite, &sa, 0);
+        SetHandleInformation(hStdOutRead, HANDLE_FLAG_INHERIT, 0);
+
+        STARTUPINFOA si = { sizeof(STARTUPINFOA) };
+        si.dwFlags = STARTF_USESTDHANDLES;
+        si.hStdOutput = hStdOutWrite;
+        si.hStdError = hStdOutWrite;
+        si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+
+        PROCESS_INFORMATION pi = { 0 };
+
+        // Create mutable copy of command
+        std::string cmdCopy = command;
+
+        BOOL success = CreateProcessA(
+            NULL,
+            const_cast<char*>(cmdCopy.c_str()),
+            NULL, NULL, TRUE,
+            CREATE_NO_WINDOW,
+            NULL, NULL,
+            &si, &pi
+        );
+
+        CloseHandle(hStdOutWrite);
+
+        if (!success)
         {
-            std::cout << "[ERROR] Failed to create pipe for command" << std::endl;
+            std::cout << "[ERROR] Failed to create process" << std::endl;
+            CloseHandle(hStdOutRead);
             return "ERROR: Failed to execute command";
         }
 
-        // Read output
-        while (fgets(buffer.data(), buffer.size(), pipe) != nullptr)
+        // Read output in chunks
+        char buffer[4096];
+        DWORD bytesRead;
+        while (ReadFile(hStdOutRead, buffer, sizeof(buffer) - 1, &bytesRead, NULL) && bytesRead > 0)
         {
-            result += buffer.data();
+            buffer[bytesRead] = '\0';
+            result += buffer;
             // Also output to console in real-time
-            std::cout << buffer.data();
+            std::cout << buffer;
         }
 
-        int exitCode = _pclose(pipe);
+        // Wait for process to complete (with timeout)
+        DWORD waitResult = WaitForSingleObject(pi.hProcess, 30000); // 30 second timeout
+        
+        if (waitResult == WAIT_TIMEOUT)
+        {
+            std::cout << "[WARNING] Command timed out after 30 seconds, terminating..." << std::endl;
+            TerminateProcess(pi.hProcess, 1);
+        }
+
+        DWORD exitCode = 0;
+        GetExitCodeProcess(pi.hProcess, &exitCode);
+        
+        // Clean up process handles
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+        CloseHandle(hStdOutRead);
+
         std::cout << "[EXEC] Command completed with exit code: " << exitCode << std::endl;
         
         return result;

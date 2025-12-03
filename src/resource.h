@@ -28,11 +28,18 @@
 #define IDR_LEECHCORE_DEVICE_RAWTCP     204
 #define IDR_LEECHCORE_DRIVER            205
 
+// BSCAN bitstream files for FPGA flash programming
+#define IDR_BSCAN_XC7A35T               300
+#define IDR_BSCAN_XC7A50T               301
+#define IDR_BSCAN_XC7A75T               302
+#define IDR_BSCAN_XC7A100T              303
+#define IDR_BSCAN_XC7A200T              304
+
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        206
+#define _APS_NEXT_RESOURCE_VALUE        305
 #define _APS_NEXT_COMMAND_VALUE         40001
 #define _APS_NEXT_CONTROL_VALUE         1001
 #define _APS_NEXT_SYMED_VALUE           101

@@ -4,6 +4,7 @@
 #include <sstream>
 #include <iomanip>
 #include <iostream>
+#include <algorithm>
 #include <Windows.h>
 
 // Integration References:
@@ -28,6 +29,23 @@ namespace DMATool::UI::Tabs
     std::string JTAGPortTab::s_DetectionStatus = "Not Detected";
     std::string JTAGPortTab::s_LastOperation = "None";
     std::string JTAGPortTab::s_CurrentProgress = "";
+
+    // Helper function to extract adapter type from driver device name
+    Backend::AdapterType GetAdapterTypeFromDriverInfo(const Backend::DriverInfo& driverInfo)
+    {
+        if (!driverInfo.installed)
+            return Backend::AdapterType::Unknown;
+        
+        std::string deviceName = driverInfo.deviceName;
+        std::transform(deviceName.begin(), deviceName.end(), deviceName.begin(), ::tolower);
+        
+        if (deviceName.find("ch347") != std::string::npos)
+            return Backend::AdapterType::CH347;
+        else if (deviceName.find("ftdi") != std::string::npos)
+            return Backend::AdapterType::RS232;
+        
+        return Backend::AdapterType::Unknown;
+    }
 
     void JTAGPortTab::AddLog(const std::string& message)
     {
@@ -608,13 +626,21 @@ namespace DMATool::UI::Tabs
         ImGui::Text("Adapter:");
         ImGui::PopStyleColor();
         ImGui::SameLine(150);
-        if (s_FPGAInfo.detected)
+        
+        // Derive adapter from driver info first, then FPGA detection as fallback
+        Backend::AdapterType adapterType = GetAdapterTypeFromDriverInfo(s_DriverInfo);
+        if (adapterType == Backend::AdapterType::Unknown && s_FPGAInfo.detected)
+        {
+            adapterType = s_FPGAInfo.adapterType;
+        }
+        
+        if (adapterType != Backend::AdapterType::Unknown)
         {
             // Display adapter type
             const char* adapterName = "Unknown";
             ImVec4 adapterColor = Colors::MutedForeground;
             
-            switch (s_FPGAInfo.adapterType)
+            switch (adapterType)
             {
             case Backend::AdapterType::CH347:
                 adapterName = "CH347";
@@ -781,7 +807,7 @@ namespace DMATool::UI::Tabs
         if (s_DriverInfo.installed)
             ImGui::TextColored(Colors::Success, "Installed");
         else
-            ImGui::TextColored(Colors::Destructive, "Not Installed");
+            ImGui::TextColored(Colors::MutedForeground, "Not Detected");
         
         // Right column
         ImGui::NextColumn();
@@ -799,12 +825,20 @@ namespace DMATool::UI::Tabs
         ImGui::Text("Adapter:");
         ImGui::PopStyleColor();
         ImGui::SameLine(70);
-        if (s_FPGAInfo.detected)
+        
+        // Derive adapter from driver info first, then FPGA detection as fallback
+        Backend::AdapterType adapterType = GetAdapterTypeFromDriverInfo(s_DriverInfo);
+        if (adapterType == Backend::AdapterType::Unknown && s_FPGAInfo.detected)
+        {
+            adapterType = s_FPGAInfo.adapterType;
+        }
+        
+        if (adapterType != Backend::AdapterType::Unknown)
         {
             const char* adapterName = "Unknown";
             ImVec4 adapterColor = Colors::MutedForeground;
             
-            switch (s_FPGAInfo.adapterType)
+            switch (adapterType)
             {
             case Backend::AdapterType::CH347:
                 adapterName = "CH347";
@@ -901,6 +935,7 @@ namespace DMATool::UI::Tabs
             s_CurrentProgress = "Checking driver status...";
             AddLog("[INFO] Checking driver status...");
         }
+        
         ImGui::EndDisabled();
         
         // Check driver operation - run after notification shows

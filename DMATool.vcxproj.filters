@@ -81,6 +81,12 @@
     <ClCompile Include="src\Util\ResourceExtractor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Backend\FlashInterface.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Util\TempDirectoryManager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Application.h">
@@ -128,6 +134,12 @@
     <ClInclude Include="src\Util\ResourceExtractor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\Backend\FlashInterface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Util\TempDirectoryManager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md" />
@@ -171,6 +183,36 @@
     <None Include="docs\HORIZONTAL_RESIZER_UPDATE.md" />
     <None Include="docs\HORIZONTAL_RESIZER_FINAL.md" />
     <None Include="docs\JTAG_PORT_TAB_ID_STACK_FIX.md" />
+    <None Include="docs\JTAG_PORT_TAB_IMPROVEMENTS.md" />
+    <None Include="docs\XC7A75T_SUPPORT_ADDED.md" />
+    <None Include="docs\DMA_FLASH_GUIDE.md" />
+    <None Include="scripts\Test-FPGAFlash.ps1" />
+    <None Include="docs\FLASH_TESTING_QUICK_REF.md" />
+    <None Include="docs\FLASH_IMPLEMENTATION_SUMMARY.md" />
+    <None Include="scripts\Test-OpenOCD-Simple.ps1" />
+    <None Include="docs\OPENOCD_FLASH_PROGRESS.md" />
+    <None Include="scripts\Sync-OpenOCD-Files.ps1" />
+    <None Include="scripts\Compare-OpenOCD-Installations.ps1" />
+    <None Include="scripts\Compare-CH347-Full.ps1" />
+    <None Include="scripts\Test-Flash-Debug.ps1" />
+    <None Include="scripts\Test-Flash-Slow.ps1" />
+    <None Include="scripts\Test-Flash-Working.ps1" />
+    <None Include="scripts\Verify-Flash.ps1" />
+    <None Include="scripts\Test-DeviceMasking.ps1" />
+    <None Include="docs\FLASH_TAB_IMPLEMENTATION_COMPLETE.md" />
+    <None Include="docs\FLASH_DETECTION_TROUBLESHOOTING.md" />
+    <None Include="scripts\Add-BSCAN-Resources.ps1" />
+    <None Include="scripts\Verify-Resources.ps1" />
+    <None Include="scripts\Update-DMATool-RC.ps1" />
+    <None Include="docs\RESOURCE_EMBEDDING_COMPLETE.md" />
+    <None Include="scripts\Fix-OpenOCD-Version.ps1" />
+    <None Include="docs\OPENOCD_VERSION_FIX.md" />
+    <None Include="scripts\Fix-RC-Paths.ps1" />
+    <None Include="scripts\Verify-Flash-Resources.ps1" />
+    <None Include="docs\FLASH_RESOURCES_PATH_VERIFICATION.md" />
+    <None Include="docs\OPENOCD_CONFIG_PATH_FIX.md" />
+    <None Include="docs\DNA_EXTRACTION_FIX.md" />
+    <None Include="scripts\Add-TempDirectoryManager.ps1" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DMATool.rc">
