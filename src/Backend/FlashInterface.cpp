@@ -75,8 +75,8 @@ namespace DMATool::Backend
         return {
             { FPGAChipModel::XC7A35T, "XC7A35T (Artix-7 35T)" },
             { FPGAChipModel::XC7A50T, "XC7A50T (Artix-7 50T)" },
-            { FPGAChipModel::XC7A75T, "XC7A75T (Artix-7 75T) ?" },
-            { FPGAChipModel::XC7A100T, "XC7A100T (Artix-7 100T) ?" },
+            { FPGAChipModel::XC7A75T, "XC7A75T (Artix-7 75T)" },
+            { FPGAChipModel::XC7A100T, "XC7A100T (Artix-7 100T)" },
             { FPGAChipModel::XC7A200T, "XC7A200T (Artix-7 200T)" },
             { FPGAChipModel::XC7K70T, "XC7K70T (Kintex-7 70T)" },
             { FPGAChipModel::XC7K160T, "XC7K160T (Kintex-7 160T)" },

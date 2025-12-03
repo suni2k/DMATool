@@ -101,12 +101,16 @@ namespace DMATool::Backend
             bool dll2 = ExtractEmbeddedResource(IDR_LIBHIDAPI_DLL, tempDir + "libhidapi-0.dll");
             std::cout << "[DEBUG] Extracted DLLs: libusb=" << dll1 << ", libhidapi=" << dll2 << std::endl;
             
-            // Extract Xilinx DNA extraction scripts
-            bool cfg1 = ExtractEmbeddedResource(IDR_XILINX_DNA_347_CFG, tempDir + "xilinx-dna-347.cfg");
-            bool cfg2 = ExtractEmbeddedResource(IDR_XILINX_XC7_CFG, tempDir + "xilinx-xc7.cfg");
-            bool cfg3 = ExtractEmbeddedResource(IDR_JTAGSPI_CFG, tempDir + "jtagspi.cfg");
-            bool cfg4 = ExtractEmbeddedResource(IDR_XILINX_DNA_CFG, tempDir + "xilinx-dna.cfg");
-            std::cout << "[DEBUG] Extracted CFGs: dna347=" << cfg1 << ", xc7=" << cfg2 << ", jtagspi=" << cfg3 << ", dna=" << cfg4 << std::endl;
+            // Create cpld subdirectory for OpenOCD scripts (OpenOCD expects scripts in cpld/ subdirectory)
+            std::string cpldDir = tempDir + "cpld\\";
+            std::filesystem::create_directories(cpldDir);
+            
+            // Extract Xilinx config files to cpld/ subdirectory so [find cpld/...] works
+            bool cfg1 = ExtractEmbeddedResource(IDR_XILINX_DNA_347_CFG, cpldDir + "xilinx-dna-347.cfg");
+            bool cfg2 = ExtractEmbeddedResource(IDR_XILINX_XC7_CFG, cpldDir + "xilinx-xc7.cfg");
+            bool cfg3 = ExtractEmbeddedResource(IDR_JTAGSPI_CFG, cpldDir + "jtagspi.cfg");
+            bool cfg4 = ExtractEmbeddedResource(IDR_XILINX_DNA_CFG, cpldDir + "xilinx-dna.cfg");
+            std::cout << "[DEBUG] Extracted CFGs to cpld/: dna347=" << cfg1 << ", xc7=" << cfg2 << ", jtagspi=" << cfg3 << ", dna=" << cfg4 << std::endl;
             
             return true;
         }
@@ -228,7 +232,8 @@ namespace DMATool::Backend
         switch (partNumber)
         {
         case 0x3622: return ChipModel::XC7A35T;
-        case 0x362D: return ChipModel::XC7A75T;
+        case 0x3632: return ChipModel::XC7A75T;  // NOTE: Some 75T cards report 50T IDCODE (remarked/binned chips)
+        case 0x362D: return ChipModel::XC7A75T;  // XC7A75T (official IDCODE)
         case 0x3631: return ChipModel::XC7A100T;
         default: return ChipModel::Unknown;
         }
@@ -239,6 +244,7 @@ namespace DMATool::Backend
         switch (model)
         {
         case ChipModel::XC7A35T: return "XC7A35T";
+        case ChipModel::XC7A50T: return "XC7A50T";  // Note: Not used - 50T IDCODE maps to 75T
         case ChipModel::XC7A75T: return "XC7A75T";
         case ChipModel::XC7A100T: return "XC7A100T";
         default: return "Unknown";
@@ -278,6 +284,7 @@ namespace DMATool::Backend
             switch (info.chipModel)
             {
             case ChipModel::XC7A35T: info.logicCells = "33,280"; break;
+            case ChipModel::XC7A50T: info.logicCells = "52,160"; break;  // XC7A50T
             case ChipModel::XC7A75T: info.logicCells = "75,520"; break;
             case ChipModel::XC7A100T: info.logicCells = "101,440"; break;
             default: info.logicCells = "Unknown"; break;
@@ -383,36 +390,33 @@ namespace DMATool::Backend
         // Get temp directory where cfg files are extracted
         std::string tempDir = GetTempDirectory();
         
-        // Replace backslashes with forward slashes for OpenOCD (it's Unix-style)
-        std::string tempDirUnix = tempDir;
-        std::replace(tempDirUnix.begin(), tempDirUnix.end(), '\\', '/');
+        // Set OPENOCD_SCRIPTS environment variable so OpenOCD can find cpld/ subdirectory
+        SetEnvironmentVariableA("OPENOCD_SCRIPTS", tempDir.c_str());
+        if (logCallback) logCallback("[DEBUG] Set OPENOCD_SCRIPTS=" + tempDir);
         
         // Build OpenOCD command - use cmd /c to properly handle quotes
         std::string command = "cmd /c \"\"" + m_OpenOCDPath + "\"";
         
-        // Add interface configuration inline - matching working config files
+        // Add interface configuration based on adapter type
         if (adapter == AdapterType::CH347)
         {
-            // From init_347_75t.cfg (working)
-            command += " -c \"adapter driver ch347\"";
-            command += " -c \"ch347 vid_pid 0x1a86 0x55dd\"";
-            command += " -c \"adapter speed 10000\"";
-            command += " -c \"source {" + tempDirUnix + "xilinx-dna-347.cfg}\"";
-            command += " -c \"source {" + tempDirUnix + "xilinx-xc7.cfg}\"";
-            command += " -c \"source {" + tempDirUnix + "jtagspi.cfg}\"";
+            // Use the CH347 DNA config which already includes adapter setup
+            // xilinx-dna-347.cfg contains: adapter driver ch347, ch347 vid_pid, adapter speed, and sources xilinx-xc7.cfg
+            command += " -c \"source [find cpld/xilinx-dna-347.cfg]\"";
+            // Source xilinx-dna.cfg to get xc7_get_dna command
+            command += " -c \"source [find cpld/xilinx-dna.cfg]\"";
         }
         else // FTDI/RS232
         {
-            // From init_232_35t.cfg (working)
+            // For FTDI, we need to configure the adapter manually then source DNA config
             command += " -c \"interface ftdi\"";
             command += " -c \"ftdi_vid_pid 0x0403 0x6011\"";
             command += " -c \"ftdi_channel 0\"";
             command += " -c \"ftdi_layout_init 0x0098 0x008b\"";
             command += " -c \"reset_config none\"";
             command += " -c \"adapter_khz 10000\"";
-            command += " -c \"source {" + tempDirUnix + "xilinx-dna.cfg}\"";
-            command += " -c \"source {" + tempDirUnix + "xilinx-xc7.cfg}\"";
-            command += " -c \"source {" + tempDirUnix + "jtagspi.cfg}\"";
+            command += " -c \"source [find cpld/xilinx-xc7.cfg]\"";
+            command += " -c \"source [find cpld/xilinx-dna.cfg]\"";
         }
         
         // Add init and DNA extraction procedure (matching working bat files)

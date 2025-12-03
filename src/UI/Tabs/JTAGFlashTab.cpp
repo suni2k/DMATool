@@ -30,6 +30,9 @@ namespace DMATool::UI::Tabs
     std::string JTAGFlashTab::s_CurrentOperation = "None";
     std::string JTAGFlashTab::s_CurrentProgress = "";
     float JTAGFlashTab::s_ProgressPercent = 0.0f;
+    
+    // SINGLE INSTANCE - Reuse across all operations
+    static Backend::FlashInterface* s_FlashInterface = nullptr;
 
     void JTAGFlashTab::AddLog(const std::string& message)
     {
@@ -227,11 +230,15 @@ namespace DMATool::UI::Tabs
         // Perform detection after UI renders (similar to JTAG tab pattern)
         if (s_IsDetecting && s_FramesSinceOperation >= 2)
         {
-            Backend::FlashInterface flashInterface;
+            // Create FlashInterface only once
+            if (!s_FlashInterface)
+            {
+                s_FlashInterface = new Backend::FlashInterface();
+            }
             
             UpdateProgress(0, "Starting flash detection...");
             
-            s_FlashInfo = flashInterface.DetectFlashDevice([](uint64_t current, uint64_t total, const std::string& msg) {
+            s_FlashInfo = s_FlashInterface->DetectFlashDevice([](uint64_t current, uint64_t total, const std::string& msg) {
                 float percent = total > 0 ? (float)current / (float)total * 100.0f : 0.0f;
                 UpdateProgress(percent, msg);
             });
@@ -272,16 +279,20 @@ namespace DMATool::UI::Tabs
         // Perform flashing after UI renders
         if (s_IsFlashing && s_FramesSinceOperation >= 2)
         {
+            // Ensure FlashInterface exists
+            if (!s_FlashInterface)
+            {
+                s_FlashInterface = new Backend::FlashInterface();
+            }
+            
             // Launch flash operation in background thread to avoid UI freeze
             std::thread flashThread([&]() {
-                Backend::FlashInterface flashInterface;
-                
                 UpdateProgress(0, "Preparing to flash firmware...");
                 AddLog("[INFO] Starting flash programming...");
                 AddLog("[INFO] Firmware: " + s_FirmwarePath);
                 AddLog("[INFO] Target chip: " + Backend::FlashInterface::ChipModelToString(s_SelectedChipModel));
                 
-                auto result = flashInterface.ProgramFirmware(
+                auto result = s_FlashInterface->ProgramFirmware(
                     s_FirmwarePath,
                     s_SelectedChipModel,
                     true,  // Verify after
@@ -316,17 +327,21 @@ namespace DMATool::UI::Tabs
         // Perform verification after UI renders
         if (s_IsVerifying && s_FramesSinceOperation >= 2)
         {
+            // Ensure FlashInterface exists
+            if (!s_FlashInterface)
+            {
+                s_FlashInterface = new Backend::FlashInterface();
+            }
+            
             // Launch verify operation in background thread
             std::thread verifyThread([&]() {
-                Backend::FlashInterface flashInterface;
-                
                 UpdateProgress(0, "Preparing to verify firmware...");
                 AddLog("[INFO] Starting firmware verification...");
                 AddLog("[INFO] Firmware: " + s_FirmwarePath);
                 AddLog("[INFO] Target chip: " + Backend::FlashInterface::ChipModelToString(s_SelectedChipModel));
                 AddLog("[INFO] This will read the entire flash and compare byte-by-byte");
                 
-                auto result = flashInterface.VerifyFirmware(
+                auto result = s_FlashInterface->VerifyFirmware(
                     s_FirmwarePath,
                     s_SelectedChipModel,
                     [](uint64_t current, uint64_t total, const std::string& msg) {
