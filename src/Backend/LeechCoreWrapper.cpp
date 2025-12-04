@@ -1,4 +1,5 @@
 #include "LeechCoreWrapper.h"
+#include "../VMProtectConfig.h"  // VMProtect SDK integration
 #include "../Util/ResourceExtractor.h"
 #include "../resource.h"
 #include <filesystem>
@@ -17,21 +18,26 @@ namespace DMATool::Backend
 
     bool LeechCoreWrapper::Initialize()
     {
+        VMPROTECT_VIRTUALIZE_BLOCK("LeechCoreInit");
+        
         if (m_hDevice)
         {
             m_LastError = "Already initialized";
+            VMPROTECT_END_BLOCK();
             return true;
         }
 
         // Load DLL
         if (!LoadDLL())
         {
+            VMPROTECT_END_BLOCK();
             return false;
         }
 
         // Get function pointers
         if (!GetFunctionPointers())
         {
+            VMPROTECT_END_BLOCK();
             return false;
         }
 
@@ -77,6 +83,8 @@ namespace DMATool::Backend
 
         m_LastError = "Success - Device: " + std::string(config.szDeviceName);
         std::cout << "[SUCCESS] LeechCore device created: " << config.szDeviceName << std::endl;
+        
+        VMPROTECT_END_BLOCK();
         return true;
     }
 
@@ -97,9 +105,12 @@ namespace DMATool::Backend
 
     bool LeechCoreWrapper::Read4KB(uint64_t address, uint8_t* buffer)
     {
+        VMPROTECT_MUTATE_BLOCK("DMARead4KB");
+        
         if (!m_hDevice || !m_pfnLcRead)
         {
             m_LastError = "Not initialized";
+            VMPROTECT_END_BLOCK();
             return false;
         }
 
@@ -111,6 +122,7 @@ namespace DMATool::Backend
             return false;
         }
 
+        VMPROTECT_END_BLOCK();
         return true;
     }
 

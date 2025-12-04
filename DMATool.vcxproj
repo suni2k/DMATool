@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|x64">
@@ -137,6 +137,7 @@
     <ClInclude Include="src\Backend\JTAGInterface.h" />
     <ClInclude Include="src\Util\ResourceExtractor.h" />
     <ClInclude Include="src\Util\TempDirectoryManager.h" />
+    <ClInclude Include="src\VMProtectConfig.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".github\copilot-instructions.md" />
@@ -147,6 +148,8 @@
     <None Include="COMPLETE_SETUP_GUIDE.md" />
     <None Include="CONSOLE_HIDDEN_RELEASE.md" />
     <None Include="CONSOLE_WINDOW_CONFIG.md" />
+    <None Include="DMATool.vmp" />
+    <None Include="DMATool_Clean.vmp" />
     <None Include="DMA_DEVICE_RELEASE_FIX.md" />
     <None Include="docs\75T_TEST_RESULTS.md" />
     <None Include="docs\ARCHITECTURE.md" />
@@ -215,6 +218,7 @@
     <None Include="docs\TROUBLESHOOTING.md" />
     <None Include="docs\UI_LAYOUT_CONSISTENCY_FIXES.md" />
     <None Include="docs\UI_SPACING_FIXES_FINAL.md" />
+    <None Include="docs\VMProtect_Integration.md" />
     <None Include="docs\XC7A50T_75T_IDCODE_ALIASING.md" />
     <None Include="docs\XC7A75T_SUPPORT_ADDED.md" />
     <None Include="DRIVER_FIX_REQUIRED.md" />
@@ -224,6 +228,7 @@
     <None Include="FINAL_TESTING_GUIDE.md" />
     <None Include="FLASH_HANG_QUICK_FIX.md" />
     <None Include="FPGA_DETECTION_QUICK_REF.md" />
+    <None Include="HOW_TO_USE_VMPROTECT.md" />
     <None Include="MANIFEST_CORRECT_LOCATION.md" />
     <None Include="MANIFEST_FINAL_FIX.md" />
     <None Include="NEXT_STEPS.md" />
@@ -241,9 +246,11 @@
     <None Include="RESOURCE_EXTRACTION_FIX_COMPLETE.md" />
     <None Include="scripts\Add-BSCAN-Resources.ps1" />
     <None Include="scripts\Add-TempDirectoryManager.ps1" />
+    <None Include="scripts\Apply-VMProtect.ps1" />
     <None Include="scripts\Check-DMATool-Processes.ps1" />
     <None Include="scripts\Check-OpenOCD-Status.ps1" />
     <None Include="scripts\Clean-Build.ps1" />
+    <None Include="scripts\Cleanup-Solution.ps1" />
     <None Include="scripts\Compare-CH347-Full.ps1" />
     <None Include="scripts\Compare-OpenOCD-Installations.ps1" />
     <None Include="scripts\Configure-Manifest.ps1" />
@@ -257,9 +264,15 @@
     <None Include="scripts\Fix-OpenOCD-Version.ps1" />
     <None Include="scripts\Fix-RC-Paths.ps1" />
     <None Include="scripts\Fix-Resource-Paths.ps1" />
+    <None Include="scripts\Fix-VMProtect-Absolute-Path.ps1" />
+    <None Include="scripts\Fix-VMProtect-LibraryDir.ps1" />
+    <None Include="scripts\Fix-VMProtect-Linker-Proper.ps1" />
+    <None Include="scripts\Fix-VMProtect-Linker.ps1" />
     <None Include="scripts\Hide-Release-Console.ps1" />
     <None Include="scripts\Kill-OpenOCD-Admin.ps1" />
     <None Include="scripts\Kill-OpenOCD-Processes.ps1" />
+    <None Include="scripts\Protect-Direct.ps1" />
+    <None Include="scripts\Protect-GUI.ps1" />
     <None Include="scripts\Quick-DMA-Test.ps1" />
     <None Include="scripts\Quick-FPGA-Test.ps1" />
     <None Include="scripts\Quick-Test-DMATool.ps1" />
@@ -279,14 +292,18 @@
     <None Include="scripts\Test-OpenOCD-Simple.ps1" />
     <None Include="scripts\Test-Resource-Embedding.ps1" />
     <None Include="scripts\Test-Resource-Extraction.ps1" />
+    <None Include="scripts\Test-VMProtect-Output.ps1" />
     <None Include="scripts\Update-DMATool-RC.ps1" />
     <None Include="scripts\Update-Resources-RC.ps1" />
     <None Include="scripts\Verify-Flash-Resources.ps1" />
     <None Include="scripts\Verify-Flash.ps1" />
     <None Include="scripts\Verify-OpenOCD-Resources.ps1" />
+    <None Include="scripts\Verify-Protection.ps1" />
     <None Include="scripts\Verify-Resources.ps1" />
     <None Include="STANDALONE_EXE_COMPLETE.md" />
     <None Include="VISUAL_STUDIO_MANIFEST_GUIDE.md" />
+    <None Include="VMPROTECT_BUILD_FIXED.md" />
+    <None Include="VMPROTECT_INTEGRATION_SUMMARY.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DMATool.rc" />

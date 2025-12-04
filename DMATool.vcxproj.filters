@@ -212,6 +212,9 @@
     <ClInclude Include="src\Util\TempDirectoryManager.h">
       <Filter>Header Files\Util</Filter>
     </ClInclude>
+    <ClInclude Include="src\VMProtectConfig.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="README.md">
@@ -566,6 +569,12 @@
     <None Include="BENCHMARK_DIAGNOSTIC.md" />
     <None Include="scripts\Copy-PCILeech-To-Solution.ps1" />
     <None Include="scripts\Embed-PCILeech-Resources.ps1" />
+    <None Include="DMA_DEVICE_RELEASE_FIX.md" />
+    <None Include="FINAL_FIX_SUMMARY.md" />
+    <None Include="scripts\Check-DMATool-Processes.ps1" />
+    <None Include="scripts\Test-DMA-Device-Release.ps1" />
+    <None Include="DMATool.vmp" />
+    <None Include="docs\VMProtect_Integration.md" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="DMATool.rc">

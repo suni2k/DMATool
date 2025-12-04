@@ -1,5 +1,6 @@
 #include "Application.h"
 #include "UI/Tabs/DataPortTab.h"  // For cleanup of DMA resources
+#include "VMProtectConfig.h"  // VMProtect SDK integration
 #include <imgui.h>
 #include <imgui_impl_win32.h>
 #include <imgui_impl_dx11.h>
@@ -30,6 +31,8 @@ namespace DMATool
 
     bool Application::Initialize()
     {
+        VMPROTECT_ULTRA_FUNCTION("AppInitialize");
+        
         // Create completely borderless window (no title bar, no resize handles)
         m_Wc = { sizeof(m_Wc), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"DMATool", nullptr };
         ::RegisterClassExW(&m_Wc);
@@ -95,11 +98,14 @@ namespace DMATool
         m_MainWindow = std::make_unique<UI::MainWindow>(m_ProjectManager.get());
 
         m_Running = true;
+        
+        VMPROTECT_END_FUNCTION();
         return true;
     }
 
     void Application::SetupImGui()
     {
+        // NOTE: UI setup is NOT protected - would cause lag
         IMGUI_CHECKVERSION();
         ImGui::CreateContext();
         ImGuiIO& io = ImGui::GetIO();

@@ -1,14 +1,14 @@
 ﻿#include "OpenOCDInterface.h"
-#include <windows.h>
-#include <filesystem>
-#include <sstream>
-#include <regex>
-#include <array>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <algorithm>
+#include "../VMProtectConfig.h"  // VMProtect SDK integration
 #include "../resource.h"
+#include "../Util/ResourceExtractor.h"
+#include <filesystem>
+#include <iostream>
+#include <sstream>      // Added for std::stringstream, std::istringstream
+#include <fstream>      // Added for std::ifstream, std::ofstream
+#include <iomanip>      // Added for std::setfill, std::setw
+#include <regex>
+#include <Windows.h>
 
 namespace DMATool::Backend
 {
@@ -124,6 +124,8 @@ namespace DMATool::Backend
 
     std::string OpenOCDInterface::ExecuteCommand(const std::string& command)
     {
+        VMPROTECT_MUTATE_BLOCK("JTAG_Execute");
+        
         std::string result;
 
         // Output command to console for debugging
@@ -198,6 +200,7 @@ namespace DMATool::Backend
 
         std::cout << "[EXEC] Command completed with exit code: " << exitCode << std::endl;
         
+        VMPROTECT_END_BLOCK();
         return result;
     }
 
@@ -358,6 +361,8 @@ namespace DMATool::Backend
 
     FPGAInfo OpenOCDInterface::DetectFPGA(std::function<void(const std::string&)> logCallback)
     {
+        VMPROTECT_MUTATE_BLOCK("JTAG_Detect");
+        
         FPGAInfo info;
 
         if (logCallback) logCallback("[INFO] Starting FPGA detection...");
@@ -484,6 +489,7 @@ namespace DMATool::Backend
             }
         }
 
+        VMPROTECT_END_BLOCK();
         return info;
     }
 

@@ -1,5 +1,6 @@
 #include "FlashInterface.h"
 #include "OpenOCDInterface.h"
+#include "../VMProtectConfig.h"  // VMProtect SDK integration
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -551,11 +552,14 @@ namespace DMATool::Backend
         bool backupBefore,
         FlashProgressCallback progressCallback)
     {
+        VMPROTECT_MUTATE_BLOCK("FlashProgram");
+        
         FlashOperationResult result;
 
         if (!fs::exists(firmwarePath))
         {
             result.message = "Firmware file not found: " + firmwarePath;
+            VMPROTECT_END_BLOCK();
             return result;
         }
 
@@ -768,6 +772,7 @@ namespace DMATool::Backend
                 result.message += "\n\nOpenOCD Output:\n" + output;
         }
 
+        VMPROTECT_END_BLOCK();
         return result;
     }
 
@@ -776,6 +781,8 @@ namespace DMATool::Backend
         FPGAChipModel chipModel,
         FlashProgressCallback progressCallback)
     {
+        VMPROTECT_MUTATE_BLOCK("FlashVerify");
+        
         FlashOperationResult result;
         
         if (!fs::exists(firmwarePath))
@@ -930,6 +937,7 @@ namespace DMATool::Backend
                 progressCallback(0, 100, "Verification failed - MISMATCH!");
         }
 
+        VMPROTECT_END_BLOCK();
         return result;
     }
 
@@ -1044,6 +1052,8 @@ namespace DMATool::Backend
 
     std::string FlashInterface::CalculateSHA256(const std::string& filePath)
     {
+        VMPROTECT_MUTATE_BLOCK("SHA256Hash");
+        
         std::cout << "[DEBUG] Calculating SHA256 for: " << filePath << std::endl;
         
         std::ifstream file(filePath, std::ios::binary);
@@ -1117,6 +1127,7 @@ namespace DMATool::Backend
         
         std::cout << "[DEBUG] SHA256: " << hashString << std::endl;
         
+        VMPROTECT_END_BLOCK();
         return hashString;
     }
 }

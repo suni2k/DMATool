@@ -1,4 +1,5 @@
 #include "BenchmarkInterface.h"
+#include "../VMProtectConfig.h"  // VMProtect SDK integration
 #include "../resource.h"
 #include <Windows.h>
 #include <iostream>
@@ -303,6 +304,8 @@ namespace DMATool::Backend
 
     bool BenchmarkInterface::RunQuickTestLeechCore(const BenchmarkConfig& config)
     {
+        VMPROTECT_VIRTUALIZE_BLOCK("BenchmarkTest");
+        
         AddLog("[INFO] Running Quick Speed Test (LeechCore Real-Time)!");
         AddLog("");
         AddLog("[INFO] Enumerating memory ranges...");
@@ -538,11 +541,14 @@ namespace DMATool::Backend
         // Small delay to ensure driver fully releases device
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
+        VMPROTECT_END_BLOCK();
         return true;
     }
 
     bool BenchmarkInterface::RunThroughputTest(const BenchmarkConfig& config)
     {
+        VMPROTECT_VIRTUALIZE_BLOCK("ThroughputTest");
+        
         AddLog("[INFO] Running Throughput Test!");
         AddLog("");
         AddLog("[INFO] This test will transfer 1 GB of data to measure throughput");
@@ -718,6 +724,7 @@ namespace DMATool::Backend
         // Small delay to ensure driver fully releases device
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
+        VMPROTECT_END_BLOCK();
         return true;
     }
 
@@ -800,6 +807,8 @@ namespace DMATool::Backend
 
     void BenchmarkInterface::CalculateRating()
     {
+        VMPROTECT_MUTATE_BLOCK("CalculateRating");
+        
         // NEW RATING SCALE (Updated Dec 2025):
         // Elite:   7000+ RPS (Gold - matches theme)
         // Amazing: 6000+ RPS (#1E90FF - Dodger Blue)
@@ -892,6 +901,8 @@ namespace DMATool::Backend
         {
             m_CurrentResults.rating = "UNKNOWN";
         }
+        
+        VMPROTECT_END_BLOCK();
     }
 
     void BenchmarkInterface::AddLog(const std::string& message)
