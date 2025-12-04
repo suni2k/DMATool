@@ -45,6 +45,9 @@
 #define IDR_BSCAN_XC7A100T              303
 #define IDR_BSCAN_XC7A200T              304
 
+// Application Icon
+#define IDI_MAINICON                    400
+
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED

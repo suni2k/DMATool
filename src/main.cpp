@@ -18,20 +18,35 @@
 #include <memory>
 #include <Windows.h>
 
+// VMProtect SDK markers for code protection
+#ifdef VMProtect_Static_x64
+#include "VMProtectSDK.h"
+#endif
+
+#ifndef VMProtect_Static_x64
+    #define VMProtectBeginVirtualization(x)
+    #define VMProtectBeginMutation(x)
+    #define VMProtectEnd()
+#endif
+
 // Entry point for Windows subsystem (no console)
 #ifdef NDEBUG  // Release build
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+    VMProtectBeginVirtualization("WinMain_Entry");
+    
     auto app = std::make_unique<DMATool::Application>("DMATool", 1400, 900);
     
     if (!app->Initialize())
     {
+        VMProtectEnd();
         return -1;
     }
     
     app->Run();
     app->Shutdown();
     
+    VMProtectEnd();
     return 0;
 }
 #else  // Debug build (console)
