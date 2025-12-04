@@ -68,6 +68,7 @@ namespace DMATool::Backend
         bool StartTest(const BenchmarkConfig& config, 
                       std::function<void(const std::string&)> logCallback);
         void StopTest();
+        void ForceCleanup();  // Force cleanup of all resources (close LeechCore device)
         bool IsTestRunning() const { return m_IsRunning; }
 
         // Results

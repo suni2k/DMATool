@@ -1,4 +1,5 @@
 #include "Application.h"
+#include "UI/Tabs/DataPortTab.h"  // For cleanup of DMA resources
 #include <imgui.h>
 #include <imgui_impl_win32.h>
 #include <imgui_impl_dx11.h>
@@ -165,6 +166,10 @@ namespace DMATool
 
     void Application::Shutdown()
     {
+        // Clean up tab resources BEFORE destroying MainWindow
+        // This ensures LeechCore device is released properly
+        UI::Tabs::DataPortTab::Cleanup();
+        
         m_MainWindow.reset();
         m_ProjectManager.reset();
 

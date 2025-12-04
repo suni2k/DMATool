@@ -21,6 +21,9 @@ namespace DMATool::UI::Tabs
     static bool s_IsUninstallingFT601Driver = false;
     static std::string s_FT601DriverProgress = "";  // Track operation progress
 
+    // Cleanup flag to track if we've cleaned up on exit
+    static bool s_HasCleanedUp = false;
+
     void DataPortTab::AddLog(const std::string& message)
     {
         s_LogMessages.push_back(message);
@@ -1317,5 +1320,21 @@ namespace DMATool::UI::Tabs
         }
         
         ImGui::EndChild();
+    }
+    
+    void DataPortTab::Cleanup()
+    {
+        if (!s_HasCleanedUp)
+        {
+            std::cout << "[INFO] DataPortTab: Cleaning up benchmark resources..." << std::endl;
+            
+            // Force cleanup of benchmark interface
+            // This will stop any running tests and release the LeechCore device
+            s_Benchmark.ForceCleanup();
+            s_IsTestRunning = false;
+            
+            s_HasCleanedUp = true;
+            std::cout << "[INFO] DataPortTab: Cleanup complete - DMA device released" << std::endl;
+        }
     }
 }

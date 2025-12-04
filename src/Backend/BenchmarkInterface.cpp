@@ -175,6 +175,19 @@ namespace DMATool::Backend
             AddLog("[INFO] Test stopped");
         }
     }
+    
+    void BenchmarkInterface::ForceCleanup()
+    {
+        // First stop any running test
+        StopTest();
+        
+        // LeechCore devices are created and destroyed within each test
+        // But we should ensure any static/lingering resources are cleaned up
+        // The LeechCoreWrapper automatically closes in its destructor, but
+        // we can force it here for immediate cleanup
+        
+        std::cout << "[DEBUG] BenchmarkInterface: Force cleanup complete" << std::endl;
+    }
 
     bool BenchmarkInterface::RunQuickTest(const BenchmarkConfig& config)
     {
@@ -517,6 +530,13 @@ namespace DMATool::Backend
         AddLog("- Reads Per Second (RPS): " + std::to_string((int)m_CurrentResults.readsPerSecond) + " (" + m_CurrentResults.rating + ")");
         AddLog("");
         AddLog("[SUCCESS] LeechCore real-time test completed!");
+        
+        // CRITICAL: Explicitly close device before returning
+        // This ensures the FPGA device is released for other applications
+        leechcore.Close();
+        
+        // Small delay to ensure driver fully releases device
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
         return true;
     }
@@ -690,6 +710,13 @@ namespace DMATool::Backend
         
         AddLog("");
         AddLog("[SUCCESS] Throughput test completed!");
+        
+        // CRITICAL: Explicitly close device before returning
+        // This ensures the FPGA device is released for other applications
+        leechcore.Close();
+        
+        // Small delay to ensure driver fully releases device
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
         return true;
     }

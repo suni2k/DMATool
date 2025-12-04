@@ -10,6 +10,7 @@ namespace DMATool::UI::Tabs
     {
     public:
         static void Render();
+        static void Cleanup();  // Clean up benchmark resources (release DMA device)
         
     private:
         static void RenderTestControlsPanel(float height);

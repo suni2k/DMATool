@@ -147,6 +147,7 @@
     <None Include="COMPLETE_SETUP_GUIDE.md" />
     <None Include="CONSOLE_HIDDEN_RELEASE.md" />
     <None Include="CONSOLE_WINDOW_CONFIG.md" />
+    <None Include="DMA_DEVICE_RELEASE_FIX.md" />
     <None Include="docs\75T_TEST_RESULTS.md" />
     <None Include="docs\ARCHITECTURE.md" />
     <None Include="docs\BENCHMARK_DOCUMENTATION_SUMMARY.md" />
@@ -240,6 +241,7 @@
     <None Include="RESOURCE_EXTRACTION_FIX_COMPLETE.md" />
     <None Include="scripts\Add-BSCAN-Resources.ps1" />
     <None Include="scripts\Add-TempDirectoryManager.ps1" />
+    <None Include="scripts\Check-DMATool-Processes.ps1" />
     <None Include="scripts\Check-OpenOCD-Status.ps1" />
     <None Include="scripts\Clean-Build.ps1" />
     <None Include="scripts\Compare-CH347-Full.ps1" />
@@ -266,6 +268,7 @@
     <None Include="scripts\Setup-PCILeech.ps1" />
     <None Include="scripts\Sync-OpenOCD-Files.ps1" />
     <None Include="scripts\Test-DeviceMasking.ps1" />
+    <None Include="scripts\Test-DMA-Device-Release.ps1" />
     <None Include="scripts\Test-Embedded-Resources.ps1" />
     <None Include="scripts\Test-Flash-Debug.ps1" />
     <None Include="scripts\Test-Flash-Slow.ps1" />
