@@ -16,9 +16,9 @@
 
 ---
 
-## ?? Features
+## Features
 
-### ?? JTAG Port Management
+### JTAG Port Management
 - **FPGA Detection** - Automatic detection of Xilinx Artix-7 FPGAs (XC7A35T, XC7A75T, XC7A100T)
 - **DNA ID Reading** - Extract unique 57-bit device DNA identifiers
 - **Multi-Adapter Support** - CH347 and RS232/FTDI JTAG adapters
@@ -27,7 +27,7 @@
 ![JTAG DNA ID Reading](assets/DNAIDpage.png)
 *JTAG interface with FPGA detection and DNA ID extraction*
 
-### ? Flash DMA Programming
+### Flash DMA Programming
 - **Firmware Programming** - Flash custom bitstreams to DMA cards
 - **Verification** - SHA-256 hash verification of programmed firmware
 - **Progress Tracking** - Real-time programming progress and status
@@ -36,7 +36,7 @@
 ![Flash Programming Interface](assets/FlashPage.png)
 *Firmware programming with real-time progress and verification*
 
-### ?? DMA Performance Benchmarking
+### DMA Performance Benchmarking
 - **Quick Test** - Fast 4KB DMA read test
 - **Throughput Test** - Full performance analysis (4KB to 1GB transfers)
 - **Performance Rating** - Automatic A/B/C/D/F grading
@@ -47,7 +47,7 @@
 
 ---
 
-## ?? Installation
+## Installation
 
 ### System Requirements
 - **OS**: Windows 10/11 (64-bit)
@@ -71,7 +71,7 @@
 
 ---
 
-## ?? Quick Start Guide
+## Quick Start Guide
 
 ### First Launch
 
@@ -106,7 +106,7 @@
 3. Wait for programming and verification
 4. Check status for success
 
-?? **Warning**: Do not disconnect power during programming!
+**Warning**: Do not disconnect power during programming!
 
 ### DMA Benchmarking
 
@@ -119,12 +119,12 @@
 **Full Throughput Test:**
 
 1. Click **"Run Throughput Test"**
-2. Wait for all transfer sizes to complete (4KB ? 1GB)
+2. Wait for all transfer sizes to complete (4KB > 1GB)
 3. View performance rating and detailed results
 
 ---
 
-## ?? Supported Hardware
+## Supported Hardware
 
 ### DMA Cards
 - PCILeech-compatible DMA cards
@@ -132,17 +132,17 @@
 - Other FPGA-based DMA cards (Artix-7 series)
 
 ### FPGA Models
-- ? Xilinx XC7A35T
-- ? Xilinx XC7A75T (including remarked 50T)
-- ? Xilinx XC7A100T
+- Xilinx XC7A35T
+- Xilinx XC7A75T
+- Xilinx XC7A100T
 
 ### JTAG Adapters
-- ? CH347 USB JTAG/SPI adapter (recommended)
-- ? FTDI-based RS232 JTAG adapters
+- CH347 USB JTAG/SPI adapter (recommended)
+- FTDI-based RS232 JTAG adapters
 
 ---
 
-## ?? Advanced Features
+## Advanced Features
 
 ### Command-Line Support
 DMATool runs with a console window for advanced users and logging.
@@ -162,34 +162,34 @@ No external dependencies required!
 
 ---
 
-## ??? Security & Protection
+## ?Security & Protection
 
 DMATool uses **VMProtect Ultimate** to protect proprietary algorithms from reverse engineering:
 
-- ? Protected against IDA Pro disassembly
-- ? Protected against Hex-Rays decompilation
-- ? Anti-debugging measures
-- ? Anti-VM detection
-- ? Code virtualization
+- Protected against IDA Pro disassembly
+- Protected against Hex-Rays decompilation
+- Anti-debugging measures
+- Anti-VM detection
+- Code virtualization
 
 **All core algorithms are secured while maintaining full performance.**
 
 ---
 
-## ?? License
+## License
 
 **Proprietary Software** - All Rights Reserved
 
-- ? Free to download and use
-- ? Reverse engineering prohibited
-- ? Redistribution prohibited
-- ? Modification prohibited
+- Free to download and use
+- Reverse engineering prohibited
+- Redistribution prohibited
+- Modification prohibited
 
 For commercial licensing inquiries, please open an issue or contact admin@dmakings.com
 
 ---
 
-## ?? Troubleshooting
+## Troubleshooting
 
 ### DMA Device Not Detected
 
@@ -214,27 +214,27 @@ For commercial licensing inquiries, please open an issue or contact admin@dmakin
 
 ---
 
-## ?? Contributing
+## Contributing
 
 While the source code is not open-source, we welcome:
 
-- ?? Bug reports
-- ?? Feature requests
-- ?? Documentation improvements
-- ?? UI/UX suggestions
+- Bug reports
+- Feature requests
+- Documentation improvements
+- UI/UX suggestions
 
 Please open an issue with your feedback!
 
 ---
 
-## ?? Support
+## Support
 
 - **Issues**: [GitHub Issues](https://github.com/suni2k/DMATool/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/suni2k/DMATool/discussions)
 
 ---
 
-## ?? Acknowledgments
+## Acknowledgments
 
 Built with:
 - [ImGui](https://github.com/ocornut/imgui) - UI framework
@@ -246,9 +246,9 @@ Built with:
 
 <div align="center">
 
-**Made with ?? for the DMA community**
+**Made with <3 for the DMA community**
 
-[? Back to Top](#dmatool---professional-dma-card-management-suite)
+[Back to Top](#dmatool---professional-dma-card-management-suite)
 
 </div>
 
