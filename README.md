@@ -10,7 +10,7 @@
 [![Downloads](https://img.shields.io/github/downloads/suni2k/DMATool/total?style=flat-square)](https://github.com/suni2k/DMATool/releases)
 [![License](https://img.shields.io/badge/license-Proprietary-red?style=flat-square)](LICENSE)
 
-[Download Latest Release](https://github.com/suni2k/DMATool/releases/latest) • [Report Bug](https://github.com/suni2k/DMATool/issues) • [Request Feature](https://github.com/suni2k/DMATool/issues)
+[Download Latest Release](https://github.com/suni2k/DMATool/releases/latest) ï¿½ [Report Bug](https://github.com/suni2k/DMATool/issues) ï¿½ [Request Feature](https://github.com/suni2k/DMATool/issues)
 
 </div>
 
@@ -185,7 +185,7 @@ DMATool uses **VMProtect Ultimate** to protect proprietary algorithms from rever
 - ? Redistribution prohibited
 - ? Modification prohibited
 
-For commercial licensing inquiries, please open an issue.
+For commercial licensing inquiries, please open an issue or contact admin@dmakings.com
 
 ---
 
@@ -251,3 +251,4 @@ Built with:
 [? Back to Top](#dmatool---professional-dma-card-management-suite)
 
 </div>
+
