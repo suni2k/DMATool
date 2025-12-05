@@ -225,7 +225,9 @@
     <None Include="DRIVER_LEECHCORE_FIXES.md" />
     <None Include="DRIVER_VERSION_AND_BENCHMARK_FIXES.md" />
     <None Include="FINAL_FIX_SUMMARY.md" />
+    <None Include="FINAL_PUBLISH_GUIDE.md" />
     <None Include="FINAL_TESTING_GUIDE.md" />
+    <None Include="FIXED_README.md" />
     <None Include="FLASH_HANG_QUICK_FIX.md" />
     <None Include="FPGA_DETECTION_QUICK_REF.md" />
     <None Include="HOW_TO_USE_VMPROTECT.md" />
@@ -233,6 +235,8 @@
     <None Include="MANIFEST_FINAL_FIX.md" />
     <None Include="NEXT_STEPS.md" />
     <None Include="OPENOCD_CLEANUP_QUICKSTART.md" />
+    <None Include="PUBLIC_README.md" />
+    <None Include="PUBLISHING_GUIDE.md" />
     <None Include="QUICK_REFERENCE.md" />
     <None Include="QUICK_REFERENCE_STANDALONE.md" />
     <None Include="QUICK_START_AFTER_CLEANUP.md" />
@@ -279,6 +283,7 @@
     <None Include="scripts\Reset-CH347-Adapter.ps1" />
     <None Include="scripts\Set-Release-NoConsole.ps1" />
     <None Include="scripts\Setup-PCILeech.ps1" />
+    <None Include="scripts\Setup-Public-Repo.ps1" />
     <None Include="scripts\Sync-OpenOCD-Files.ps1" />
     <None Include="scripts\Test-DeviceMasking.ps1" />
     <None Include="scripts\Test-DMA-Device-Release.ps1" />
