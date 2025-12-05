@@ -2,6 +2,8 @@
 
 <div align="center">
 
+![DMATool Splash](assets/SplashPage.png)
+
 **Modern Windows Application for DMA Hardware Interface**
 
 [![Release](https://img.shields.io/github/v/release/suni2k/DMATool?style=flat-square)](https://github.com/suni2k/DMATool/releases)
@@ -22,17 +24,26 @@
 - **Multi-Adapter Support** - CH347 and RS232/FTDI JTAG adapters
 - **Driver Management** - One-click CH347 driver installation/uninstallation
 
+![JTAG DNA ID Reading](assets/DNAIDpage.png)
+*JTAG interface with FPGA detection and DNA ID extraction*
+
 ### ? Flash DMA Programming
 - **Firmware Programming** - Flash custom bitstreams to DMA cards
 - **Verification** - SHA-256 hash verification of programmed firmware
 - **Progress Tracking** - Real-time programming progress and status
 - **Safety Features** - Automatic verification before and after programming
 
+![Flash Programming Interface](assets/FlashPage.png)
+*Firmware programming with real-time progress and verification*
+
 ### ?? DMA Performance Benchmarking
 - **Quick Test** - Fast 4KB DMA read test
 - **Throughput Test** - Full performance analysis (4KB to 1GB transfers)
 - **Performance Rating** - Automatic A/B/C/D/F grading
 - **Real-time Monitoring** - Live speed and status updates
+
+![Benchmark Testing](assets/BenchmarkPage.png)
+*Complete DMA performance testing with detailed metrics*
 
 ---
 
