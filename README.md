@@ -2,8 +2,6 @@
 
 <div align="center">
 
-![DMATool Banner](assets/banner.png)
-
 **Modern Windows Application for DMA Hardware Interface**
 
 [![Release](https://img.shields.io/github/v/release/suni2k/DMATool?style=flat-square)](https://github.com/suni2k/DMATool/releases)
@@ -24,23 +22,17 @@
 - **Multi-Adapter Support** - CH347 and RS232/FTDI JTAG adapters
 - **Driver Management** - One-click CH347 driver installation/uninstallation
 
-![JTAG Port Screenshot](assets/jtag_tab.png)
-
 ### ? Flash DMA Programming
 - **Firmware Programming** - Flash custom bitstreams to DMA cards
 - **Verification** - SHA-256 hash verification of programmed firmware
 - **Progress Tracking** - Real-time programming progress and status
 - **Safety Features** - Automatic verification before and after programming
 
-![Flash Port Screenshot](assets/flash_tab.png)
-
 ### ?? DMA Performance Benchmarking
 - **Quick Test** - Fast 4KB DMA read test
 - **Throughput Test** - Full performance analysis (4KB to 1GB transfers)
 - **Performance Rating** - Automatic A/B/C/D/F grading
 - **Real-time Monitoring** - Live speed and status updates
-
-![Data Port Screenshot](assets/data_tab.png)
 
 ---
 
@@ -87,8 +79,6 @@
 3. Wait for detection to complete
 4. View FPGA model and DNA ID
 
-![JTAG Detection](assets/jtag_detection.png)
-
 **Install CH347 Driver:**
 
 1. Click **"Install Driver"**
@@ -120,31 +110,6 @@
 1. Click **"Run Throughput Test"**
 2. Wait for all transfer sizes to complete (4KB ? 1GB)
 3. View performance rating and detailed results
-
----
-
-## ?? Screenshots
-
-<details>
-<summary>Click to expand gallery</summary>
-
-### JTAG Port
-![JTAG Tab](assets/jtag_tab.png)
-*FPGA detection and DNA reading interface*
-
-### Flash Programming
-![Flash Tab](assets/flash_tab.png)
-*Firmware programming with verification*
-
-### Benchmarking
-![Data Tab](assets/data_tab.png)
-*DMA performance testing and rating*
-
-### Driver Management
-![Driver Management](assets/driver_tab.png)
-*One-click driver installation*
-
-</details>
 
 ---
 
