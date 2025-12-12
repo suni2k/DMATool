@@ -125,36 +125,56 @@ This document tracks the implementation of automatic DMA card detection and driv
 
 ## 🔧 In Progress / Pending
 
-### Phase 2: Embed RS232 WinUSB Driver
+### Phase 2: Automated RS232 WinUSB Driver Installation
 
 **Current State**: Uses Zadig tool for manual installation  
-**Target State**: Fully automated WinUSB installation from embedded resources
+**Target State**: Fully automated WinUSB installation
 
-#### Required Steps:
-1. **Add Driver Files to Resources**
-   - [ ] Add `ftdi_winusb.inf` to resources
-   - [ ] Add `ftdi_winusb.cat` to resources
-   - [ ] Add `WinUSBCoInstaller2.dll` to resources
-   - [ ] Define resource IDs in `resource.h`
+#### Issue Discovered (Dec 12, 2024):
+The Zadig-generated INF file requires additional components not included in our current package:
+- **WdfCoInstaller01011.dll** - Part of Windows Driver Kit (WDK), ~1MB file
+- **Architecture-specific folder structure** - Needs x86/amd64/arm subdirectories
+- **CAT file name mismatch** - INF references `Quad_RS232-HS_(Interface_0).cat` but we have `ftdi_winusb.cat`
 
-2. **Update `InstallRS232Driver()`**
-   - [ ] Extract files from resources to temp directory
-   - [ ] Use pnputil to add driver: `pnputil /add-driver <path> /install`
-   - [ ] Force driver update on Interface 0: `Update-PnpDevice -InstanceId ...`
-   - [ ] Verify WinUSB is applied to correct interface
+#### Solutions for Phase 2:
 
-3. **Testing**
-   - [ ] Test on clean system (FTDIBUS installed)
-   - [ ] Test switching from FTDIBUS to WinUSB
-   - [ ] Test switching back from WinUSB to FTDIBUS
-   - [ ] Test on different Windows versions (10/11)
+**Option 1: Integrate libwdi Library (Recommended)**
+- Use the same library that Zadig uses: https://github.com/pbatard/libwdi
+- Handles driver signing and installation automatically
+- No manual INF file management
+- Well-tested and maintained
+- Implementation: Link libwdi.lib and use `wdi_prepare_driver()` + `wdi_install_driver()`
 
-**Reference**: See `CH347` driver implementation in `OpenOCDInterface.cpp` lines 639-1003
+**Option 2: Create Simplified INF (Modern Windows)**
+- Modern Windows 10/11 doesn't require WdfCoInstaller
+- Create simplified INF that uses built-in Windows WinUSB support
+- Self-sign or use unsigned (test mode)
+- Less dependencies, but requires test signing on production machines
 
-**Driver Files Location**: `tools/FTDI_RS232_Driver/WinUSB_Driver/`
-- `ftdi_winusb.inf` (152 bytes)
-- `ftdi_winusb.cat` (9.7 KB)
-- `WinUSBCoInstaller2.dll` (38 KB)
+**Option 3: Include Full Zadig Driver Package**
+- Download and embed WdfCoInstaller01011.dll
+- Create proper folder structure: drivers/rs232/x86/, drivers/rs232/amd64/
+- Update CAT file references in INF
+- Most complex, requires ~1MB additional space
+
+#### Current Working Solution:
+- Device detection: ✅ Works perfectly
+- Driver checking: ✅ Distinguishes FTDIBUS vs WinUSB
+- Manual installation: ✅ User installs WinUSB via Zadig
+- Button workflow: ✅ Smart failsafe detection
+
+**Recommendation**: Use Option 1 (libwdi) for Phase 2 - it's the most robust and maintainable solution.
+
+---
+
+### Files That Need to Be Added (if continuing with embedded approach):
+
+**From Windows Driver Kit (WDK):**
+- WdfCoInstaller01011.dll (x86 version)
+- WdfCoInstaller01011.dll (amd64 version)  
+- WdfCoInstaller01011.dll (arm version)
+
+**Repository Reference**: https://github.com/pbatard/libwdi/tree/master/libwdi/.msvc
 
 ---
 
