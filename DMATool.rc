@@ -32,6 +32,12 @@ IDR_RS232_WINUSB_INF RCDATA "tools\\FTDI_RS232_Driver\\WinUSB_Driver\\ftdi_winus
 IDR_RS232_WINUSB_CAT RCDATA "tools\\FTDI_RS232_Driver\\WinUSB_Driver\\ftdi_winusb.cat"
 IDR_RS232_WINUSB_COINSTALLER RCDATA "tools\\FTDI_RS232_Driver\\WinUSB_Driver\\WinUSBCoInstaller2.dll"
 
+// RS232 (35T) FTDIBUS Driver Files (for reverting)
+IDR_RS232_FTDIBUS_INF RCDATA "tools\\FTDI_RS232_Driver\\FTDIBUS_Driver\\ftdibus.inf"
+IDR_RS232_FTDIBUS_CAT RCDATA "tools\\FTDI_RS232_Driver\\FTDIBUS_Driver\\ftdibus.cat"
+IDR_RS232_FTDIBUS_SYS RCDATA "tools\\FTDI_RS232_Driver\\FTDIBUS_Driver\\ftdibus.sys"
+IDR_RS232_FTSER2K_SYS RCDATA "tools\\FTDI_RS232_Driver\\FTDIBUS_Driver\\ftser2k.sys"
+
 // PCILeech Files for Benchmark Tests (embedded from tools\PCILeech)
 IDR_PCILEECH_EXE RCDATA "tools\\PCILeech\\pcileech.exe"
 IDR_LEECHCORE_DLL RCDATA "tools\\PCILeech\\leechcore.dll"
