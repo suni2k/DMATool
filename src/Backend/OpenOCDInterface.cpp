@@ -619,8 +619,9 @@ namespace DMATool::Backend
         if (serviceType == "FTDIBUS")
         {
             // Wrong driver - default FTDI driver, needs WinUSB
+            // Keep original device name but append note
             info.installed = false;  // Mark as not installed (wrong driver)
-            info.deviceName = "Default FTDI Driver Detected (Needs WinUSB)";
+            info.deviceName += " (FTDIBUS - Needs WinUSB)";
         }
         else if (serviceType == "WinUSB")
         {
@@ -1135,22 +1136,80 @@ namespace DMATool::Backend
         
         std::cout << "[INFO] Extracting WinUSB driver files from embedded resources..." << std::endl;
         
-        // TODO: Add resource IDs for RS232 WinUSB driver files in resource.h
-        // For now, use the tool fallback path as reference
-        // The driver files should be embedded as resources like CH347 drivers
+        // Extract INF file
+        if (!ExtractEmbeddedResource(IDR_RS232_WINUSB_INF, tempDir + "ftdi_winusb.inf"))
+        {
+            std::cout << "[ERROR] Failed to extract ftdi_winusb.inf" << std::endl;
+            return false;
+        }
+        std::cout << "[DEBUG] Extracted: ftdi_winusb.inf" << std::endl;
         
-        std::cout << "[ERROR] RS232 WinUSB driver embedding not yet implemented" << std::endl;
-        std::cout << "[INFO] Please use Zadig tool to install WinUSB driver for now:" << std::endl;
-        std::cout << "[INFO] 1. Download Zadig from https://zadig.akeo.ie/" << std::endl;
-        std::cout << "[INFO] 2. Run Zadig" << std::endl;
-        std::cout << "[INFO] 3. Select 'Quad RS232-HS (Interface 0)'" << std::endl;
-        std::cout << "[INFO] 4. Choose WinUSB driver" << std::endl;
-        std::cout << "[INFO] 5. Click 'Replace Driver'" << std::endl;
+        // Extract CAT file
+        if (!ExtractEmbeddedResource(IDR_RS232_WINUSB_CAT, tempDir + "ftdi_winusb.cat"))
+        {
+            std::cout << "[ERROR] Failed to extract ftdi_winusb.cat" << std::endl;
+            return false;
+        }
+        std::cout << "[DEBUG] Extracted: ftdi_winusb.cat" << std::endl;
         
-        // Open Zadig website in browser
-        ShellExecuteA(NULL, "open", "https://zadig.akeo.ie/", NULL, NULL, SW_SHOWNORMAL);
+        // Extract WinUSB CoInstaller DLL
+        if (!ExtractEmbeddedResource(IDR_RS232_WINUSB_COINSTALLER, tempDir + "WinUSBCoInstaller2.dll"))
+        {
+            std::cout << "[ERROR] Failed to extract WinUSBCoInstaller2.dll" << std::endl;
+            return false;
+        }
+        std::cout << "[DEBUG] Extracted: WinUSBCoInstaller2.dll" << std::endl;
         
-        return false;  // Return false since we're using manual method for now
+        std::cout << "[SUCCESS] Driver files extracted successfully" << std::endl;
+        
+        // Install driver using pnputil
+        std::string infPath = tempDir + "ftdi_winusb.inf";
+        std::cout << "[INFO] Using driver INF at: " << infPath << std::endl;
+        std::cout << "[INFO] Adding driver to Windows driver store..." << std::endl;
+        
+        // Build pnputil command
+        std::string command = "pnputil.exe /add-driver \"" + infPath + "\" /install";
+        std::cout << "[DEBUG] Running: " << command << std::endl;
+        
+        std::string output = ExecuteCommand(command);
+        std::cout << output << std::endl;
+        
+        if (output.find("successfully") != std::string::npos || output.find("Already exists") != std::string::npos)
+        {
+            std::cout << "[SUCCESS] Driver added to Windows driver store" << std::endl;
+            
+            // Force update device to use new driver
+            std::cout << "[INFO] Updating device with new driver..." << std::endl;
+            std::string updateCommand = R"(powershell -Command "$device = Get-PnpDevice | Where-Object {$_.InstanceId -like '*VID_0403&PID_6011&MI_00*'} | Select-Object -First 1; if ($device) { try { Write-Output 'UPDATING_DEVICE'; Update-PnpDevice -InstanceId $device.InstanceId -ErrorAction Stop; Write-Output 'UPDATE_SUCCESS' } catch { Write-Output 'UPDATE_FAILED' } } else { Write-Output 'NO_DEVICE' }")";
+            
+            std::string updateOutput = ExecuteCommand(updateCommand);
+            std::cout << updateOutput << std::endl;
+            
+            if (updateOutput.find("UPDATE_SUCCESS") != std::string::npos)
+            {
+                std::cout << "[SUCCESS] Device updated successfully" << std::endl;
+                std::cout << "[INFO] RS232 Interface 0 should now use WinUSB for JTAG operations" << std::endl;
+                return true;
+            }
+            else if (updateOutput.find("UPDATE_FAILED") != std::string::npos)
+            {
+                std::cout << "[WARNING] Driver update failed - device may need manual driver installation" << std::endl;
+                std::cout << "[INFO] Try: Device Manager → Right-click device → Update driver" << std::endl;
+                std::cout << "[INFO] Point to: " << tempDir << std::endl;
+                return false;
+            }
+            else
+            {
+                std::cout << "[INFO] Driver installed to store. You may need to manually update the device." << std::endl;
+                return true;
+            }
+        }
+        else
+        {
+            std::cout << "[ERROR] Failed to install WinUSB driver" << std::endl;
+            std::cout << "[INFO] You may need to run DMATool as Administrator" << std::endl;
+            return false;
+        }
     }
 
     bool OpenOCDInterface::UninstallRS232Driver()

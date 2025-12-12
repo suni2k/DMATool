@@ -969,9 +969,9 @@ namespace DMATool::UI::Tabs
         ImGui::Text("Device:");
         ImGui::PopStyleColor();
         ImGui::SameLine(70);
-        if (s_DriverInfo.installed && !s_DriverInfo.deviceName.empty())
+        if (!s_DriverInfo.deviceName.empty())
         {
-            // Show full device name with text wrapping
+            // Show full device name with text wrapping (regardless of installed status)
             float availableWidth = ImGui::GetContentRegionAvail().x;
             ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + availableWidth);
             ImGui::Text(s_DriverInfo.deviceName.c_str());

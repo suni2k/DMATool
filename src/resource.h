@@ -21,6 +21,9 @@
 #define IDR_CH341_DLL_A64               119
 #define IDR_FT601_INF                   116
 #define IDR_FT601_CAT                   117
+#define IDR_RS232_WINUSB_INF            126
+#define IDR_RS232_WINUSB_CAT            127
+#define IDR_RS232_WINUSB_COINSTALLER    128
 
 // PCILeech executable for benchmark tests
 #define IDR_PCILEECH_EXE                120
