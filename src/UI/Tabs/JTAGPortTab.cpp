@@ -25,6 +25,7 @@ namespace DMATool::UI::Tabs
     bool JTAGPortTab::s_IsUninstallingDriver = false;
     bool JTAGPortTab::s_IsCopyingDNA = false;
     bool JTAGPortTab::s_ResetFrameCounter = false;
+    bool JTAGPortTab::s_DriverCheckCompleted = false;
     std::string JTAGPortTab::s_ConnectionStatus = "Disconnected";
     std::string JTAGPortTab::s_DetectionStatus = "Not Detected";
     std::string JTAGPortTab::s_LastOperation = "None";
@@ -317,38 +318,84 @@ namespace DMATool::UI::Tabs
         // Perform auto-detection AFTER UI has rendered AND notification has shown for 1 frame
         if (s_IsAutoDetecting && s_FramesSinceDetectionQueued >= 2)
         {
-            UpdateProgress("Checking driver status first...");
+            UpdateProgress("Detecting hardware...");
             Backend::OpenOCDInterface openocd;
             
-            // SMART AUTO-DETECTION: Check driver FIRST before attempting FPGA detection
-            AddLog("[INFO] Checking CH347 driver status...");
-            s_DriverInfo = openocd.CheckCH347Driver();
+            // STEP 1: Detect DMA card by VID/PID (driver-agnostic)
+            AddLog("[INFO] Scanning for DMA cards...");
+            Backend::CardInfo cardInfo = openocd.DetectDMACard();
+            
+            if (!cardInfo.detected)
+            {
+                AddLog("[ERROR] No DMA card detected");
+                AddLog("[INFO] Please ensure your DMA card is properly connected");
+                AddLog("[INFO] Supported cards: 35T (RS232), 75T (CH347), 100T (CH347)");
+                
+                s_DetectionStatus = "No Card";
+                s_ConnectionStatus = "Disconnected";
+                s_CurrentProgress = "No DMA card found!";
+                
+                s_IsDetecting = false;
+                s_IsAutoDetecting = false;
+                s_FramesSinceDetectionQueued = 0;
+                Sleep(3000);
+                s_CurrentProgress = "";
+                return;
+            }
+            
+            // Card detected! Set adapter type early so UI updates correctly
+            s_FPGAInfo.adapterType = cardInfo.adapterType;
+            
+            AddLog("[SUCCESS] Detected: " + cardInfo.cardTypeString + " DMA card");
+            AddLog("[INFO] VID:PID = " + cardInfo.vidPid);
+            AddLog("[INFO] Device: " + cardInfo.deviceName);
+            
+            // STEP 2: Check driver status for THIS specific card
+            UpdateProgress("Checking driver status...");
+            std::string driverTypeName = (cardInfo.adapterType == Backend::AdapterType::RS232) ? "RS232" : "CH347";
+            AddLog("[INFO] Checking " + driverTypeName + " driver status...");
+            
+            s_DriverInfo = (cardInfo.adapterType == Backend::AdapterType::RS232)
+                ? openocd.CheckRS232Driver()
+                : openocd.CheckCH347Driver();
             
             bool canDetectFPGA = false;
             
             if (s_DriverInfo.installed)
             {
-                // Check if it's the CORRECT driver
-                if (s_DriverInfo.deviceName.find("HighSpeed-JTAG") != std::string::npos)
+                // Driver found - check if it's the CORRECT driver
+                bool isCorrectDriver = false;
+                
+                if (cardInfo.adapterType == Backend::AdapterType::CH347)
                 {
-                    AddLog("[SUCCESS] Correct CH347 JTAG driver detected");
+                    // CH347: Need "HighSpeed-JTAG" driver
+                    isCorrectDriver = (s_DriverInfo.deviceName.find("HighSpeed-JTAG") != std::string::npos);
+                }
+                else if (cardInfo.adapterType == Backend::AdapterType::RS232)
+                {
+                    // RS232: CheckRS232Driver() already validated - WinUSB = installed, FTDIBUS = not installed
+                    // If we're here and installed=true, it means WinUSB is present
+                    isCorrectDriver = true;
+                }
+                
+                if (isCorrectDriver)
+                {
+                    AddLog("[SUCCESS] Correct " + driverTypeName + " driver detected");
                     AddLog("[INFO] Device: " + s_DriverInfo.deviceName);
                     AddLog("[INFO] Version: " + s_DriverInfo.version);
                     canDetectFPGA = true;
                 }
                 else
                 {
-                    // Wrong driver (USB to UART+JTAG)
-                    AddLog("[WARNING] Wrong CH347 driver detected: " + s_DriverInfo.deviceName);
+                    // Wrong driver installed
+                    AddLog("[WARNING] Wrong " + driverTypeName + " driver detected: " + s_DriverInfo.deviceName);
                     AddLog("[ERROR] Cannot detect FPGA with current driver");
-                    AddLog("[INFO] Expected: USB HighSpeed-JTAG/I2C... CH347T");
-                    AddLog("[INFO] Current: " + s_DriverInfo.deviceName);
                     AddLog("[INFO] ");
                     AddLog("[INFO] ===== ACTION REQUIRED =====");
-                    AddLog("[INFO] Please install the correct CH347 driver:");
-                    AddLog("[INFO] 1. Click 'Uninstall CH347 Driver' below");
+                    AddLog("[INFO] Please install the correct " + driverTypeName + " driver:");
+                    AddLog("[INFO] 1. Click 'Uninstall " + driverTypeName + " Driver' below");
                     AddLog("[INFO] 2. Wait for uninstall to complete");
-                    AddLog("[INFO] 3. Click 'Install CH347 Driver'");
+                    AddLog("[INFO] 3. Click 'Install " + driverTypeName + " Driver'");
                     AddLog("[INFO] 4. Follow installation prompts");
                     AddLog("[INFO] 5. Click 'Detect FPGA & Read DNA' to retry");
                     AddLog("[INFO] =============================");
@@ -361,15 +408,20 @@ namespace DMATool::UI::Tabs
             }
             else
             {
-                // No driver installed at all
-                AddLog("[ERROR] CH347 driver not installed");
-                AddLog("[INFO] Cannot detect FPGA without driver");
+                // No driver installed or wrong driver (FTDIBUS for RS232)
+                AddLog("[ERROR] " + driverTypeName + " driver not installed");
+                if (cardInfo.adapterType == Backend::AdapterType::RS232 && !s_DriverInfo.deviceName.empty())
+                {
+                    AddLog("[INFO] Current: " + s_DriverInfo.deviceName);
+                    AddLog("[INFO] Required: WinUSB driver for JTAG operations");
+                }
+                AddLog("[INFO] Cannot detect FPGA without correct driver");
                 AddLog("[INFO] ");
                 AddLog("[INFO] ===== ACTION REQUIRED =====");
-                AddLog("[INFO] Please install the CH347 driver:");
-                AddLog("[INFO] 1. Click 'Install CH347 Driver' below");
-                AddLog("[INFO] 3. Wait for installation to complete");
-                AddLog("[INFO] 4. Click 'Detect FPGA & Read DNA' to retry");
+                AddLog("[INFO] Please install the " + driverTypeName + " driver:");
+                AddLog("[INFO] 1. Click 'Install " + driverTypeName + " Driver' below");
+                AddLog("[INFO] 2. Wait for installation to complete");
+                AddLog("[INFO] 3. Click 'Detect FPGA & Read DNA' to retry");
                 AddLog("[INFO] =============================");
                 
                 s_DetectionStatus = "No Driver";
@@ -378,7 +430,7 @@ namespace DMATool::UI::Tabs
                 canDetectFPGA = false;
             }
             
-            // Only proceed with FPGA detection if driver is correct
+            // STEP 3: Proceed with FPGA detection if driver is correct
             if (canDetectFPGA)
             {
                 UpdateProgress("Driver OK! Searching for OpenOCD...");
@@ -410,7 +462,7 @@ namespace DMATool::UI::Tabs
             
             s_IsDetecting = false;
             s_IsAutoDetecting = false;
-            s_FramesSinceDetectionQueued = 0;  // Reset counter after auto-detection completes
+            s_FramesSinceDetectionQueued = 0;
             
             // Keep progress message visible for 3 seconds if driver issue
             if (!canDetectFPGA)
@@ -420,39 +472,68 @@ namespace DMATool::UI::Tabs
             s_CurrentProgress = "";
         }
         
-        // Perform manual FPGA detection (triggered by button) - ONLY detect FPGA, don't check driver
+        // Perform manual FPGA detection (triggered by button)
         if (!s_IsAutoDetecting && s_IsDetecting && !s_IsCheckingDriver && 
             !s_IsInstallingDriver && !s_IsUninstallingDriver && s_FramesSinceDetectionQueued >= 2)
         {
             Backend::OpenOCDInterface openocd;
             
-            UpdateProgress("Searching for OpenOCD executable...");
-            s_FPGAInfo = openocd.DetectFPGA([](const std::string& msg) {
-                AddLog(msg);
-            });
+            // STEP 1: Detect DMA card by VID/PID (driver-agnostic)
+            UpdateProgress("Detecting hardware...");
+            AddLog("[INFO] Scanning for DMA cards...");
+            Backend::CardInfo cardInfo = openocd.DetectDMACard();
             
-            if (s_FPGAInfo.detected)
+            if (!cardInfo.detected)
             {
-                UpdateProgress("FPGA detected successfully!");
-                s_DetectionStatus = "Detected";
-                s_ConnectionStatus = "Connected";
-                AddLog("[SUCCESS] FPGA detected: " + s_FPGAInfo.partNumber);
-                AddLog("[INFO] DNA ID: " + s_FPGAInfo.dnaId);
-                s_CurrentProgress = "Detection complete!";
+                AddLog("[ERROR] No DMA card detected");
+                AddLog("[INFO] Please ensure your DMA card is properly connected");
+                AddLog("[INFO] Supported cards: 35T (RS232), 75T (CH347), 100T (CH347)");
+                
+                s_DetectionStatus = "No Card";
+                s_ConnectionStatus = "Disconnected";
+                s_CurrentProgress = "No DMA card found!";
+                
+                s_IsDetecting = false;
+                s_FramesSinceDetectionQueued = 0;
+                Sleep(2000);
+                s_CurrentProgress = "";
             }
             else
             {
-                UpdateProgress("Detection failed!");
-                s_DetectionStatus = "Failed";
-                s_ConnectionStatus = "Disconnected";
-                AddLog("[ERROR] Failed to detect FPGA. Check connections.");
-                s_CurrentProgress = "Detection failed.";
+                // Card detected! Set adapter type
+                s_FPGAInfo.adapterType = cardInfo.adapterType;
+                
+                AddLog("[SUCCESS] Detected: " + cardInfo.cardTypeString + " DMA card");
+                AddLog("[INFO] VID:PID = " + cardInfo.vidPid);
+                
+                // STEP 2: Proceed with FPGA detection
+                UpdateProgress("Searching for OpenOCD executable...");
+                s_FPGAInfo = openocd.DetectFPGA([](const std::string& msg) {
+                    AddLog(msg);
+                });
+                
+                if (s_FPGAInfo.detected)
+                {
+                    UpdateProgress("FPGA detected successfully!");
+                    s_DetectionStatus = "Detected";
+                    s_ConnectionStatus = "Connected";
+                    AddLog("[SUCCESS] FPGA detected: " + s_FPGAInfo.partNumber);
+                    AddLog("[INFO] DNA ID: " + s_FPGAInfo.dnaId);
+                    s_CurrentProgress = "Detection complete!";
+                }
+                else
+                {
+                    UpdateProgress("Detection failed!");
+                    s_DetectionStatus = "Failed";
+                    s_ConnectionStatus = "Disconnected";
+                    AddLog("[ERROR] Failed to detect FPGA. Check connections.");
+                    s_CurrentProgress = "Detection failed.";
+                }
+                
+                s_IsDetecting = false;
+                s_FramesSinceDetectionQueued = 0;
+                s_CurrentProgress = "";
             }
-            
-            // Clear detecting state AFTER operation completes
-            s_IsDetecting = false;
-            s_FramesSinceDetectionQueued = 0;  // Reset counter after manual detection completes
-            s_CurrentProgress = "";
         }
 
         // Floating progress notification (toast-style) - MUST render even if detection hasn't started yet
@@ -703,11 +784,19 @@ namespace DMATool::UI::Tabs
         ImGui::Separator();
         ImGui::Dummy(ImVec2(0, 2));  // Reduced spacing
         
-        // Detection button
-        ImGui::BeginDisabled(s_IsDetecting && !s_IsCheckingDriver);  // Only disable if actually detecting FPGA
+        // Detection button - DISABLED until driver check is done AND correct driver is installed
+        ImGui::BeginDisabled((s_IsDetecting && !s_IsCheckingDriver) || !s_DriverCheckCompleted || !s_DriverInfo.installed);
         
         std::string buttonText = "Detect FPGA & Read DNA";
-        if (s_IsDetecting && !s_IsCheckingDriver && !s_IsInstallingDriver && !s_IsUninstallingDriver)
+        if (!s_DriverCheckCompleted)
+        {
+            buttonText = "Detect FPGA & Read DNA (Check Driver First)";
+        }
+        else if (!s_DriverInfo.installed)
+        {
+            buttonText = "Detect FPGA & Read DNA (Install Driver First)";
+        }
+        else if (s_IsDetecting && !s_IsCheckingDriver && !s_IsInstallingDriver && !s_IsUninstallingDriver)
         {
             // Animated dots - only when THIS button's operation is running
             static float detectDotTimer = 0.0f;
@@ -727,6 +816,17 @@ namespace DMATool::UI::Tabs
             s_CurrentProgress = "Starting detection...";
             AddLog("[INFO] Starting FPGA detection...");
         }
+        
+        // Show tooltip when disabled
+        if (!s_DriverCheckCompleted && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+        {
+            ImGui::SetTooltip("Please click 'Check Driver Status' first to detect your DMA card type");
+        }
+        else if (s_DriverCheckCompleted && !s_DriverInfo.installed && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+        {
+            ImGui::SetTooltip("Please install the correct driver first. Click 'Install RS232 Driver' or 'Install CH347 Driver' below.");
+        }
+        
         ImGui::EndDisabled();
         
         // Reduce spacing between buttons
@@ -806,8 +906,10 @@ namespace DMATool::UI::Tabs
         ImGui::SameLine(70);
         if (s_DriverInfo.installed)
             ImGui::TextColored(Colors::Success, "Installed");
+        else if (s_DriverCheckCompleted)
+            ImGui::TextColored(Colors::Warning, "Driver Install Needed");
         else
-            ImGui::TextColored(Colors::MutedForeground, "Not Detected");
+            ImGui::Text("---");
         
         // Right column
         ImGui::NextColumn();
@@ -827,10 +929,10 @@ namespace DMATool::UI::Tabs
         ImGui::SameLine(70);
         
         // Derive adapter from driver info first, then FPGA detection as fallback
-        Backend::AdapterType adapterType = GetAdapterTypeFromDriverInfo(s_DriverInfo);
-        if (adapterType == Backend::AdapterType::Unknown && s_FPGAInfo.detected)
+        Backend::AdapterType adapterType = s_FPGAInfo.adapterType;  // Use FPGAInfo (set by card detection)
+        if (adapterType == Backend::AdapterType::Unknown)
         {
-            adapterType = s_FPGAInfo.adapterType;
+            adapterType = GetAdapterTypeFromDriverInfo(s_DriverInfo);
         }
         
         if (adapterType != Backend::AdapterType::Unknown)
@@ -845,7 +947,7 @@ namespace DMATool::UI::Tabs
                 adapterColor = Colors::Success;
                 break;
             case Backend::AdapterType::RS232:
-                adapterName = "RS232/FTDI";
+                adapterName = "RS-232";
                 adapterColor = Colors::Info;
                 break;
             case Backend::AdapterType::Unknown:
@@ -899,22 +1001,19 @@ namespace DMATool::UI::Tabs
         ImGui::Spacing();
         
         // Determine adapter type for button labels
-        std::string driverName = "CH347";
-        if (s_FPGAInfo.detected)
+        // Use detected adapter type (set by card detection OR FPGA detection)
+        bool cardDetected = (s_FPGAInfo.adapterType != Backend::AdapterType::Unknown);
+        std::string driverName = "DMA Card";  // Default if unknown
+        if (s_FPGAInfo.adapterType == Backend::AdapterType::RS232)
         {
-            switch (s_FPGAInfo.adapterType)
-            {
-            case Backend::AdapterType::RS232:
-                driverName = "RS232";
-                break;
-            case Backend::AdapterType::CH347:
-            default:
-                driverName = "CH347";
-                break;
-            }
+            driverName = "RS232";
+        }
+        else if (s_FPGAInfo.adapterType == Backend::AdapterType::CH347)
+        {
+            driverName = "CH347";
         }
         
-        // Check driver status button
+        // Check driver status button (always enabled)
         ImGui::BeginDisabled(s_IsCheckingDriver);
         
         std::string checkButtonText = "Check Driver Status";
@@ -957,19 +1056,51 @@ namespace DMATool::UI::Tabs
             if (checkDriverFrames >= 2)
             {
                 Backend::OpenOCDInterface openocd;
-                s_DriverInfo = openocd.CheckCH347Driver();
                 
-                if (s_DriverInfo.installed)
+                // First detect hardware to know which driver to check
+                AddLog("[INFO] Detecting DMA card hardware...");
+                Backend::CardInfo cardInfo = openocd.DetectDMACard();
+                
+                if (!cardInfo.detected)
                 {
-                    AddLog("[SUCCESS] Driver is installed");
-                    AddLog("[INFO] Version: " + s_DriverInfo.version);
-                    AddLog("[INFO] Provider: " + s_DriverInfo.provider);
-                    s_CurrentProgress = "Driver check complete!";
+                    AddLog("[ERROR] No DMA card detected");
+                    AddLog("[INFO] Please connect a DMA card (35T/75T/100T)");
+                    s_CurrentProgress = "No card found.";
                 }
                 else
                 {
-                    AddLog("[WARNING] Driver is not installed");
-                    s_CurrentProgress = "Driver not found.";
+                    // Update adapter type so buttons show correct driver
+                    s_FPGAInfo.adapterType = cardInfo.adapterType;
+                    
+                    AddLog("[SUCCESS] Detected: " + cardInfo.cardTypeString + " DMA card");
+                    AddLog("[INFO] VID:PID = " + cardInfo.vidPid);
+                    
+                    // Check driver for this specific card
+                    std::string driverType = (cardInfo.adapterType == Backend::AdapterType::RS232) ? "RS232" : "CH347";
+                    AddLog("[INFO] Checking " + driverType + " driver...");
+                    
+                    s_DriverInfo = (cardInfo.adapterType == Backend::AdapterType::RS232)
+                        ? openocd.CheckRS232Driver()
+                        : openocd.CheckCH347Driver();
+                    
+                    if (s_DriverInfo.installed)
+                    {
+                        AddLog("[SUCCESS] Correct " + driverType + " driver is installed");
+                        AddLog("[INFO] Device: " + s_DriverInfo.deviceName);
+                        AddLog("[INFO] Version: " + s_DriverInfo.version);
+                        AddLog("[INFO] Provider: " + s_DriverInfo.provider);
+                        s_CurrentProgress = "Driver check complete!";
+                    }
+                    else
+                    {
+                        AddLog("[WARNING] Correct " + driverType + " driver is NOT installed");
+                        if (!s_DriverInfo.deviceName.empty())
+                        {
+                            AddLog("[INFO] Current: " + s_DriverInfo.deviceName);
+                        }
+                        AddLog("[INFO] Click 'Install " + driverType + " Driver' to proceed");
+                        s_CurrentProgress = "Driver not found.";
+                    }
                 }
                 
                 s_IsCheckingDriver = false;
@@ -977,16 +1108,21 @@ namespace DMATool::UI::Tabs
                 checkDriverQueued = false;
                 checkDriverFrames = 0;
                 s_CurrentProgress = "";
+                s_DriverCheckCompleted = true;  // Mark driver check as completed
             }
         }
         
         ImGui::Spacing();
         
-        // Install driver button
-        ImGui::BeginDisabled(s_IsInstallingDriver);
+        // Install driver button - DISABLED if no card detected
+        ImGui::BeginDisabled(s_IsInstallingDriver || !cardDetected);
         
         std::string installButtonText = "Install " + driverName + " Driver";
-        if (s_IsInstallingDriver)
+        if (!cardDetected)
+        {
+            installButtonText = "Install Driver (No Card Detected)";
+        }
+        else if (s_IsInstallingDriver)
         {
             static float installDotTimer = 0.0f;
             installDotTimer += ImGui::GetIO().DeltaTime;
@@ -1003,6 +1139,13 @@ namespace DMATool::UI::Tabs
             s_CurrentProgress = "Installing drivers...";
             AddLog("[INFO] Launching " + driverName + " driver installer...");
         }
+        
+        // Show tooltip when disabled due to no card
+        if (!cardDetected && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+        {
+            ImGui::SetTooltip("Please detect DMA card first using 'Check Driver Status' or 'Detect FPGA & Read DNA'");
+        }
+        
         ImGui::EndDisabled();
         
         // Install driver operation - run after notification shows
@@ -1024,25 +1167,57 @@ namespace DMATool::UI::Tabs
             if (installDriverFrames >= 2)
             {
                 Backend::OpenOCDInterface openocd;
-                bool success = openocd.InstallCH347Driver();
+                
+                // Call appropriate installer based on adapter type
+                bool success = false;
+                if (s_FPGAInfo.adapterType == Backend::AdapterType::RS232)
+                {
+                    success = openocd.InstallRS232Driver();
+                }
+                else if (s_FPGAInfo.adapterType == Backend::AdapterType::CH347)
+                {
+                    success = openocd.InstallCH347Driver();
+                }
+                else
+                {
+                    AddLog("[ERROR] Unknown adapter type - cannot install driver");
+                    success = false;
+                }
                 
                 if (success)
                 {
-                    AddLog("[SUCCESS] Driver is already installed!");
+                    AddLog("[SUCCESS] Driver installation completed!");
                     s_CurrentProgress = "Driver installed. Refreshing status...";
                 }
                 else
                 {
-                    AddLog("[INFO] Please follow the instructions in your browser.");
-                    AddLog("[INFO] Download and install the CH347 driver.");
-                    AddLog("[INFO] Restart DMATool after installation completes.");
-                    s_CurrentProgress = "See browser for download instructions. Refreshing status...";
+                    if (s_FPGAInfo.adapterType == Backend::AdapterType::RS232)
+                    {
+                        AddLog("[INFO] Please follow the instructions in your browser.");
+                        AddLog("[INFO] Use Zadig to install WinUSB driver for RS232.");
+                    }
+                    else
+                    {
+                        AddLog("[INFO] Please follow the instructions in your browser.");
+                        AddLog("[INFO] Download and install the CH347 driver.");
+                        AddLog("[INFO] Restart DMATool after installation completes.");
+                    }
+                    s_CurrentProgress = "See browser for instructions. Refreshing status...";
                 }
                 
                 // AUTO-REFRESH: Re-check driver status after installation
                 Sleep(1000);  // Give Windows time to update
                 AddLog("[INFO] Re-checking driver status...");
-                s_DriverInfo = openocd.CheckCH347Driver();
+                
+                // Check the correct driver type
+                if (s_FPGAInfo.adapterType == Backend::AdapterType::RS232)
+                {
+                    s_DriverInfo = openocd.CheckRS232Driver();
+                }
+                else
+                {
+                    s_DriverInfo = openocd.CheckCH347Driver();
+                }
                 
                 if (s_DriverInfo.installed)
                 {
@@ -1065,11 +1240,15 @@ namespace DMATool::UI::Tabs
         
         ImGui::Spacing();
         
-        // Uninstall driver button
-        ImGui::BeginDisabled(s_IsUninstallingDriver);
+        // Uninstall driver button - DISABLED if no card detected
+        ImGui::BeginDisabled(s_IsUninstallingDriver || !cardDetected);
         
         std::string uninstallButtonText = "Uninstall " + driverName + " Driver";
-        if (s_IsUninstallingDriver)
+        if (!cardDetected)
+        {
+            uninstallButtonText = "Uninstall Driver (No Card Detected)";
+        }
+        else if (s_IsUninstallingDriver)
         {
             static float uninstallDotTimer = 0.0f;
             uninstallDotTimer += ImGui::GetIO().DeltaTime;
@@ -1086,6 +1265,13 @@ namespace DMATool::UI::Tabs
             s_CurrentProgress = "Uninstalling driver...";
             AddLog("[INFO] Uninstalling " + driverName + " driver...");
         }
+        
+        // Show tooltip when disabled due to no card
+        if (!cardDetected && ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+        {
+            ImGui::SetTooltip("Please detect DMA card first using 'Check Driver Status' or 'Detect FPGA & Read DNA'");
+        }
+        
         ImGui::EndDisabled();
         
         // Uninstall driver operation - run after notification shows
@@ -1107,7 +1293,24 @@ namespace DMATool::UI::Tabs
             if (uninstallDriverFrames >= 2)
             {
                 Backend::OpenOCDInterface openocd;
-                if (openocd.UninstallCH347Driver())
+                
+                // Call appropriate uninstaller based on adapter type
+                bool success = false;
+                if (s_FPGAInfo.adapterType == Backend::AdapterType::RS232)
+                {
+                    success = openocd.UninstallRS232Driver();
+                }
+                else if (s_FPGAInfo.adapterType == Backend::AdapterType::CH347)
+                {
+                    success = openocd.UninstallCH347Driver();
+                }
+                else
+                {
+                    AddLog("[ERROR] Unknown adapter type - cannot uninstall driver");
+                    success = false;
+                }
+                
+                if (success)
                 {
                     AddLog("[SUCCESS] Driver uninstall initiated.");
                     s_CurrentProgress = "Uninstall complete! Refreshing status...";
@@ -1121,7 +1324,16 @@ namespace DMATool::UI::Tabs
                 // AUTO-REFRESH: Re-check driver status after uninstallation
                 Sleep(1000);  // Give Windows time to update
                 AddLog("[INFO] Re-checking driver status...");
-                s_DriverInfo = openocd.CheckCH347Driver();
+                
+                // Check the correct driver type
+                if (s_FPGAInfo.adapterType == Backend::AdapterType::RS232)
+                {
+                    s_DriverInfo = openocd.CheckRS232Driver();
+                }
+                else
+                {
+                    s_DriverInfo = openocd.CheckCH347Driver();
+                }
                 
                 if (!s_DriverInfo.installed)
                 {

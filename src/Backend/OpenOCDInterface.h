@@ -48,6 +48,16 @@ namespace DMATool::Backend
         std::string vidPid;
     };
 
+    struct CardInfo
+    {
+        bool detected = false;
+        AdapterType adapterType = AdapterType::Unknown;
+        std::string cardTypeString;  // "35T", "75T", "100T"
+        std::string vidPid;
+        std::string instanceId;
+        std::string deviceName;
+    };
+
     class OpenOCDInterface
     {
     public:
@@ -56,11 +66,15 @@ namespace DMATool::Backend
 
         // Detection operations
         FPGAInfo DetectFPGA(std::function<void(const std::string&)> logCallback = nullptr);
+        CardInfo DetectDMACard();
         DriverInfo CheckCH347Driver();
+        DriverInfo CheckRS232Driver();
         
         // Driver management
         bool InstallCH347Driver();
         bool UninstallCH347Driver();
+        bool InstallRS232Driver();
+        bool UninstallRS232Driver();
         
         // Utility functions
         static std::string GetChipModelName(ChipModel model);

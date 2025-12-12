@@ -552,6 +552,180 @@ namespace DMATool::Backend
         return info;
     }
 
+    DriverInfo OpenOCDInterface::CheckRS232Driver()
+    {
+        DriverInfo info;
+
+        // PowerShell command to check for FTDI RS232 Interface 0 (VID_0403&PID_6011&MI_00)
+        std::string psCommand = R"(powershell -Command "$device = Get-PnpDevice | Where-Object {$_.InstanceId -like '*VID_0403&PID_6011&MI_00*'} | Select-Object -First 1; if ($device) { $props = @{}; $props['Status'] = $device.Status; $props['FriendlyName'] = $device.FriendlyName; try { $props['DriverVersion'] = (Get-PnpDeviceProperty -InstanceId $device.InstanceId -KeyName 'DEVPKEY_Device_DriverVersion' -ErrorAction SilentlyContinue).Data } catch { $props['DriverVersion'] = 'Unknown' }; try { $props['DriverDate'] = (Get-PnpDeviceProperty -InstanceId $device.InstanceId -KeyName 'DEVPKEY_Device_DriverDate' -ErrorAction SilentlyContinue).Data } catch { $props['DriverDate'] = 'Unknown' }; try { $props['DriverProvider'] = (Get-PnpDeviceProperty -InstanceId $device.InstanceId -KeyName 'DEVPKEY_Device_DriverProvider' -ErrorAction SilentlyContinue).Data } catch { $props['DriverProvider'] = 'Unknown' }; try { $props['HardwareIds'] = (Get-PnpDeviceProperty -InstanceId $device.InstanceId -KeyName 'DEVPKEY_Device_HardwareIds' -ErrorAction SilentlyContinue).Data[0] } catch { $props['HardwareIds'] = 'Unknown' }; try { $props['Service'] = (Get-PnpDeviceProperty -InstanceId $device.InstanceId -KeyName 'DEVPKEY_Device_Service' -ErrorAction SilentlyContinue).Data } catch { $props['Service'] = 'Unknown' }; Write-Output \"STATUS:$($props['Status'])\"; Write-Output \"NAME:$($props['FriendlyName'])\"; Write-Output \"VERSION:$($props['DriverVersion'])\"; Write-Output \"DATE:$($props['DriverDate'])\"; Write-Output \"PROVIDER:$($props['DriverProvider'])\"; Write-Output \"HWID:$($props['HardwareIds'])\"; Write-Output \"SERVICE:$($props['Service'])\" } else { Write-Output 'NOT_INSTALLED' }")";
+
+        std::string output = ExecuteCommand(psCommand);
+
+        if (output.find("NOT_INSTALLED") != std::string::npos)
+        {
+            info.installed = false;
+            return info;
+        }
+
+        std::string serviceType;
+        bool deviceDetected = true;
+        
+        // Parse output
+        std::istringstream stream(output);
+        std::string line;
+        while (std::getline(stream, line))
+        {
+            if (line.find("STATUS:") == 0)
+            {
+                std::string status = line.substr(7);
+                deviceDetected = (status.find("OK") != std::string::npos);
+            }
+            else if (line.find("NAME:") == 0)
+            {
+                info.deviceName = line.substr(5);
+            }
+            else if (line.find("VERSION:") == 0)
+            {
+                info.version = line.substr(8);
+            }
+            else if (line.find("DATE:") == 0)
+            {
+                info.date = line.substr(5);
+            }
+            else if (line.find("PROVIDER:") == 0)
+            {
+                info.provider = line.substr(9);
+            }
+            else if (line.find("SERVICE:") == 0)
+            {
+                serviceType = line.substr(8);
+            }
+            else if (line.find("HWID:") == 0)
+            {
+                std::string hwid = line.substr(5);
+                // Extract VID/PID from hardware ID
+                std::regex vidPidRegex(R"(VID_([0-9A-Fa-f]{4})&PID_([0-9A-Fa-f]{4}))");
+                std::smatch match;
+                if (std::regex_search(hwid, match, vidPidRegex))
+                {
+                    info.vidPid = match[1].str() + ":" + match[2].str();
+                }
+            }
+        }
+        
+        // Determine if this is the CORRECT driver for JTAG operations
+        // FTDIBUS = Default Windows driver (WRONG - needs replacement with WinUSB)
+        // WinUSB = Custom driver (CORRECT for JTAG with OpenOCD)
+        if (serviceType == "FTDIBUS")
+        {
+            // Wrong driver - default FTDI driver, needs WinUSB
+            info.installed = false;  // Mark as not installed (wrong driver)
+            info.deviceName = "Default FTDI Driver Detected (Needs WinUSB)";
+        }
+        else if (serviceType == "WinUSB")
+        {
+            // Correct driver for JTAG operations
+            info.installed = true;
+            info.deviceName += " (WinUSB - JTAG Ready)";
+        }
+        else
+        {
+            // Unknown driver or no driver
+            info.installed = false;
+        }
+
+        return info;
+    }
+
+    CardInfo OpenOCDInterface::DetectDMACard()
+    {
+        CardInfo info;
+
+        // PowerShell command to detect DMA cards by VID/PID (driver-agnostic)
+        // Checks for:
+        // 1. VID_0403&PID_6011&MI_00 -> 35T (FTDI FT4232H Quad RS232)
+        // 2. VID_1A86&PID_55DD or VID_1A86&PID_55DE -> 75T/100T (CH347)
+        std::string psCommand = R"(powershell -Command "
+            # Check for 35T (FTDI FT4232H Interface 0)
+            $rs232Device = Get-PnpDevice | Where-Object {$_.InstanceId -like '*VID_0403&PID_6011&MI_00*'} | Select-Object -First 1
+            
+            # Check for 75T/100T (CH347)
+            $ch347Device = Get-PnpDevice | Where-Object {
+                $_.InstanceId -like '*VID_1A86&PID_55DD*' -or 
+                $_.InstanceId -like '*VID_1A86&PID_55DE*'
+            } | Select-Object -First 1
+            
+            if ($rs232Device) {
+                $props = Get-PnpDeviceProperty -InstanceId $rs232Device.InstanceId
+                $hwids = ($props | Where-Object {$_.KeyName -eq 'DEVPKEY_Device_HardwareIds'}).Data[0]
+                Write-Output 'DETECTED:35T'
+                Write-Output \"NAME:$($rs232Device.FriendlyName)\"
+                Write-Output \"INSTANCE:$($rs232Device.InstanceId)\"
+                Write-Output \"HWID:$hwids\"
+            }
+            elseif ($ch347Device) {
+                $props = Get-PnpDeviceProperty -InstanceId $ch347Device.InstanceId
+                $hwids = ($props | Where-Object {$_.KeyName -eq 'DEVPKEY_Device_HardwareIds'}).Data[0]
+                Write-Output 'DETECTED:CH347'
+                Write-Output \"NAME:$($ch347Device.FriendlyName)\"
+                Write-Output \"INSTANCE:$($ch347Device.InstanceId)\"
+                Write-Output \"HWID:$hwids\"
+            }
+            else {
+                Write-Output 'NOT_DETECTED'
+            }
+        ")";
+
+        std::string output = ExecuteCommand(psCommand);
+
+        if (output.find("NOT_DETECTED") != std::string::npos)
+        {
+            info.detected = false;
+            return info;
+        }
+
+        info.detected = true;
+
+        // Parse output
+        std::istringstream stream(output);
+        std::string line;
+        while (std::getline(stream, line))
+        {
+            if (line.find("DETECTED:35T") == 0)
+            {
+                info.adapterType = AdapterType::RS232;
+                info.cardTypeString = "35T";
+            }
+            else if (line.find("DETECTED:CH347") == 0)
+            {
+                info.adapterType = AdapterType::CH347;
+                // Will be refined to 75T or 100T after FPGA detection
+                info.cardTypeString = "75T/100T";
+            }
+            else if (line.find("NAME:") == 0)
+            {
+                info.deviceName = line.substr(5);
+            }
+            else if (line.find("INSTANCE:") == 0)
+            {
+                info.instanceId = line.substr(9);
+            }
+            else if (line.find("HWID:") == 0)
+            {
+                std::string hwid = line.substr(5);
+                // Extract VID/PID from hardware ID
+                std::regex vidPidRegex(R"(VID_([0-9A-Fa-f]{4})&PID_([0-9A-Fa-f]{4}))");
+                std::smatch match;
+                if (std::regex_search(hwid, match, vidPidRegex))
+                {
+                    info.vidPid = match[1].str() + ":" + match[2].str();
+                }
+            }
+        }
+
+        return info;
+    }
+
     bool OpenOCDInterface::InstallCH347Driver()
     {
         std::cout << "[INFO] Installing CH347 driver..." << std::endl;
@@ -948,5 +1122,78 @@ namespace DMATool::Backend
         }
         
         return anySuccess;
+    }
+
+    bool OpenOCDInterface::InstallRS232Driver()
+    {
+        std::cout << "[INFO] Installing RS232 (WinUSB) driver for FTDI FT4232H..." << std::endl;
+        std::cout << "[INFO] This will replace the default FTDIBUS driver with WinUSB for JTAG operations" << std::endl;
+        
+        // Extract driver files from embedded resources to temp directory
+        std::string tempDir = GetTempDirectory() + "drivers\\rs232\\";
+        CreateDirectoryA(tempDir.c_str(), NULL);
+        
+        std::cout << "[INFO] Extracting WinUSB driver files from embedded resources..." << std::endl;
+        
+        // TODO: Add resource IDs for RS232 WinUSB driver files in resource.h
+        // For now, use the tool fallback path as reference
+        // The driver files should be embedded as resources like CH347 drivers
+        
+        std::cout << "[ERROR] RS232 WinUSB driver embedding not yet implemented" << std::endl;
+        std::cout << "[INFO] Please use Zadig tool to install WinUSB driver for now:" << std::endl;
+        std::cout << "[INFO] 1. Download Zadig from https://zadig.akeo.ie/" << std::endl;
+        std::cout << "[INFO] 2. Run Zadig" << std::endl;
+        std::cout << "[INFO] 3. Select 'Quad RS232-HS (Interface 0)'" << std::endl;
+        std::cout << "[INFO] 4. Choose WinUSB driver" << std::endl;
+        std::cout << "[INFO] 5. Click 'Replace Driver'" << std::endl;
+        
+        // Open Zadig website in browser
+        ShellExecuteA(NULL, "open", "https://zadig.akeo.ie/", NULL, NULL, SW_SHOWNORMAL);
+        
+        return false;  // Return false since we're using manual method for now
+    }
+
+    bool OpenOCDInterface::UninstallRS232Driver()
+    {
+        std::cout << "[INFO] Uninstalling RS232 (WinUSB) driver..." << std::endl;
+        std::cout << "[INFO] This will restore the default FTDIBUS driver" << std::endl;
+        
+        // Find WinUSB driver for FTDI device
+        std::string findCommand = R"(powershell -Command "pnputil /enum-drivers | Select-String -Pattern 'ftdi.*winusb' -Context 2,0 | ForEach-Object { if ($_.Line -match 'Published [Nn]ame\\s*:\\s*(.+\\.inf)') { $matches[1] } }")";
+        
+        std::string infName = ExecuteCommand(findCommand);
+        
+        if (infName.empty() || infName.find(".inf") == std::string::npos)
+        {
+            std::cout << "[WARNING] WinUSB driver for FTDI not found in driver store" << std::endl;
+            return false;
+        }
+        
+        // Remove newlines/whitespace
+        infName.erase(std::remove(infName.begin(), infName.end(), '\n'), infName.end());
+        infName.erase(std::remove(infName.begin(), infName.end(), '\r'), infName.end());
+        infName.erase(std::remove(infName.begin(), infName.end(), ' '), infName.end());
+        
+        std::cout << "[INFO] Found WinUSB driver: " << infName << std::endl;
+        
+        // Uninstall using pnputil with admin privileges
+        std::string command = "pnputil.exe /delete-driver " + infName + " /uninstall /force";
+        std::cout << "[DEBUG] Running: " << command << std::endl;
+        
+        std::string output = ExecuteCommand(command);
+        std::cout << output << std::endl;
+        
+        if (output.find("successfully") != std::string::npos)
+        {
+            std::cout << "[SUCCESS] WinUSB driver uninstalled successfully" << std::endl;
+            std::cout << "[INFO] Windows should automatically restore the default FTDIBUS driver" << std::endl;
+            return true;
+        }
+        else
+        {
+            std::cout << "[ERROR] Failed to uninstall WinUSB driver" << std::endl;
+            std::cout << "[INFO] You may need to run DMATool as Administrator" << std::endl;
+            return false;
+        }
     }
 }

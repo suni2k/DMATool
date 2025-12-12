@@ -27,6 +27,7 @@ namespace DMATool::UI::Tabs
         static bool s_IsUninstallingDriver;
         static bool s_IsCopyingDNA;
         static bool s_ResetFrameCounter;  // Flag to reset frame counter for manual detection
+        static bool s_DriverCheckCompleted;  // Track if driver check has been done
         static std::string s_ConnectionStatus;
         static std::string s_DetectionStatus;
         static std::string s_LastOperation;
