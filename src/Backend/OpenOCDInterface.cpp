@@ -1221,102 +1221,130 @@ namespace DMATool::Backend
         
         std::cout << "[INFO] Extracting WinUSB driver files from embedded resources..." << std::endl;
         
-        // Extract INF, CAT, and DLL files
-        if (!ExtractEmbeddedResource(IDR_RS232_WINUSB_INF, (driverDir / "ftdi_winusb.inf").string()))
+        // Extract Zadig signed INF and CAT files
+        if (!ExtractEmbeddedResource(IDR_RS232_WINUSB_INF, (driverDir / "quad_rs232-hs_(interface_0).inf").string()))
         {
-            std::cout << "[ERROR] Failed to extract ftdi_winusb.inf" << std::endl;
+            std::cout << "[ERROR] Failed to extract quad_rs232-hs_(interface_0).inf" << std::endl;
             return false;
         }
-        std::cout << "[DEBUG] Extracted: ftdi_winusb.inf" << std::endl;
-        
-        if (!ExtractEmbeddedResource(IDR_RS232_WINUSB_CAT, (driverDir / "ftdi_winusb.cat").string()))
+        std::cout << "[DEBUG] Extracted: quad_rs232-hs_(interface_0).inf" << std::endl;
+
+        if (!ExtractEmbeddedResource(IDR_RS232_WINUSB_CAT, (driverDir / "Quad_RS232-HS_(Interface_0).cat").string()))
         {
-            std::cout << "[ERROR] Failed to extract ftdi_winusb.cat" << std::endl;
+            std::cout << "[ERROR] Failed to extract Quad_RS232-HS_(Interface_0).cat" << std::endl;
             return false;
         }
-        std::cout << "[DEBUG] Extracted: ftdi_winusb.cat" << std::endl;
-        
-        if (!ExtractEmbeddedResource(IDR_RS232_WINUSB_COINSTALLER, (driverDir / "WinUSBCoInstaller2.dll").string()))
-        {
-            std::cout << "[ERROR] Failed to extract WinUSBCoInstaller2.dll" << std::endl;
-            return false;
-        }
-        std::cout << "[DEBUG] Extracted: WinUSBCoInstaller2.dll" << std::endl;
+        std::cout << "[DEBUG] Extracted: Quad_RS232-HS_(Interface_0).cat" << std::endl;
         
         std::cout << "[SUCCESS] Driver files extracted successfully" << std::endl;
         
-        std::filesystem::path infPath = driverDir / "ftdi_winusb.inf";
+        std::filesystem::path infPath = driverDir / "quad_rs232-hs_(interface_0).inf";
         std::cout << "[INFO] Using driver INF at: " << infPath.string() << std::endl;
         
-        // Verify files exist
-        std::cout << "[DEBUG] Verifying extracted files..." << std::endl;
-        std::cout << "[DEBUG] INF exists: " << (std::filesystem::exists(infPath) ? "YES" : "NO") << std::endl;
-        std::cout << "[DEBUG] CAT exists: " << (std::filesystem::exists(driverDir / "ftdi_winusb.cat") ? "YES" : "NO") << std::endl;
-        std::cout << "[DEBUG] DLL exists: " << (std::filesystem::exists(driverDir / "WinUSBCoInstaller2.dll") ? "YES" : "NO") << std::endl;
-        
+        // Verify INF exists
         if (!std::filesystem::exists(infPath))
         {
             std::cout << "[ERROR] INF file was not extracted properly!" << std::endl;
             return false;
         }
         
-        // Add driver to Windows driver store using pnputil
-        std::cout << "[INFO] Adding driver to Windows driver store..." << std::endl;
-        std::string pnpCommand = "pnputil.exe /add-driver \"" + infPath.string() + "\" /install";
-        std::cout << "[DEBUG] Running: " + pnpCommand << std::endl;
+        // WORKING SOLUTION: Remove FTDIBUS driver, then WinUSB activates automatically
         
-        std::string pnpOutput = ExecuteCommand(pnpCommand);
-        std::cout << pnpOutput;
+        // Step 1: Add WinUSB driver to driver store first (so it's available)
+        std::cout << "[INFO] Adding WinUSB driver to Windows driver store..." << std::endl;
+        std::string addCommand = "pnputil.exe /add-driver \"" + infPath.string() + "\" /install";
+        std::cout << "[DEBUG] Running: " + addCommand << std::endl;
         
-        if (pnpOutput.find("Failed") != std::string::npos || 
-            pnpOutput.find("failed") != std::string::npos)
+        std::string addOutput = ExecuteCommand(addCommand);
+        std::cout << addOutput << std::endl;
+        
+        // Step 2: Find and backup current FTDIBUS driver OEM number
+        std::cout << "[INFO] Finding current FTDIBUS driver..." << std::endl;
+        
+        // Use temp script file to avoid escaping issues
+        std::string tempScriptFile = GetTempDirectory() + "find_ftdibus.ps1";
+        std::ofstream scriptOut(tempScriptFile);
+        scriptOut << "$output = pnputil /enum-drivers\n";
+        scriptOut << "$lines = $output -split \"`n\"\n";
+        scriptOut << "for ($i = 0; $i -lt $lines.Count; $i++) {\n";
+        scriptOut << "    if ($lines[$i] -match 'Original Name:\\s+ftdibus\\.inf') {\n";
+        scriptOut << "        for ($j = $i - 1; $j -ge 0; $j--) {\n";
+        scriptOut << "            if ($lines[$j] -match 'Published Name:\\s+(oem\\d+\\.inf)') {\n";
+        scriptOut << "                Write-Output $matches[1]\n";
+        scriptOut << "                exit 0\n";
+        scriptOut << "            }\n";
+        scriptOut << "        }\n";
+        scriptOut << "        break\n";
+        scriptOut << "    }\n";
+        scriptOut << "}\n";
+        scriptOut << "Write-Output 'NOT_FOUND'\n";
+        scriptOut.close();
+        
+        std::string findFTDICmd = "powershell -ExecutionPolicy Bypass -File \"" + tempScriptFile + "\"";
+        std::string ftdiOemInf = ExecuteCommand(findFTDICmd);
+        DeleteFileA(tempScriptFile.c_str());
+        
+        ftdiOemInf.erase(std::remove(ftdiOemInf.begin(), ftdiOemInf.end(), '\n'), ftdiOemInf.end());
+        ftdiOemInf.erase(std::remove(ftdiOemInf.begin(), ftdiOemInf.end(), '\r'), ftdiOemInf.end());
+        
+        if (ftdiOemInf.find(".inf") != std::string::npos)
         {
-            std::cout << "[ERROR] Failed to add driver to Windows driver store" << std::endl;
-            std::cout << "[INFO] This may require running DMATool as Administrator" << std::endl;
-            return false;
-        }
-        
-        std::cout << "[SUCCESS] Driver added to Windows driver store" << std::endl;
-        
-        // Force update the device with new driver
-        std::cout << "[INFO] Updating device with new driver..." << std::endl;
-        std::string updateCommand = R"(powershell -Command "
-            $device = Get-PnpDevice | Where-Object {$_.InstanceId -like '*VID_0403&PID_6011&MI_00*'} | Select-Object -First 1
-            if ($device) {
-                try {
-                    Write-Output 'UPDATING_DEVICE'
-                    Update-PnpDevice -InstanceId $device.InstanceId -ErrorAction Stop
-                    Write-Output 'UPDATE_SUCCESS'
-                } catch {
-                    Write-Output 'UPDATE_FAILED'
-                }
-            } else {
-                Write-Output 'NO_DEVICE'
-            }
-        ")";
-        
-        std::string updateOutput = ExecuteCommand(updateCommand);
-        
-        if (updateOutput.find("UPDATE_SUCCESS") != std::string::npos)
-        {
-            std::cout << "[SUCCESS] Device driver updated successfully" << std::endl;
-            std::cout << "[INFO] Please wait a few seconds for Windows to apply the driver..." << std::endl;
-            Sleep(3000);  // Wait for driver to be applied
-            return true;
-        }
-        else if (updateOutput.find("UPDATE_FAILED") != std::string::npos)
-        {
-            std::cout << "[WARNING] Automatic driver update failed" << std::endl;
-            std::cout << "[INFO] Manual driver update may be required:" << std::endl;
-            std::cout << "[INFO]   1. Open Device Manager" << std::endl;
-            std::cout << "[INFO]   2. Find 'USB Serial Converter A' under USB controllers" << std::endl;
-            std::cout << "[INFO]   3. Right-click > Update driver > Browse my computer" << std::endl;
-            std::cout << "[INFO]   4. Point to: " << driverDir.string() << std::endl;
-            return false;
+            std::cout << "[INFO] Found FTDIBUS driver: " << ftdiOemInf << std::endl;
         }
         else
         {
-            std::cout << "[ERROR] Device not found or unexpected error" << std::endl;
+            std::cout << "[WARNING] Could not find FTDIBUS driver OEM number" << std::endl;
+        }
+        
+        // Step 3: Remove FTDIBUS driver with /uninstall /force
+        // This causes Windows to automatically switch to WinUSB
+        std::cout << "[INFO] Removing FTDIBUS driver to activate WinUSB..." << std::endl;
+        if (ftdiOemInf.find(".inf") != std::string::npos)
+        {
+            std::string removeCmd = "pnputil.exe /delete-driver " + ftdiOemInf + " /uninstall /force";
+            std::cout << "[DEBUG] Running: " << removeCmd << std::endl;
+            
+            std::string removeOutput = ExecuteCommand(removeCmd);
+            std::cout << removeOutput << std::endl;
+            
+            if (removeOutput.find("successfully") != std::string::npos || removeOutput.find("deleted") != std::string::npos)
+            {
+                std::cout << "[SUCCESS] FTDIBUS driver removed" << std::endl;
+                std::cout << "[INFO] WinUSB driver should now activate automatically..." << std::endl;
+                Sleep(3000); // Wait for Windows to switch driver
+            }
+            else
+            {
+                std::cout << "[ERROR] Failed to remove FTDIBUS driver" << std::endl;
+                std::cout << "[INFO] You may need to run DMATool as Administrator" << std::endl;
+                return false;
+            }
+        }
+        
+        // Step 4: Verify WinUSB driver is active
+        std::cout << "[INFO] Verifying WinUSB driver installation..." << std::endl;
+        Sleep(2000);
+        
+        auto driverInfo = CheckRS232Driver();
+        
+        bool isWinUSBInstalled = (driverInfo.service == "WinUSB") ||
+                                  (driverInfo.deviceName.find("Quad RS232-HS") != std::string::npos) ||
+                                  (driverInfo.provider.find("libwdi") != std::string::npos);
+        
+        if (isWinUSBInstalled)
+        {
+            std::cout << "[SUCCESS] WinUSB driver installed successfully!" << std::endl;
+            std::cout << "[INFO] Device: " << driverInfo.deviceName << std::endl;
+            std::cout << "[INFO] Service: " << driverInfo.service << std::endl;
+            std::cout << "[INFO] Version: " << driverInfo.version << std::endl;
+            return true;
+        }
+        else
+        {
+            std::cout << "[ERROR] WinUSB driver installation may have failed" << std::endl;
+            std::cout << "[INFO] Current device: " << driverInfo.deviceName << std::endl;
+            std::cout << "[INFO] Current service: " << driverInfo.service << std::endl;
+            std::cout << "[INFO] Please check Device Manager or run 'Check Driver Status' again" << std::endl;
             return false;
         }
     }
@@ -1326,12 +1354,13 @@ namespace DMATool::Backend
         std::cout << "[INFO] Uninstalling RS232 (WinUSB) driver..." << std::endl;
         std::cout << "[INFO] This will restore the default FTDIBUS driver" << std::endl;
         
-        // Find WinUSB driver package for VID_0403&PID_6011&MI_00
+        // WORKING SOLUTION: Delete WinUSB driver with /force, FTDIBUS activates automatically
+        
+        // Step 1: Find WinUSB driver package for quad_rs232
+        std::cout << "[INFO] Finding WinUSB driver in driver store..." << std::endl;
         std::string findCommand = R"(powershell -Command "
             $packages = pnputil /enum-drivers | Out-String
-            if ($packages -match 'Published Name:\s+(oem\d+\.inf).*?Original Name:\s+.*rs232.*interface.*0.*inf') {
-                $matches[1]
-            } elseif ($packages -match 'Published Name:\s+(oem\d+\.inf).*?VID_0403.*PID_6011.*MI_00') {
+            if ($packages -match 'Published Name:\s+(oem\d+\.inf).*?Original Name:\s+.*quad.*rs232.*interface.*0.*inf') {
                 $matches[1]
             } else {
                 'NOT_FOUND'
@@ -1339,22 +1368,20 @@ namespace DMATool::Backend
         ")";
         
         std::string oemInf = ExecuteCommand(findCommand);
-        
-        // Remove whitespace
         oemInf.erase(std::remove(oemInf.begin(), oemInf.end(), '\n'), oemInf.end());
         oemInf.erase(std::remove(oemInf.begin(), oemInf.end(), '\r'), oemInf.end());
-        oemInf.erase(std::remove(oemInf.begin(), oemInf.end(), ' '), oemInf.end());
         
-        if (oemInf.empty() || oemInf == "NOT_FOUND" || oemInf.find(".inf") == std::string::npos)
+        if (oemInf.empty() || oemInf.find(".inf") == std::string::npos)
         {
-            std::cout << "[WARNING] WinUSB driver for FTDI not found in driver store" << std::endl;
-            std::cout << "[INFO] Driver may already be uninstalled" << std::endl;
+            std::cout << "[WARNING] WinUSB driver for RS232 not found in driver store" << std::endl;
+            std::cout << "[INFO] Driver may already be uninstalled or was never installed" << std::endl;
             return false;
         }
         
         std::cout << "[INFO] Found WinUSB driver package: " << oemInf << std::endl;
         
-        // Uninstall WinUSB driver
+        // Step 2: Delete WinUSB driver with /uninstall /force
+        // This removes WinUSB and allows FTDIBUS to become active
         std::string uninstallCmd = "pnputil.exe /delete-driver " + oemInf + " /uninstall /force";
         std::cout << "[DEBUG] Running: " << uninstallCmd << std::endl;
         
@@ -1368,64 +1395,34 @@ namespace DMATool::Backend
             return false;
         }
         
-        std::cout << "[SUCCESS] WinUSB driver uninstalled" << std::endl;
+        std::cout << "[SUCCESS] WinUSB driver removed" << std::endl;
+        std::cout << "[INFO] FTDIBUS driver should now activate automatically..." << std::endl;
         
-        // Wait for device to reset
-        std::cout << "[INFO] Waiting for device to reset..." << std::endl;
+        // Wait for Windows to switch back to FTDIBUS
         Sleep(3000);
         
-        // Reinstall FTDIBUS driver
-        std::cout << "[INFO] Reinstalling default FTDIBUS driver..." << std::endl;
+        // Step 3: Verify FTDIBUS is restored
+        std::cout << "[INFO] Verifying FTDIBUS driver restoration..." << std::endl;
         
-        // Extract FTDIBUS driver to temp
-        std::string tempDir = GetTempDirectory() + "drivers\\ftdibus\\";
-        CreateDirectoryA(tempDir.c_str(), NULL);
+        auto driverInfo = CheckRS232Driver();
         
-        // Extract FTDIBUS files
-        if (!ExtractEmbeddedResource(IDR_RS232_FTDIBUS_INF, tempDir + "ftdibus.inf"))
+        bool isFTDIBUSRestored = (driverInfo.service == "FTDIBUS") ||
+                                  (driverInfo.deviceName.find("USB Serial Port") != std::string::npos) ||
+                                  (driverInfo.deviceName.find("USB Serial Converter") != std::string::npos);
+        
+        if (isFTDIBUSRestored)
         {
-            std::cout << "[ERROR] Failed to extract ftdibus.inf" << std::endl;
-            return false;
-        }
-        
-        if (!ExtractEmbeddedResource(IDR_RS232_FTDIBUS_CAT, tempDir + "ftdibus.cat"))
-        {
-            std::cout << "[ERROR] Failed to extract ftdibus.cat" << std::endl;
-            return false;
-        }
-        
-        if (!ExtractEmbeddedResource(IDR_RS232_FTDIBUS_SYS, tempDir + "ftdibus.sys"))
-        {
-            std::cout << "[ERROR] Failed to extract ftdibus.sys" << std::endl;
-            return false;
-        }
-        
-        if (!ExtractEmbeddedResource(IDR_RS232_FTSER2K_SYS, tempDir + "ftser2k.sys"))
-        {
-            std::cout << "[ERROR] Failed to extract ftser2k.sys" << std::endl;
-            return false;
-        }
-        
-        std::cout << "[DEBUG] FTDIBUS driver files extracted" << std::endl;
-        
-        // Install FTDIBUS driver
-        std::string ftdibusInf = tempDir + "ftdibus.inf";
-        std::string installCmd = "pnputil.exe /add-driver \"" + ftdibusInf + "\" /install";
-        std::cout << "[DEBUG] Running: " << installCmd << std::endl;
-        
-        std::string installOutput = ExecuteCommand(installCmd);
-        std::cout << installOutput << std::endl;
-        
-        if (installOutput.find("successfully") != std::string::npos || installOutput.find("Already exists") != std::string::npos)
-        {
-            std::cout << "[SUCCESS] FTDIBUS driver restored" << std::endl;
-            std::cout << "[INFO] Device should now appear as 'USB Serial Port (COMx)'" << std::endl;
+            std::cout << "[SUCCESS] FTDIBUS driver restored successfully!" << std::endl;
+            std::cout << "[INFO] Device: " << driverInfo.deviceName << std::endl;
+            std::cout << "[INFO] Service: " << driverInfo.service << std::endl;
             return true;
         }
         else
         {
-            std::cout << "[WARNING] FTDIBUS driver installation may have failed" << std::endl;
-            std::cout << "[INFO] Windows may automatically install it on next reconnect" << std::endl;
+            std::cout << "[WARNING] Could not verify FTDIBUS driver restoration" << std::endl;
+            std::cout << "[INFO] Current device: " << driverInfo.deviceName << std::endl;
+            std::cout << "[INFO] Current service: " << driverInfo.service << std::endl;
+            std::cout << "[INFO] Please check Device Manager or rescan for hardware changes" << std::endl;
             return false;
         }
     }

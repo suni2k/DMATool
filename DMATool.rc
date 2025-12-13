@@ -28,8 +28,8 @@ IDR_FT601_INF RCDATA "dmafiles\\Winusb_D3XX_Release_1.4.0.1\\WU_FTD3XX_Driver\\F
 IDR_FT601_CAT RCDATA "dmafiles\\Winusb_D3XX_Release_1.4.0.1\\WU_FTD3XX_Driver\\FTD3XXWU.cat"
 
 // RS232 (35T) WinUSB Driver Files  
-IDR_RS232_WINUSB_INF RCDATA "tools\\FTDI_RS232_Driver\\WinUSB_Driver\\ftdi_winusb.inf"
-IDR_RS232_WINUSB_CAT RCDATA "tools\\FTDI_RS232_Driver\\WinUSB_Driver\\ftdi_winusb.cat"
+IDR_RS232_WINUSB_INF RCDATA "tools\\FTDI_RS232_Driver\\Zadig_Signed\\quad_rs232-hs_(interface_0).inf"
+IDR_RS232_WINUSB_CAT RCDATA "tools\\FTDI_RS232_Driver\\Zadig_Signed\\Quad_RS232-HS_(Interface_0).cat"
 IDR_RS232_WINUSB_COINSTALLER RCDATA "tools\\FTDI_RS232_Driver\\WinUSB_Driver\\WinUSBCoInstaller2.dll"
 
 // RS232 (35T) FTDIBUS Driver Files (for reverting)

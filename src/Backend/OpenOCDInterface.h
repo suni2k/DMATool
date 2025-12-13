@@ -46,6 +46,7 @@ namespace DMATool::Backend
         std::string provider;
         std::string deviceName;
         std::string vidPid;
+        std::string service;  // Added for driver service type (FTDIBUS, WinUSB, etc.)
     };
 
     struct CardInfo
