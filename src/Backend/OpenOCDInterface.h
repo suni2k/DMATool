@@ -66,7 +66,7 @@ namespace DMATool::Backend
         ~OpenOCDInterface();
 
         // Detection operations
-        FPGAInfo DetectFPGA(std::function<void(const std::string&)> logCallback = nullptr);
+        FPGAInfo DetectFPGA(AdapterType adapterType = AdapterType::Unknown, std::function<void(const std::string&)> logCallback = nullptr);
         CardInfo DetectDMACard();
         DriverInfo CheckCH347Driver();
         DriverInfo CheckRS232Driver();

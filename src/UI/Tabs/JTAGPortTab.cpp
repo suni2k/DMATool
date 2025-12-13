@@ -435,7 +435,7 @@ namespace DMATool::UI::Tabs
             {
                 UpdateProgress("Driver OK! Searching for OpenOCD...");
                 UpdateProgress("Detecting JTAG adapter...");
-                s_FPGAInfo = openocd.DetectFPGA([](const std::string& msg) {
+                s_FPGAInfo = openocd.DetectFPGA(cardInfo.adapterType, [](const std::string& msg) {
                     AddLog(msg);
                     // Extract progress from log messages
                     if (msg.find("Detecting") != std::string::npos)
@@ -506,9 +506,9 @@ namespace DMATool::UI::Tabs
                 AddLog("[SUCCESS] Detected: " + cardInfo.cardTypeString + " DMA card");
                 AddLog("[INFO] VID:PID = " + cardInfo.vidPid);
                 
-                // STEP 2: Proceed with FPGA detection
+                // STEP 2: Proceed with FPGA detection - PASS THE ADAPTER TYPE
                 UpdateProgress("Searching for OpenOCD executable...");
-                s_FPGAInfo = openocd.DetectFPGA([](const std::string& msg) {
+                s_FPGAInfo = openocd.DetectFPGA(cardInfo.adapterType, [](const std::string& msg) {
                     AddLog(msg);
                 });
                 

@@ -171,7 +171,7 @@ namespace DMATool::Backend
             progressCallback(20, 100, "Detecting FPGA via JTAG...");
 
         // Detect FPGA using the proven working method (no DNA needed for flash!)
-        FPGAInfo fpgaInfo = openocd.DetectFPGA([&](const std::string& msg) {
+        FPGAInfo fpgaInfo = openocd.DetectFPGA(AdapterType::Unknown, [&](const std::string& msg) {
             std::cout << msg << std::endl;
         });
 

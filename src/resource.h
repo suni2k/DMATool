@@ -28,6 +28,8 @@
 #define IDR_RS232_FTDIBUS_CAT           130
 #define IDR_RS232_FTDIBUS_SYS           131
 #define IDR_RS232_FTSER2K_SYS           132
+#define IDR_RS232_FTBUSUI_DLL           133
+#define IDR_RS232_FTD2XX_DLL            134
 
 // PCILeech executable for benchmark tests
 #define IDR_PCILEECH_EXE                120
