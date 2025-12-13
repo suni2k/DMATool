@@ -24,6 +24,7 @@
 #define IDR_RS232_WINUSB_INF            126
 #define IDR_RS232_WINUSB_CAT            127
 #define IDR_RS232_WINUSB_COINSTALLER    128
+#define IDR_RS232_WDF_COINSTALLER       135
 #define IDR_RS232_FTDIBUS_INF           129
 #define IDR_RS232_FTDIBUS_CAT           130
 #define IDR_RS232_FTDIBUS_SYS           131
