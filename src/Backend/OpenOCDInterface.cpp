@@ -216,11 +216,12 @@ namespace DMATool::Backend
             return AdapterType::CH347;
         }
 
-        // Check for FTDI (RS232)
-        psCommand = R"(powershell -Command "Get-PnpDevice | Where-Object {$_.FriendlyName -like '*FTDI*'} | Select-Object -First 1 | Select-Object -ExpandProperty FriendlyName")";
+        // Check for FTDI/RS232 - look for FTDI devices or Quad RS232 (WinUSB installed)
+        // Also check by VID/PID (0403:6011) to be more reliable
+        psCommand = R"(powershell -Command "$device = Get-PnpDevice | Where-Object {($_.FriendlyName -like '*FTDI*') -or ($_.FriendlyName -like '*Quad RS232*') -or ($_.InstanceId -like '*VID_0403&PID_6011*')} | Select-Object -First 1; if ($device) { Write-Output $device.FriendlyName }")";
         output = ExecuteCommand(psCommand);
 
-        if (output.find("FTDI") != std::string::npos)
+        if (!output.empty() && output.find_first_not_of(" \t\n\r") != std::string::npos)
         {
             return AdapterType::RS232;
         }
