@@ -8,7 +8,7 @@
 [![Downloads](https://img.shields.io/github/downloads/suni2k/DMATool/total?style=flat-square)](https://github.com/suni2k/DMATool/releases)
 [![License](https://img.shields.io/badge/license-Proprietary-red?style=flat-square)](LICENSE)
 
-[Download Latest Release](https://github.com/suni2k/DMATool/releases/latest) • [Report Bug](https://github.com/suni2k/DMATool/issues) • [Request Feature](https://github.com/suni2k/DMATool/issues)
+[Download Latest Release](https://github.com/suni2k/DMATool/releases/latest) ï¿½ [Report Bug](https://github.com/suni2k/DMATool/issues) ï¿½ [Request Feature](https://github.com/suni2k/DMATool/issues)
 
 </div>
 
@@ -20,7 +20,9 @@
 - **FPGA Detection** - Automatic detection of Xilinx Artix-7 FPGAs (XC7A35T, XC7A75T, XC7A100T)
 - **DNA ID Reading** - Extract unique 57-bit device DNA identifiers
 - **Multi-Adapter Support** - CH347 and RS232/FTDI JTAG adapters
-- **Driver Management** - One-click CH347 driver installation/uninstallation
+- **Driver Management** - One-click driver installation/uninstallation
+  - CH347: WCH USB driver (libusb-win32)
+  - RS232: WinUSB driver (preserves other FTDI interfaces as COM ports)
 
 ### ? Flash DMA Programming
 - **Firmware Programming** - Flash custom bitstreams to DMA cards
