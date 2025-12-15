@@ -83,7 +83,8 @@ namespace DMATool::Backend
         static std::string FormatDNA(const std::string& dna);
 
     private:
-        std::string m_OpenOCDPath;
+        std::string m_OpenOCDPath;          // FTDI/RS232 OpenOCD binary
+        std::string m_OpenOCD347Path;       // CH347 OpenOCD binary
         std::string m_ConfigPath;
         
         bool FindOpenOCD();

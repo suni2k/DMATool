@@ -4,6 +4,7 @@
 IDI_MAINICON ICON "icon\\app_icon.ico"
 
 IDR_OPENOCD_EXE RCDATA "dmafiles\\CH347FPGATool\\OpenOCD_CH347\\bin\\openocd.exe"
+IDR_OPENOCD_347_EXE RCDATA "tools\\openocd\\openocd-347.exe"
 IDR_CH347_CFG RCDATA "dmafiles\\CH347FPGATool\\OpenOCD_CH347\\bin\\ch347.cfg"
 IDR_LIBUSB_DLL RCDATA "dmafiles\\CH347FPGATool\\OpenOCD_CH347\\bin\\libusb-1.0.dll"
 IDR_LIBHIDAPI_DLL RCDATA "dmafiles\\CH347FPGATool\\OpenOCD_CH347\\bin\\libhidapi-0.dll"

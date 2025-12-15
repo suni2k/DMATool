@@ -82,15 +82,20 @@ namespace DMATool::Backend
         // Extract embedded resources to temp directory
         std::string tempDir = GetTempDirectory();
         std::string openocdPath = tempDir + "openocd.exe";
+        std::string openocd347Path = tempDir + "openocd-347.exe";
         std::string configPath = tempDir + "ch347.cfg";
 
         std::cout << "[INFO] Searching for OpenOCD executable..." << std::endl;
         std::cout << "[DEBUG] Attempting to extract resources to: " << tempDir << std::endl;
 
-        // Extract OpenOCD executable from resources
-        if (ExtractEmbeddedResource(IDR_OPENOCD_EXE, openocdPath))
+        // Extract both OpenOCD executables from resources
+        bool extractedMain = ExtractEmbeddedResource(IDR_OPENOCD_EXE, openocdPath);
+        bool extracted347 = ExtractEmbeddedResource(IDR_OPENOCD_347_EXE, openocd347Path);
+        
+        if (extractedMain || extracted347)
         {
-            m_OpenOCDPath = openocdPath;
+            m_OpenOCDPath = openocdPath;           // FTDI/RS232 version
+            m_OpenOCD347Path = openocd347Path;     // CH347 version
             std::cout << "[DEBUG] Extracted openocd.exe successfully" << std::endl;
             
             // Extract config files
@@ -409,8 +414,11 @@ namespace DMATool::Backend
         SetEnvironmentVariableA("OPENOCD_SCRIPTS", tempDir.c_str());
         if (logCallback) logCallback("[DEBUG] Set OPENOCD_SCRIPTS=" + tempDir);
         
+        // Choose the correct OpenOCD binary based on adapter type
+        std::string openocdBinary = (adapter == AdapterType::CH347) ? m_OpenOCD347Path : m_OpenOCDPath;
+        
         // Build OpenOCD command - use cmd /c to properly handle quotes
-        std::string command = "cmd /c \"\"" + m_OpenOCDPath + "\"";
+        std::string command = "cmd /c \"\"" + openocdBinary + "\"";
         
         // Add interface configuration based on adapter type
         if (adapter == AdapterType::CH347)
