@@ -11,6 +11,8 @@ IDR_XILINX_DNA_347_CFG RCDATA "dmafiles\\CH347FPGATool\\OpenOCD_CH347\\bin\\xili
 IDR_XILINX_XC7_CFG RCDATA "dmafiles\\CH347FPGATool\\OpenOCD_CH347\\bin\\xilinx-xc7.cfg"
 IDR_JTAGSPI_CFG RCDATA "dmafiles\\CH347FPGATool\\OpenOCD_CH347\\bin\\jtagspi.cfg"
 IDR_XILINX_DNA_CFG RCDATA "dmafiles\\CH347FPGATool\\OpenOCD_CH347\\bin\\xilinx-dna.cfg"
+IDR_INIT_232_35T_CFG RCDATA "tools\\openocd\\init_232_35t.cfg"
+IDR_INIT_232_75T_CFG RCDATA "tools\\openocd\\init_232_75t.cfg"
 
 // CH341/CH347 Driver Files
 IDR_CH341_INF RCDATA "tools\\ch347\\drivers\\CH341WDM.INF"

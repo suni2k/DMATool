@@ -10,6 +10,8 @@
 #define IDR_XILINX_XC7_CFG              106
 #define IDR_JTAGSPI_CFG                 107
 #define IDR_XILINX_DNA_CFG              108
+#define IDR_INIT_232_35T_CFG            136
+#define IDR_INIT_232_75T_CFG            137
 #define IDR_CH341_INF                   109
 #define IDR_CH341_SYS                   110
 #define IDR_CH341_M64_SYS               111
