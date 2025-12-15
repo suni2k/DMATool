@@ -2,6 +2,7 @@
 #include "../VMProtectConfig.h"  // VMProtect SDK integration
 #include "../resource.h"
 #include "../Util/ResourceExtractor.h"
+#include "../DriverUpdateAPI.h"  // Windows driver update API
 #include <filesystem>
 #include <iostream>
 #include <sstream>      // Added for std::stringstream, std::istringstream
@@ -1366,50 +1367,44 @@ namespace DMATool::Backend
             std::cout << "[WARNING] Could not find FTDIBUS driver OEM number" << std::endl;
         }
         
-        // Step 4: Force Interface 0 to use WinUSB without removing FTDIBUS
-        // This preserves other interfaces which use FTDIBUS for COM ports
-        std::cout << "[INFO] Forcing Interface 0 to use WinUSB driver..." << std::endl;
+        // Step 4: Force Interface 0 to use WinUSB using Windows API (Zadig method)
+        // This method does NOT remove FTDIBUS from the driver store, so other interfaces keep working
+        std::cout << "[INFO] Forcing Interface 0 to use WinUSB driver using Windows API..." << std::endl;
         
-        std::string deviceInstanceId = "USB\\VID_0403&PID_6011&MI_00\\7&1230F973&0&0000"; // Get this dynamically
-        std::string forceUpdateCmd = R"(powershell -Command ")"
-            R"($device = Get-PnpDevice | Where-Object {$_.InstanceId -like '*VID_0403&PID_6011&MI_00*'} | Select-Object -First 1; )"
-            R"(if ($device) { )"
-            R"(pnputil /delete-driver )" + ftdiOemInf + R"( /uninstall /force; )"
-            R"(Start-Sleep -Seconds 2; )"
-            R"(pnputil /scan-devices; )"
-            R"(Write-Output 'UPDATED' } else { Write-Output 'NO_DEVICE' }")";
+        // Use the hardware ID pattern that matches ONLY Interface 0
+        std::wstring hardwareId = L"USB\\VID_0403&PID_6011&MI_00";
+        std::wstring infPathW(infPath.wstring());
         
-        std::string updateOutput = ExecuteCommand(forceUpdateCmd);
-        std::cout << updateOutput << std::endl;
+        bool updateResult = DriverUpdateAPI::UpdateDriverForDevice(hardwareId, infPathW);
         
-        if (updateOutput.find("UPDATED") != std::string::npos)
+        if (updateResult)
         {
-            std::cout << "[SUCCESS] Forced driver update completed" << std::endl;
-            Sleep(3000); // Wait for Windows to apply driver
-            
-            // Re-add FTDIBUS driver so other interfaces (MI_01, MI_02, MI_03) can use it
-            std::cout << "[INFO] Restoring FTDIBUS driver for other interfaces..." << std::endl;
-            
-            // Export FTDIBUS from Windows driver cache
-            std::string ftdibusBackupPath = GetTempDirectory() + "ftdibus_backup\\";
-            CreateDirectoryA(ftdibusBackupPath.c_str(), NULL);
-            
-            // Get FTDIBUS from Windows INF directory
-            std::string windowsInfPath = "C:\\Windows\\INF\\ftdibus.inf";
-            std::string readdFTDICmd = "pnputil.exe /add-driver \"" + windowsInfPath + "\" /install";
-            std::string readdOutput = ExecuteCommand(readdFTDICmd);
-            std::cout << readdOutput << std::endl;
-            
-            // Rescan for hardware changes to apply FTDIBUS to other interfaces
-            ExecuteCommand("powershell -Command \"pnputil /scan-devices\"");
-            Sleep(2000);
-            
-            std::cout << "[SUCCESS] FTDIBUS driver restored for other interfaces" << std::endl;
+            std::cout << "[SUCCESS] WinUSB driver forced onto Interface 0" << std::endl;
+            std::cout << "[INFO] Other interfaces (MI_01, MI_02, MI_03) still use FTDIBUS for COM ports" << std::endl;
+            Sleep(2000); // Wait for Windows to apply driver
         }
         else
         {
-            std::cout << "[WARNING] Automatic driver update may have failed" << std::endl;
-            std::cout << "[INFO] You may need to manually update the driver in Device Manager" << std::endl;
+            std::cout << "[ERROR] Failed to force WinUSB driver onto Interface 0" << std::endl;
+            std::cout << "[INFO] Falling back to manual method..." << std::endl;
+            
+            // Fallback to old method if Windows API fails
+            std::string forceUpdateCmd = R"(powershell -Command ")"
+                R"($device = Get-PnpDevice | Where-Object {$_.InstanceId -like '*VID_0403&PID_6011&MI_00*'} | Select-Object -First 1; )"
+                R"(if ($device) { )"
+                R"(pnputil /delete-driver )" + ftdiOemInf + R"( /uninstall /force; )"
+                R"(Start-Sleep -Seconds 2; )"
+                R"(pnputil /scan-devices; )"
+                R"(Write-Output 'UPDATED' } else { Write-Output 'NO_DEVICE' }")";
+            
+            std::string updateOutput = ExecuteCommand(forceUpdateCmd);
+            std::cout << updateOutput << std::endl;
+            
+            if (updateOutput.find("UPDATED") == std::string::npos)
+            {
+                std::cout << "[WARNING] Automatic driver update may have failed" << std::endl;
+                std::cout << "[INFO] You may need to manually update the driver in Device Manager" << std::endl;
+            }
         }
         
         // Step 5: Verify WinUSB driver is active

@@ -99,6 +99,7 @@
     <ClCompile Include="src\Backend\FT601DriverInterface.cpp" />
     <ClCompile Include="src\Backend\LeechCoreWrapper.cpp" />
     <ClCompile Include="src\Backend\OpenOCDInterface.cpp" />
+    <ClCompile Include="src\DriverUpdateAPI.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="src\UI\Theme.cpp" />
@@ -126,6 +127,7 @@
     <ClInclude Include="src\Backend\FT601DriverInterface.h" />
     <ClInclude Include="src\Backend\LeechCoreWrapper.h" />
     <ClInclude Include="src\Backend\OpenOCDInterface.h" />
+    <ClInclude Include="src\DriverUpdateAPI.h" />
     <ClInclude Include="src\resource.h" />
     <ClInclude Include="src\UI\Theme.h" />
     <ClInclude Include="src\UI\MainWindow.h" />
