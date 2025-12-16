@@ -20,9 +20,13 @@
 - **FPGA Detection** - Automatic detection of Xilinx Artix-7 FPGAs (XC7A35T, XC7A75T, XC7A100T)
 - **DNA ID Reading** - Extract unique 57-bit device DNA identifiers
 - **Multi-Adapter Support** - CH347 and RS232/FTDI JTAG adapters
+- **Card Type Detection** - Identifies Squirrel 35T (RS232) vs CH347 cards (35T/75T/100T)
 - **Driver Management** - One-click driver installation/uninstallation
-  - CH347: WCH USB driver (libusb-win32)
-  - RS232: WinUSB driver (preserves other FTDI interfaces as COM ports)
+  - **CH347**: WCH USB driver (libusb-win32)
+  - **RS232**: WinUSB driver using Windows API `UpdateDriverForPlugAndPlayDevicesW()`
+    - Only replaces driver on Interface 0 (JTAG)
+    - Preserves other interfaces (MI_01, MI_02, MI_03) as COM ports
+    - Proper driver backup and restoration on uninstall
 
 ### ? Flash DMA Programming
 - **Firmware Programming** - Flash custom bitstreams to DMA cards
