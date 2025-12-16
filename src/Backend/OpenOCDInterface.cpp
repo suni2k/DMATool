@@ -108,7 +108,8 @@ namespace DMATool::Backend
             // Extract required DLLs
             bool dll1 = ExtractEmbeddedResource(IDR_LIBUSB_DLL, tempDir + "libusb-1.0.dll");
             bool dll2 = ExtractEmbeddedResource(IDR_LIBHIDAPI_DLL, tempDir + "libhidapi-0.dll");
-            std::cout << "[DEBUG] Extracted DLLs: libusb=" << dll1 << ", libhidapi=" << dll2 << std::endl;
+            bool dll3 = ExtractEmbeddedResource(IDR_CYGWIN1_DLL, tempDir + "cygwin1.dll");
+            std::cout << "[DEBUG] Extracted DLLs: libusb=" << dll1 << ", libhidapi=" << dll2 << ", cygwin1=" << dll3 << std::endl;
             
             // Create cpld subdirectory for OpenOCD scripts (OpenOCD expects scripts in cpld/ subdirectory)
             std::string cpldDir = tempDir + "cpld\\";

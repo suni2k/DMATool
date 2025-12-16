@@ -8,6 +8,7 @@
 #define IDR_CH347_CFG                   102
 #define IDR_LIBUSB_DLL                  103
 #define IDR_LIBHIDAPI_DLL               104
+#define IDR_CYGWIN1_DLL                 140
 #define IDR_XILINX_DNA_347_CFG          105
 #define IDR_XILINX_XC7_CFG              106
 #define IDR_JTAGSPI_CFG                 107
