@@ -172,11 +172,11 @@ namespace DMATool::UI::Tabs
         // Two column layout for top panels
         ImGui::Columns(2, "JTAGColumns", true);
         
-        RenderDeviceInfoPanel();
+        RenderDriverPanel();
         
         ImGui::NextColumn();
         
-        RenderDriverPanel();
+        RenderDeviceInfoPanel();
         
         ImGui::Columns(1);
         
@@ -1026,7 +1026,7 @@ namespace DMATool::UI::Tabs
             for (int i = 0; i < dotCount; i++) checkButtonText += ".";
         }
         
-        if (Theme::ButtonSecondary(checkButtonText.c_str(), ImVec2(-1, 40)))
+        if (Theme::ButtonGold(checkButtonText.c_str(), ImVec2(-1, 40)))
         {
             s_IsCheckingDriver = true;
             s_IsDetecting = true;

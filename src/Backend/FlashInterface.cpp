@@ -77,21 +77,17 @@ namespace DMATool::Backend
     {
     }
 
+    // Returns list of supported chip models for dropdown selection
+    // Limited to DMA Kings cards: 35T/75T/100T for CH347, 35T for RS232
     std::vector<std::pair<FPGAChipModel, std::string>> FlashInterface::GetSupportedChipModels()
     {
         return {
-            { FPGAChipModel::XC7A35T, "XC7A35T (Artix-7 35T)" },
-            { FPGAChipModel::XC7A50T, "XC7A50T (Artix-7 50T)" },
-            { FPGAChipModel::XC7A75T, "XC7A75T (Artix-7 75T)" },
-            { FPGAChipModel::XC7A100T, "XC7A100T (Artix-7 100T)" },
-            { FPGAChipModel::XC7A200T, "XC7A200T (Artix-7 200T)" },
-            { FPGAChipModel::XC7K70T, "XC7K70T (Kintex-7 70T)" },
-            { FPGAChipModel::XC7K160T, "XC7K160T (Kintex-7 160T)" },
-            { FPGAChipModel::XC7K325T, "XC7K325T (Kintex-7 325T)" },
-            { FPGAChipModel::XC7K410T, "XC7K410T (Kintex-7 410T)" },
-            { FPGAChipModel::XC6SLX9, "XC6SLX9 (Spartan-6 9K)" },
-            { FPGAChipModel::XC6SLX45, "XC6SLX45 (Spartan-6 45K)" },
-            { FPGAChipModel::XC6SLX75, "XC6SLX75 (Spartan-6 75K)" }
+            // CH347 USB-JTAG adapter models
+            { FPGAChipModel::XC7A35T, "XC7A35T (Artix-7 35T - CH347)" },
+            { FPGAChipModel::XC7A75T, "XC7A75T (Artix-7 75T - CH347)" },
+            { FPGAChipModel::XC7A100T, "XC7A100T (Artix-7 100T - CH347)" },
+            // RS232/FTDI adapter models (Screamer)
+            { FPGAChipModel::XC7A35T_RS232, "XC7A35T (Artix-7 35T - RS232)" }
         };
     }
 
@@ -99,18 +95,11 @@ namespace DMATool::Backend
     {
         switch (model)
         {
+        case FPGAChipModel::XC7A35T_RS232: return "xc7a35t";
         case FPGAChipModel::XC7A35T: return "xc7a35t";
         case FPGAChipModel::XC7A50T: return "xc7a50t";
         case FPGAChipModel::XC7A75T: return "xc7a75t";
         case FPGAChipModel::XC7A100T: return "xc7a100t";
-        case FPGAChipModel::XC7A200T: return "xc7a200t";
-        case FPGAChipModel::XC7K70T: return "xc7k70t";
-        case FPGAChipModel::XC7K160T: return "xc7k160t";
-        case FPGAChipModel::XC7K325T: return "xc7k325t";
-        case FPGAChipModel::XC7K410T: return "xc7k410t";
-        case FPGAChipModel::XC6SLX9: return "xc6slx9";
-        case FPGAChipModel::XC6SLX45: return "xc6slx45";
-        case FPGAChipModel::XC6SLX75: return "xc6slx75";
         default: return "unknown";
         }
     }
@@ -119,15 +108,11 @@ namespace DMATool::Backend
     {
         std::string lower = modelStr;
         std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+        // Default to CH347 for 35T unless explicitly RS232
         if (lower.find("7a35t") != std::string::npos) return FPGAChipModel::XC7A35T;
         if (lower.find("7a50t") != std::string::npos) return FPGAChipModel::XC7A50T;
         if (lower.find("7a75t") != std::string::npos) return FPGAChipModel::XC7A75T;
         if (lower.find("7a100t") != std::string::npos) return FPGAChipModel::XC7A100T;
-        if (lower.find("7a200t") != std::string::npos) return FPGAChipModel::XC7A200T;
-        if (lower.find("7k70t") != std::string::npos) return FPGAChipModel::XC7K70T;
-        if (lower.find("7k160t") != std::string::npos) return FPGAChipModel::XC7K160T;
-        if (lower.find("7k325t") != std::string::npos) return FPGAChipModel::XC7K325T;
-        if (lower.find("7k410t") != std::string::npos) return FPGAChipModel::XC7K410T;
         return FPGAChipModel::Unknown;
     }
 
@@ -156,7 +141,8 @@ namespace DMATool::Backend
         return "0.11.0+dev (CH347 Edition)";
     }
 
-    // SIMPLIFIED: Just detect FPGA chip model, no flash access needed!
+    // Detect FPGA chip and adapter type for flash programming
+    // Uses OpenOCDInterface to identify hardware and determine correct flash method
     FlashDeviceInfo FlashInterface::DetectFlashDevice(FlashProgressCallback progressCallback)
     {
         FlashDeviceInfo info;
@@ -168,10 +154,23 @@ namespace DMATool::Backend
         OpenOCDInterface openocd;
         
         if (progressCallback)
-            progressCallback(20, 100, "Detecting FPGA via JTAG...");
+            progressCallback(20, 100, "Detecting DMA card hardware...");
 
-        // Detect FPGA using the proven working method (no DNA needed for flash!)
-        FPGAInfo fpgaInfo = openocd.DetectFPGA(AdapterType::Unknown, [&](const std::string& msg) {
+        // Step 1: Detect DMA card by VID/PID to determine adapter type (CH347 or RS232)
+        CardInfo cardInfo = openocd.DetectDMACard();
+        
+        if (!cardInfo.detected)
+        {
+            if (progressCallback)
+                progressCallback(0, 100, "No DMA card detected");
+            return info;
+        }
+        
+        if (progressCallback)
+            progressCallback(40, 100, "Detecting FPGA via JTAG...");
+
+        // Step 2: Detect FPGA chip model using the detected adapter
+        FPGAInfo fpgaInfo = openocd.DetectFPGA(cardInfo.adapterType, [&](const std::string& msg) {
             std::cout << msg << std::endl;
         });
 
@@ -182,15 +181,28 @@ namespace DMATool::Backend
             return info;
         }
 
-        // We detected the FPGA! Fill in the flash info
+        // Step 3: Fill in flash device info with detected data
         info.detected = true;
         info.fpgaModelString = fpgaInfo.partNumber;  // e.g., "XC7A75T"
         
+        // Map adapter type from JTAG detection to flash adapter type
+        if (cardInfo.adapterType == AdapterType::RS232)
+            info.adapterType = FlashAdapterType::RS232;
+        else if (cardInfo.adapterType == AdapterType::CH347)
+            info.adapterType = FlashAdapterType::CH347;
+        else
+            info.adapterType = FlashAdapterType::Unknown;
+        
         // Convert from ChipModel (JTAG) to FPGAChipModel (Flash)
+        // For 35T, distinguish between RS232 and CH347 based on detected adapter
         switch (fpgaInfo.chipModel)
         {
-        case ChipModel::XC7A35T: 
-            info.fpgaModel = FPGAChipModel::XC7A35T;
+        case ChipModel::XC7A35T:
+            // Determine if RS232 or CH347 based on detected adapter
+            if (info.adapterType == FlashAdapterType::RS232)
+                info.fpgaModel = FPGAChipModel::XC7A35T_RS232;  // Screamer M2
+            else
+                info.fpgaModel = FPGAChipModel::XC7A35T;       // CH347 variant
             info.manufacturer = "Xilinx";
             info.model = "Artix-7 35T";
             break;

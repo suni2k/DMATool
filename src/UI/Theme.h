@@ -59,5 +59,6 @@ namespace DMATool::UI
         static bool ButtonPrimary(const char* label, const ImVec2& size = ImVec2(0, 0));
         static bool ButtonSecondary(const char* label, const ImVec2& size = ImVec2(0, 0));
         static bool ButtonDestructive(const char* label, const ImVec2& size = ImVec2(0, 0));
+        static bool ButtonGold(const char* label, const ImVec2& size = ImVec2(0, 0));
     };
 }

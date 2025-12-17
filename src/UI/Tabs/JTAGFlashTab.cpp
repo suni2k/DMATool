@@ -83,7 +83,7 @@ namespace DMATool::UI::Tabs
         {
             s_FirstRender = false;
             AddLog("[INFO] Flash programming interface initialized");
-            AddLog("[INFO] Supports XC7A75T, XC7A100T, and other Xilinx 7-series FPGAs");
+            AddLog("[INFO] Supports XC7A35T (RS232), XC7A35T/75T/100T (CH347)");
             AddLog("[INFO] Ready for flash operations");
         }
 
@@ -575,18 +575,33 @@ namespace DMATool::UI::Tabs
             }
         }
         
-        if (ImGui::BeginCombo("##chipmodel", currentChipDisplay.c_str()))
+        // Chip model selection dropdown with improved spacing
+        // HeightLarge flag makes dropdown taller to prevent clipping
+        if (ImGui::BeginCombo("##chipmodel", currentChipDisplay.c_str(), ImGuiComboFlags_HeightLarge))
         {
+            // Add padding to the popup window itself for breathing room
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8, 12));  // Top/bottom padding for popup
+            ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(12, 8));    // Spacing between items
+            
+            // Add spacing at the top to prevent first item from being flush with border
+            ImGui::Dummy(ImVec2(0, 4));
+            
+            // Render each supported chip model
             for (const auto& [model, displayName] : supportedChips)
             {
                 bool isSelected = (s_SelectedChipModel == model);
-                if (ImGui::Selectable(displayName.c_str(), isSelected))
+                if (ImGui::Selectable(displayName.c_str(), isSelected, 0, ImVec2(0, 0)))
                 {
                     s_SelectedChipModel = model;
                 }
                 if (isSelected)
                     ImGui::SetItemDefaultFocus();
             }
+            
+            // Add spacing at the bottom to prevent last item from being flush with border
+            ImGui::Dummy(ImVec2(0, 4));
+            
+            ImGui::PopStyleVar(2);
             ImGui::EndCombo();
         }
         

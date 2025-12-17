@@ -7,15 +7,26 @@
 
 namespace DMATool::Backend
 {
-    // Supported FPGA chip models
+    // Adapter types for flash programming
+    // Determines which OpenOCD configuration and scripts to use
+    enum class FlashAdapterType
+    {
+        Unknown = 0,
+        CH347,      // USB-JTAG (CH347) adapter for 35T/75T/100T
+        RS232       // Quad-RS232 (FTDI) adapter for 35T only
+    };
+
+    // Supported FPGA chip models for flash programming
+    // Limited to DMA Kings supported cards only
     enum class FPGAChipModel
     {
         Unknown = 0,
-        // Artix-7 Series (Most Common for DMA)
-        XC7A35T,
-        XC7A50T,
-        XC7A75T,      // Very common
-        XC7A100T,     // Very common
+        // Artix-7 Series (DMA Kings Cards)
+        XC7A35T_RS232,   // 35T via RS232/FTDI adapter (Screamer)
+        XC7A35T,         // 35T via CH347 adapter
+        XC7A50T,         // Legacy support (not commonly used)
+        XC7A75T,         // Very common (CH347)
+        XC7A100T,        // Very common (CH347)
         XC7A200T,
         // Kintex-7 Series
         XC7K70T,
@@ -50,6 +61,7 @@ namespace DMATool::Backend
     };
 
     // Flash device information
+    // Contains detected FPGA and adapter details
     struct FlashDeviceInfo
     {
         bool detected = false;
@@ -61,6 +73,8 @@ namespace DMATool::Backend
         uint32_t pageSize = 0;      // In bytes
         FPGAChipModel fpgaModel = FPGAChipModel::Unknown;
         std::string fpgaModelString;
+        FlashAdapterType adapterType = FlashAdapterType::Unknown;  // Detected adapter type (CH347 or RS232)
+    };
     };
 
     // Flash operation result

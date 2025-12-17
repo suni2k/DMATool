@@ -125,11 +125,17 @@ namespace DMATool::UI
         );
     }
 
+    // Primary button with gold hover/active states
+    // Used for main actions like "Detect FPGA & Read DNA"
     bool Theme::ButtonPrimary(const char* label, const ImVec2& size)
     {
+        ImVec4 brandGold = ImVec4(0.83f, 0.69f, 0.22f, 1.0f);
+        ImVec4 brandGoldLight = ImVec4(0.90f, 0.75f, 0.25f, 1.0f);
+        ImVec4 brandGoldDark = ImVec4(0.70f, 0.58f, 0.18f, 1.0f);
+        
         ImGui::PushStyleColor(ImGuiCol_Button, Colors::Primary);
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, LerpColor(Colors::Primary, Colors::Foreground, 0.1f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, LerpColor(Colors::Primary, Colors::Background, 0.2f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, brandGoldLight);  // Gold on hover
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, brandGoldDark);     // Dark gold when pressed
         ImGui::PushStyleColor(ImGuiCol_Text, Colors::PrimaryForeground);
         
         bool result = ImGui::Button(label, size);
@@ -138,12 +144,17 @@ namespace DMATool::UI
         return result;
     }
 
+    // Secondary button with white text and gold hover/active states
+    // Used for utility actions like "Copy DNA to Clipboard"
     bool Theme::ButtonSecondary(const char* label, const ImVec2& size)
     {
+        ImVec4 brandGoldLight = ImVec4(0.90f, 0.75f, 0.25f, 1.0f);
+        ImVec4 brandGoldDark = ImVec4(0.70f, 0.58f, 0.18f, 1.0f);
+        
         ImGui::PushStyleColor(ImGuiCol_Button, Colors::Secondary);
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Colors::Accent);
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, Colors::Muted);
-        ImGui::PushStyleColor(ImGuiCol_Text, Colors::SecondaryForeground);
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, brandGoldLight);  // Gold on hover
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, brandGoldDark);     // Dark gold when pressed
+        ImGui::PushStyleColor(ImGuiCol_Text, Colors::Foreground);        // White text for visibility
         
         bool result = ImGui::Button(label, size);
         
@@ -151,14 +162,74 @@ namespace DMATool::UI
         return result;
     }
 
+    // Destructive button with red color scheme
+    // Used for dangerous actions like "Uninstall Driver"
     bool Theme::ButtonDestructive(const char* label, const ImVec2& size)
     {
+        ImVec4 destructiveLight = ImVec4(0.92f, 0.36f, 0.36f, 1.0f);
+        ImVec4 destructiveDark = ImVec4(0.75f, 0.22f, 0.22f, 1.0f);
+        
         ImGui::PushStyleColor(ImGuiCol_Button, Colors::Destructive);
-        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, LerpColor(Colors::Destructive, Colors::Foreground, 0.1f));
-        ImGui::PushStyleColor(ImGuiCol_ButtonActive, LerpColor(Colors::Destructive, Colors::Background, 0.2f));
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, destructiveLight);  // Lighter red on hover
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, destructiveDark);     // Darker red when pressed
         ImGui::PushStyleColor(ImGuiCol_Text, Colors::DestructiveForeground);
         
         bool result = ImGui::Button(label, size);
+        
+        ImGui::PopStyleColor(4);
+        return result;
+    }
+
+    // Gold themed button matching active tab color with gradient overlay
+    // Used for important actions like "Check Driver Status"
+    bool Theme::ButtonGold(const char* label, const ImVec2& size)
+    {
+        ImVec4 brandGold = ImVec4(0.83f, 0.69f, 0.22f, 1.0f);      // Same as TabActive (#D4AF37)
+        ImVec4 brandGoldDark = ImVec4(0.70f, 0.58f, 0.18f, 1.0f);
+        ImVec4 brandGoldLight = ImVec4(0.90f, 0.75f, 0.25f, 1.0f);
+        ImVec4 textColor = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);         // Pure black text for maximum contrast
+        
+        // Base button colors
+        ImGui::PushStyleColor(ImGuiCol_Button, brandGold);          // Base gold color
+        ImGui::PushStyleColor(ImGuiCol_ButtonHovered, brandGoldLight); // Lighter gold on hover
+        ImGui::PushStyleColor(ImGuiCol_ButtonActive, brandGoldDark);   // Darker gold when pressed
+        ImGui::PushStyleColor(ImGuiCol_Text, textColor);
+        
+        bool result = ImGui::Button(label, size);
+        
+        // Get actual button rect after rendering for gradient overlay
+        ImVec2 buttonMin = ImGui::GetItemRectMin();
+        ImVec2 buttonMax = ImGui::GetItemRectMax();
+        
+        // Draw subtle vertical gradient overlay for depth effect
+        ImDrawList* drawList = ImGui::GetWindowDrawList();
+        
+        // Create vertical gradient from lighter gold at top to darker gold at bottom
+        ImU32 colorTop = IM_COL32(230, 191, 64, 60);     // Lighter gold, subtle transparency
+        ImU32 colorBottom = IM_COL32(178, 148, 46, 90);  // Darker gold, more visible
+        
+        if (ImGui::IsItemActive())
+        {
+            // When pressed, use darker gradient to show button is pressed
+            colorTop = IM_COL32(178, 148, 46, 80);
+            colorBottom = IM_COL32(140, 116, 36, 110);
+        }
+        else if (ImGui::IsItemHovered())
+        {
+            // When hovered, use brighter gradient to show interactivity
+            colorTop = IM_COL32(240, 200, 74, 70);
+            colorBottom = IM_COL32(200, 166, 54, 100);
+        }
+        
+        // Apply gradient as overlay (doesn't replace base color, just adds depth)
+        drawList->AddRectFilledMultiColor(
+            buttonMin,
+            buttonMax,
+            colorTop,    // Top-left
+            colorTop,    // Top-right
+            colorBottom, // Bottom-right
+            colorBottom  // Bottom-left
+        );
         
         ImGui::PopStyleColor(4);
         return result;
