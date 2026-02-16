@@ -46,8 +46,8 @@ Fixed FT601 driver detection and embedded driver files into the executable to el
 ### DMATool.rc (MANUAL UPDATE REQUIRED)
 ```rc
 // FT601 Driver Files
-IDR_FT601_INF RCDATA "dmafiles\\Winusb_D3XX_Release_1.4.0.1\\WU_FTD3XX_Driver\\FTD3XXWU.Inf"
-IDR_FT601_CAT RCDATA "dmafiles\\Winusb_D3XX_Release_1.4.0.1\\WU_FTD3XX_Driver\\FTD3XXWU.cat"
+IDR_FT601_INF RCDATA "dmafiles\\Winusb_D3XX_Release_1.3.0.10\\WU_FTD3XX_Driver\\FTD3XXWU.Inf"
+IDR_FT601_CAT RCDATA "dmafiles\\Winusb_D3XX_Release_1.3.0.10\\WU_FTD3XX_Driver\\FTD3XXWU.cat"
 ```
 
 ### src/Backend/FT601DriverInterface.h
